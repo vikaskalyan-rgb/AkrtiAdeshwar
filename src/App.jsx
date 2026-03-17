@@ -17,6 +17,7 @@ import ResidentLayout from './pages/resident/ResidentLayout'
 import ResidentDashboard from './pages/resident/ResidentDashboard'
 import ResidentMaintenance from './pages/resident/ResidentMaintenance'
 import ResidentComplaints from './pages/resident/ResidentComplaints'
+import OrgChart from './pages/OrgChart'
 import {
   ResidentAnnouncements,
   ResidentVisitors,
@@ -46,6 +47,8 @@ function AdminShell() {
           <Route path="/complaints"      element={<Complaints />} />
           <Route path="/announcements"   element={<Announcements />} />
           <Route path="/visitors"        element={<Visitors />} />
+          <Route path="/org-chart" element={<OrgChart />} />
+          <Route path="/resident/org-chart" element={<OrgChart />} />
           <Route path="/flats"           element={<FlatDirectory />} />
           <Route path="/flat-management" element={<FlatManagement />} />
           <Route path="/reports"         element={<Reports />} />
@@ -66,6 +69,7 @@ function ResidentShell() {
         <Route path="/resident/announcements" element={<ResidentAnnouncements />} />
         <Route path="/resident/visitors"      element={<ResidentVisitors />} />
         <Route path="/resident/directory"     element={<ResidentDirectory />} />
+        <Route path="/resident/org-chart" element={<OrgChart />} />
 
         {/* Owner only */}
         <Route path="/resident/expenses" element={

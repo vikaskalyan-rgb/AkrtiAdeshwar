@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../api/config'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { useRef } from 'react'
+import { useAuth } from '../context/AuthContext'
 
 function fmt(n) {
   if (n >= 100000) return `₹${(n/100000).toFixed(2)}L`
@@ -106,6 +107,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function Dashboard() {
   const navigate  = useNavigate()
   const now       = new Date()
+  const { user } = useAuth()
 
   const [selectedMonth, setSelectedMonth] = useState({
     month: now.getMonth() + 1,
@@ -176,10 +178,10 @@ export default function Dashboard() {
 
   const currentMonthLabel = `${MONTH_NAMES[selectedMonth.month - 1]} ${selectedMonth.year}`
 
-  const flatGrid = flats.map(f => {
-    const pay = payments.find(p => p.flatNo === f.flatNo)
-    return { ...f, payStatus: pay?.status || 'UNPAID' }
-  })
+ const flatGrid = flats.map(f => {
+  const pay = payments.find(p => p.flatNo === f.flatNo)
+  return { ...f, payStatus: pay?.status || 'UNPAID' }
+})
 
   if (loading) return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
@@ -281,21 +283,24 @@ export default function Dashboard() {
                 </div>
                 <div className="grid gap-1"
                   style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))' }}>
-                  {flatGrid.map(f => {
-                    const isPaid = f.payStatus === 'PAID'
-                    return (
-                      <div key={f.flatNo} title={f.flatNo}
-                        onClick={() => navigate('/maintenance')}
-                        className="aspect-square rounded-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
-                        style={{
-                          background: isPaid ? '#d1fae5' : '#ffe4e6',
-                          color:      isPaid ? '#065f46' : '#9f1239',
-                          fontSize: '7px', fontWeight: 700,
-                        }}>
-                        {f.flatNo}
-                      </div>
-                    )
-                  })}
+               {flatGrid.map(f => {
+  const isPaid = f.payStatus === 'PAID'
+  const isMe   = f.flatNo === user?.flatNo
+  return (
+    <div key={f.flatNo} title={f.flatNo}
+      onClick={() => navigate('/maintenance')}
+      className="aspect-square rounded-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
+      style={{
+        background: isMe ? 'var(--indigo)' : isPaid ? '#d1fae5' : '#ffe4e6',
+        color:      isMe ? 'white'          : isPaid ? '#065f46' : '#9f1239',
+        fontSize:   '7px', fontWeight: 700,
+        outline:    isMe ? '2px solid var(--indigo)' : 'none',
+        outlineOffset: '1px',
+      }}>
+      {f.flatNo}
+    </div>
+  )
+})}
                 </div>
               </div>
             </div>

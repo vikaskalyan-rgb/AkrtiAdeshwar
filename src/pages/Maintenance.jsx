@@ -379,8 +379,8 @@ export default function Maintenance() {
           /* Wing view */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { name:'North Wing', units:['A','B','C','D','E','F'], color:'var(--sky)' },
-              { name:'South Wing', units:['G','H','J','K'],         color:'var(--indigo)' },
+              { name:'South Wing', units:['A','B','C','D','E','F'], color:'var(--sky)' },
+              { name:'North Wing', units:['G','H','J','K'],         color:'var(--indigo)' },
             ].map(wing => (
               <div key={wing.name} className="card">
                 <div className="card-header">

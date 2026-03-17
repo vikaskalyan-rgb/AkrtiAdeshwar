@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, CreditCard, MessageSquareWarning,
-  Megaphone, Users, Building2, FileBarChart2, Receipt, LogOut, Menu, X
+  Megaphone, Users, Building2, FileBarChart2, Receipt, LogOut, Menu, X, Network
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useState } from 'react'
@@ -18,6 +18,7 @@ const NAV = [
     { to: '/resident/visitors',      icon: Users,         label: 'Visitors' },
     { to: '/resident/expenses',      icon: Receipt,       label: 'Expenses',       ownerOnly: true },
     { to: '/resident/directory',     icon: Building2,     label: 'Flat Directory' },
+    { to: '/resident/org-chart',     icon: Network,       label: 'Committee' },
     { to: '/resident/reports',       icon: FileBarChart2, label: 'Reports',        ownerOnly: true },
   ]},
 ]
@@ -36,6 +37,7 @@ const READ_ONLY = [
   '/resident/expenses',
   '/resident/reports',
   '/resident/directory',
+  '/resident/org-chart',
 ]
 
 export default function ResidentLayout({ children }) {
@@ -55,14 +57,17 @@ export default function ResidentLayout({ children }) {
       <aside className="hidden md:flex w-[220px] min-w-[220px] bg-white flex-col h-screen overflow-hidden"
         style={{ borderRight: '1px solid var(--border)' }}>
         <div className="px-5 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
-          <div className="text-[9px] font-bold tracking-[2px] uppercase mb-1" style={{ color: 'var(--emerald)' }}>
+          <div className="text-[9px] font-bold tracking-[2px] uppercase mb-1"
+            style={{ color: 'var(--emerald)' }}>
             Resident Portal
           </div>
-          <div className="text-[17px] font-bold leading-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+          <div className="text-[17px] font-bold leading-tight"
+            style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
             Akriti<br />Adeshwar
           </div>
           <div className="flex items-center gap-1.5 mt-1.5">
-            <span className="w-1.5 h-1.5 rounded-full pulse-dot inline-block" style={{ background: 'var(--emerald)' }}></span>
+            <span className="w-1.5 h-1.5 rounded-full pulse-dot inline-block"
+              style={{ background: 'var(--emerald)' }}></span>
             <span className="text-[10px] font-medium" style={{ color: 'var(--ink-3)' }}>
               Flat {user?.flatNo} · {user?.role === 'owner' ? 'Owner' : 'Tenant'}
             </span>
@@ -79,8 +84,8 @@ export default function ResidentLayout({ children }) {
               {section.items
                 .filter(item => !item.ownerOnly || isOwner)
                 .map(item => {
-                  const Icon = item.icon
-                  const active = isActive(item.to)
+                  const Icon     = item.icon
+                  const active   = isActive(item.to)
                   const readOnly = READ_ONLY.includes(item.to)
                   return (
                     <NavLink key={item.to} to={item.to}
@@ -109,7 +114,8 @@ export default function ResidentLayout({ children }) {
               {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{user?.name}</div>
+              <div className="text-[12px] font-semibold truncate"
+                style={{ color: 'var(--ink)' }}>{user?.name}</div>
               <div className="text-[10px]" style={{ color: 'var(--ink-3)' }}>
                 Flat {user?.flatNo} · {user?.role === 'owner' ? 'Owner' : 'Tenant'}
               </div>
@@ -127,7 +133,8 @@ export default function ResidentLayout({ children }) {
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white flex items-center justify-between px-4 py-3"
         style={{ borderBottom: '1px solid var(--border)', height: '56px' }}>
         <div>
-          <div className="text-[9px] font-bold tracking-[2px] uppercase" style={{ color: 'var(--emerald)' }}>
+          <div className="text-[9px] font-bold tracking-[2px] uppercase"
+            style={{ color: 'var(--emerald)' }}>
             Resident · Flat {user?.flatNo}
           </div>
           <div className="text-[15px] font-bold leading-tight"
@@ -145,7 +152,8 @@ export default function ResidentLayout({ children }) {
       {/* ── Mobile slide-in menu ── */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileMenuOpen(false)} />
           <div className="relative bg-white w-72 h-full flex flex-col"
             style={{ borderRight: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}>
@@ -176,7 +184,7 @@ export default function ResidentLayout({ children }) {
                   {section.items
                     .filter(item => !item.ownerOnly || isOwner)
                     .map(item => {
-                      const Icon = item.icon
+                      const Icon   = item.icon
                       const active = isActive(item.to)
                       return (
                         <NavLink key={item.to} to={item.to}
@@ -200,7 +208,8 @@ export default function ResidentLayout({ children }) {
                   {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{user?.name}</div>
+                  <div className="text-[13px] font-semibold truncate"
+                    style={{ color: 'var(--ink)' }}>{user?.name}</div>
                   <div className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
                     Flat {user?.flatNo} · {user?.role === 'owner' ? 'Owner' : 'Tenant'}
                   </div>
@@ -223,9 +232,13 @@ export default function ResidentLayout({ children }) {
 
       {/* ── Mobile bottom nav ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white flex items-center justify-around px-2"
-        style={{ height: 'var(--bottom-nav-h)', borderTop: '1px solid var(--border)', boxShadow: '0 -4px 12px rgba(26,26,46,0.06)' }}>
+        style={{
+          height: 'var(--bottom-nav-h)',
+          borderTop: '1px solid var(--border)',
+          boxShadow: '0 -4px 12px rgba(26,26,46,0.06)'
+        }}>
         {BOTTOM_NAV.map(item => {
-          const Icon = item.icon
+          const Icon   = item.icon
           const active = isActive(item.to)
           return (
             <NavLink key={item.to} to={item.to}

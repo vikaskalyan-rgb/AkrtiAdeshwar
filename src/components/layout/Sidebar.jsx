@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, CreditCard, Receipt, MessageSquareWarning,
-  Megaphone, Users, Building2, FileBarChart2, LogOut, Menu, X, Settings2
+  Megaphone, Users, Building2, FileBarChart2, LogOut, Menu, X, Settings2, Network
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useState } from 'react'
@@ -19,6 +19,7 @@ const NAV = [
     { to: '/visitors',      icon: Users,                label: 'Visitors' },
   ]},
   { label: 'Management', items: [
+    { to: '/org-chart',        icon: Network,       label: 'Committee' },
     { to: '/flats',            icon: Building2,     label: 'Flat Directory' },
     { to: '/flat-management',  icon: Settings2,     label: 'Flat Management' },
     { to: '/reports',          icon: FileBarChart2, label: 'Reports' },
@@ -35,6 +36,17 @@ const BOTTOM_NAV = [
 
 const BADGES = { complaints: 0 }
 
+function getRoleLabel(phone) {
+  const roles = {
+    '9600699366': 'Society Treasurer',
+    '9790088048': 'Society Seceretary',
+    '9994445388': 'Society President',
+    '9150625740': 'Society Supervisor',
+    '7010033792': 'Society Admin',
+  }
+  return roles[phone] || 'Society Admin'
+}
+
 export default function Sidebar() {
   const { user, logout } = useAuth()
   const location = useLocation()
@@ -42,6 +54,8 @@ export default function Sidebar() {
 
   const isActive = (to) =>
     to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
+
+  const roleLabel = getRoleLabel(user?.phone)
 
   return (
     <>
@@ -72,8 +86,8 @@ export default function Sidebar() {
                 {section.label}
               </div>
               {section.items.map(item => {
-                const Icon  = item.icon
-                const badge = item.badgeKey ? BADGES[item.badgeKey] : null
+                const Icon   = item.icon
+                const badge  = item.badgeKey ? BADGES[item.badgeKey] : null
                 const active = isActive(item.to)
                 return (
                   <NavLink key={item.to} to={item.to}
@@ -93,6 +107,7 @@ export default function Sidebar() {
           ))}
         </nav>
 
+        {/* Desktop user card */}
         <div className="mx-3 mb-3 p-3 rounded-xl"
           style={{ background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
           <div className="flex items-center gap-2.5">
@@ -104,7 +119,9 @@ export default function Sidebar() {
               <div className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
                 {user?.name || 'Admin'}
               </div>
-              <div className="text-[10px]" style={{ color: 'var(--ink-3)' }}>Society Admin</div>
+              <div className="text-[10px]" style={{ color: 'var(--ink-3)' }}>
+                {roleLabel}
+              </div>
             </div>
             <button onClick={logout} title="Logout"
               className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
@@ -136,7 +153,8 @@ export default function Sidebar() {
       {/* ── Mobile slide-in full menu ── */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileMenuOpen(false)} />
           <div className="relative bg-white w-72 h-full flex flex-col slide-up"
             style={{ borderRight: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}>
@@ -161,8 +179,8 @@ export default function Sidebar() {
                   <div className="text-[9px] font-bold tracking-[1.5px] uppercase px-3 py-1.5"
                     style={{ color: 'var(--ink-4)' }}>{section.label}</div>
                   {section.items.map(item => {
-                    const Icon  = item.icon
-                    const badge = item.badgeKey ? BADGES[item.badgeKey] : null
+                    const Icon   = item.icon
+                    const badge  = item.badgeKey ? BADGES[item.badgeKey] : null
                     const active = isActive(item.to)
                     return (
                       <NavLink key={item.to} to={item.to}
@@ -181,6 +199,7 @@ export default function Sidebar() {
               ))}
             </nav>
 
+            {/* Mobile user card */}
             <div className="mx-3 mb-4 p-3 rounded-xl"
               style={{ background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
               <div className="flex items-center gap-2.5">
@@ -189,8 +208,11 @@ export default function Sidebar() {
                   {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{user?.name}</div>
-                  <div className="text-[11px]" style={{ color: 'var(--ink-3)' }}>Society Admin</div>
+                  <div className="text-[13px] font-semibold truncate"
+                    style={{ color: 'var(--ink)' }}>{user?.name}</div>
+                  <div className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
+                    {roleLabel}
+                  </div>
                 </div>
                 <button onClick={logout}
                   className="w-8 h-8 flex items-center justify-center rounded-lg"
@@ -205,8 +227,11 @@ export default function Sidebar() {
 
       {/* ── Mobile bottom nav ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white flex items-center justify-around px-2"
-        style={{ height: 'var(--bottom-nav-h)', borderTop: '1px solid var(--border)',
-          boxShadow: '0 -4px 12px rgba(26,26,46,0.06)' }}>
+        style={{
+          height: 'var(--bottom-nav-h)',
+          borderTop: '1px solid var(--border)',
+          boxShadow: '0 -4px 12px rgba(26,26,46,0.06)'
+        }}>
         {BOTTOM_NAV.map(item => {
           const Icon   = item.icon
           const active = isActive(item.to)
