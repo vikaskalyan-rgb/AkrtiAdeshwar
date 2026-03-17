@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react'
+import api from '../api/config'
 
 const AuthContext = createContext(null)
 const STORAGE_KEY = 'akriti_user'
@@ -8,9 +9,7 @@ export function AuthProvider({ children }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       return saved ? JSON.parse(saved) : null
-    } catch {
-      return null
-    }
+    } catch { return null }
   })
 
   const login = (userData) => {

@@ -1,55 +1,76 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { ADMIN_CREDENTIALS, getAllValidPhones, identifyByPhone } from '../data/mockData'
+import api from '../api/config'
 import { Building2, Phone, KeyRound, ArrowRight, ShieldCheck } from 'lucide-react'
-
-// Simulated OTP — always 1234 for demo
-const DEMO_OTP = '1234'
 
 export default function Login() {
   const { login } = useAuth()
-  const [tab, setTab] = useState('resident') // 'admin' | 'resident'
+  const [tab, setTab] = useState('resident')
 
   // Admin state
   const [adminForm, setAdminForm] = useState({ username: '', password: '' })
   const [adminError, setAdminError] = useState('')
+  const [adminLoading, setAdminLoading] = useState(false)
 
   // Resident state
-  const [step, setStep] = useState('phone') // 'phone' | 'otp'
+  const [step, setStep] = useState('phone')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
   const [phoneError, setPhoneError] = useState('')
   const [otpError, setOtpError] = useState('')
+  const [otpLoading, setOtpLoading] = useState(false)
   const [resolvedUser, setResolvedUser] = useState(null)
 
   // Admin login
-  const handleAdminLogin = (e) => {
+  const handleAdminLogin = async (e) => {
     e.preventDefault()
-    if (adminForm.username === ADMIN_CREDENTIALS.username && adminForm.password === ADMIN_CREDENTIALS.password) {
-      login({ role: 'admin', name: ADMIN_CREDENTIALS.name, phone: ADMIN_CREDENTIALS.phone })
-    } else {
-      setAdminError('Invalid username or password')
+    setAdminError('')
+    setAdminLoading(true)
+    try {
+      const res = await api.post('/api/auth/admin/login', adminForm)
+      login({ ...res.data, role: 'admin' })
+    } catch (err) {
+      setAdminError(err.response?.data?.message || 'Invalid credentials')
+    } finally {
+      setAdminLoading(false)
     }
   }
 
-  // Resident: send OTP
-  const handleSendOtp = (e) => {
+  // Send OTP
+  const handleSendOtp = async (e) => {
     e.preventDefault()
     setPhoneError('')
-    const validPhones = getAllValidPhones()
-    if (!phone.match(/^[0-9]{10}$/)) { setPhoneError('Enter a valid 10-digit phone number'); return }
-    if (!validPhones.has(phone)) { setPhoneError('This phone number is not registered in our system'); return }
-    const identified = identifyByPhone(phone)
-    setResolvedUser(identified)
-    setStep('otp')
+    if (!phone.match(/^[0-9]{10}$/)) {
+      setPhoneError('Enter a valid 10-digit phone number')
+      return
+    }
+    setOtpLoading(true)
+    try {
+      await api.post('/api/auth/send-otp', { phone })
+      setStep('otp')
+    } catch (err) {
+      setPhoneError(err.response?.data?.message || 'Phone not registered')
+    } finally {
+      setOtpLoading(false)
+    }
   }
 
-  // Resident: verify OTP
-  const handleVerifyOtp = (e) => {
+  // Verify OTP
+  const handleVerifyOtp = async (e) => {
     e.preventDefault()
     setOtpError('')
-    if (otp !== DEMO_OTP) { setOtpError('Incorrect OTP. Use 1234 for demo.'); return }
-    login(resolvedUser)
+    setOtpLoading(true)
+    try {
+      const res = await api.post('/api/auth/verify-otp', { phone, otp })
+      login({
+        ...res.data,
+        role: res.data.role?.toLowerCase(),
+      })
+    } catch (err) {
+      setOtpError(err.response?.data?.message || 'Invalid or expired OTP')
+    } finally {
+      setOtpLoading(false)
+    }
   }
 
   return (
@@ -95,11 +116,12 @@ export default function Login() {
                   onChange={e => { setAdminForm(f => ({...f, password: e.target.value})); setAdminError('') }} />
               </div>
               {adminError && <p className="text-[12px] font-medium" style={{ color: 'var(--rose)' }}>{adminError}</p>}
-              <button type="submit" className="btn-primary w-full justify-center mt-2">
-                <ShieldCheck size={15} /> Login as Admin
+              <button type="submit" disabled={adminLoading} className="btn-primary w-full justify-center mt-2">
+                <ShieldCheck size={15} />
+                {adminLoading ? 'Logging in...' : 'Login as Admin'}
               </button>
-              <p className="text-center text-[11px]" style={{ color: 'var(--ink-4)' }}>Demo: admin / admin123</p>
             </form>
+
           ) : step === 'phone' ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div className="text-center mb-4">
@@ -107,7 +129,7 @@ export default function Login() {
                   <Phone size={22} style={{ color: 'var(--indigo)' }} />
                 </div>
                 <h2 className="text-[16px] font-bold" style={{ color: 'var(--ink)' }}>Enter your phone number</h2>
-                <p className="text-[12px] mt-1" style={{ color: 'var(--ink-3)' }}>We'll send an OTP to verify your identity</p>
+                <p className="text-[12px] mt-1" style={{ color: 'var(--ink-3)' }}>We'll send an OTP via WhatsApp</p>
               </div>
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5" style={{ color: 'var(--ink-3)' }}>Mobile Number</label>
@@ -118,10 +140,11 @@ export default function Login() {
                 </div>
               </div>
               {phoneError && <p className="text-[12px] font-medium" style={{ color: 'var(--rose)' }}>{phoneError}</p>}
-              <button type="submit" className="btn-primary w-full justify-center">
-                Send OTP <ArrowRight size={14} />
+              <button type="submit" disabled={otpLoading} className="btn-primary w-full justify-center">
+                {otpLoading ? 'Sending...' : <><span>Send OTP</span> <ArrowRight size={14} /></>}
               </button>
             </form>
+
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div className="text-center mb-4">
@@ -129,10 +152,9 @@ export default function Login() {
                   <KeyRound size={22} style={{ color: 'var(--indigo)' }} />
                 </div>
                 <h2 className="text-[16px] font-bold" style={{ color: 'var(--ink)' }}>Enter OTP</h2>
-                <p className="text-[12px] mt-1" style={{ color: 'var(--ink-3)' }}>OTP sent to +91 {phone}</p>
+                <p className="text-[12px] mt-1" style={{ color: 'var(--ink-3)' }}>Sent to WhatsApp +91 {phone}</p>
               </div>
 
-              {/* Identified user preview */}
               {resolvedUser && (
                 <div className="rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--indigo-lt)', border: '1px solid var(--indigo-md)' }}>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: 'var(--indigo)' }}>
@@ -140,30 +162,33 @@ export default function Login() {
                   </div>
                   <div>
                     <div className="text-[13px] font-bold" style={{ color: 'var(--ink)' }}>{resolvedUser.name}</div>
-                    <div className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
-                      Flat {resolvedUser.flatNo} · {resolvedUser.role === 'owner' ? 'Owner' : 'Tenant'}
-                    </div>
+                    <div className="text-[11px]" style={{ color: 'var(--ink-3)' }}>Flat {resolvedUser.flatNo}</div>
                   </div>
                 </div>
               )}
 
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5" style={{ color: 'var(--ink-3)' }}>OTP</label>
-                <input className="input w-full text-center text-[20px] font-bold tracking-[0.5em]" maxLength={4}
-                  placeholder="----" value={otp} onChange={e => { setOtp(e.target.value.replace(/\D/g,'')); setOtpError('') }} />
+                <input className="input w-full text-center text-[20px] font-bold tracking-[0.5em]"
+                  maxLength={6} placeholder="------" value={otp}
+                  onChange={e => { setOtp(e.target.value.replace(/\D/g,'')); setOtpError('') }} />
               </div>
               {otpError && <p className="text-[12px] font-medium" style={{ color: 'var(--rose)' }}>{otpError}</p>}
-              <button type="submit" className="btn-primary w-full justify-center">
-                Verify & Login <ArrowRight size={14} />
+              <button type="submit" disabled={otpLoading} className="btn-primary w-full justify-center">
+                {otpLoading ? 'Verifying...' : <><span>Verify & Login</span> <ArrowRight size={14} /></>}
               </button>
               <button type="button" onClick={() => { setStep('phone'); setOtp(''); setOtpError('') }}
                 className="w-full text-center text-[12px] font-medium" style={{ color: 'var(--ink-3)' }}>
                 ← Change number
               </button>
-              <p className="text-center text-[11px]" style={{ color: 'var(--ink-4)' }}>Demo OTP: 1234</p>
             </form>
           )}
         </div>
+
+        {/* Note about simulate mode */}
+        <p className="text-center text-[11px] mt-4" style={{ color: 'var(--ink-4)' }}>
+          OTP is sent via WhatsApp (simulate mode: check server logs)
+        </p>
       </div>
     </div>
   )
