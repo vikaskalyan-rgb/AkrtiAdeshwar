@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import Topbar from '../components/layout/Topbar'
 import { StatusBadge, Modal } from '../components/ui'
-import { PlusCircle, Pin, Trash2, Users } from 'lucide-react'
+import { PlusCircle, Pin, Trash2, Users, Mail } from 'lucide-react'
 import clsx from 'clsx'
 import api from '../api/config'
 
 const TYPE_COLORS = { notice:'#5b52f0', event:'#059669', urgent:'#e11d48' }
 
 const AUDIENCE_LABELS = {
-  EVERYONE:  { label:'Everyone',        desc:'Owners + all residents',               color:'#5b52f0', bg:'#eeeeff' },
-  OWNERS:    { label:'Owners Only',     desc:'Flat owners only (not tenants)',        color:'#d97706', bg:'#fffbeb' },
-  RESIDENTS: { label:'Residents Only',  desc:'Physically living (tenants + owners)',  color:'#059669', bg:'#ecfdf5' },
+  EVERYONE:  { label:'Everyone',       desc:'Owners + all residents',              color:'#5b52f0', bg:'#eeeeff' },
+  OWNERS:    { label:'Owners Only',    desc:'Flat owners only (not tenants)',       color:'#d97706', bg:'#fffbeb' },
+  RESIDENTS: { label:'Residents Only', desc:'Physically living (tenants + owners)', color:'#059669', bg:'#ecfdf5' },
 }
 
 const audienceStyle = {
@@ -20,14 +20,25 @@ const audienceStyle = {
 }
 
 export default function Announcements() {
-  const [anns, setAnns] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
+  const [anns, setAnns]           = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [showAdd, setShowAdd]     = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [form, setForm] = useState({ type:'NOTICE', audience:'EVERYONE', title:'', body:'' })
-  const [filter, setFilter] = useState('all')
+  const [form, setForm]           = useState({ type:'NOTICE', audience:'EVERYONE', title:'', body:'' })
+  const [filter, setFilter]       = useState('all')
+  const [recipientCount, setRecipientCount] = useState(0)
+  const [loadingCount, setLoadingCount]     = useState(false)
+  const [postSuccess, setPostSuccess]       = useState(null)
+
+  // Recipient counts cache per audience
+  const [countCache, setCountCache] = useState({})
 
   useEffect(() => { fetchAnnouncements() }, [])
+
+  // Fetch real recipient count when audience changes
+  useEffect(() => {
+    fetchRecipientCount(form.audience)
+  }, [form.audience])
 
   const fetchAnnouncements = async () => {
     setLoading(true)
@@ -41,24 +52,45 @@ export default function Announcements() {
     }
   }
 
+  const fetchRecipientCount = async (audience) => {
+    // Use cache if available
+    if (countCache[audience] !== undefined) {
+      setRecipientCount(countCache[audience])
+      return
+    }
+    setLoadingCount(true)
+    try {
+      const res = await api.get(`/api/announcements/recipient-count?audience=${audience}`)
+      const count = res.data.count || 0
+      setRecipientCount(count)
+      setCountCache(prev => ({ ...prev, [audience]: count }))
+    } catch (err) {
+      console.error('Failed to fetch recipient count:', err)
+      setRecipientCount(0)
+    } finally {
+      setLoadingCount(false)
+    }
+  }
+
+  // Get cached count for a posted announcement's audience
+  const getAudienceCount = (audience) => countCache[audience] ?? '—'
+
   const filtered = anns
     .filter(a => filter === 'all' || a.type?.toLowerCase() === filter)
     .sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0))
 
-  // Recipient count estimate based on audience
-  const getRecipientCount = (audience) => {
-    const counts = { EVERYONE: 76, OWNERS: 40, RESIDENTS: 40 }
-    return counts[audience] || 40
-  }
-
   const handleAdd = async () => {
-    if (!form.title || !form.body) return
+    if (!form.title.trim() || !form.body.trim()) return
     setSubmitting(true)
     try {
       await api.post('/api/announcements', form)
       await fetchAnnouncements()
+      setPostSuccess({ count: recipientCount, audience: form.audience })
       setForm({ type:'NOTICE', audience:'EVERYONE', title:'', body:'' })
       setShowAdd(false)
+      // Clear cache so fresh count is fetched next time
+      setCountCache({})
+      setTimeout(() => setPostSuccess(null), 5000)
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to post announcement')
     } finally {
@@ -70,7 +102,7 @@ export default function Announcements() {
     try {
       await api.patch(`/api/announcements/${id}/pin`)
       await fetchAnnouncements()
-    } catch (err) {
+    } catch {
       alert('Failed to update')
     }
   }
@@ -80,7 +112,7 @@ export default function Announcements() {
     try {
       await api.delete(`/api/announcements/${id}`)
       setAnns(prev => prev.filter(a => a.id !== id))
-    } catch (err) {
+    } catch {
       alert('Failed to delete')
     }
   }
@@ -96,6 +128,24 @@ export default function Announcements() {
       />
       <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-3">
 
+        {/* Post success banner */}
+        {postSuccess && (
+          <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl"
+            style={{ background:'#ecfdf5', border:'1px solid #6ee7b7' }}>
+            <div className="flex items-center gap-2">
+              <Mail size={14} style={{ color:'var(--emerald)' }} />
+              <span className="text-[12px] font-medium" style={{ color:'#065f46' }}>
+                Announcement posted! Emails sent to{' '}
+                <strong>{postSuccess.count}</strong>{' '}
+                {audienceStyle[postSuccess.audience]?.label?.toLowerCase()} recipients.
+              </span>
+            </div>
+            <button onClick={() => setPostSuccess(null)}
+              className="text-[16px] leading-none font-bold"
+              style={{ color:'#065f46' }}>×</button>
+          </div>
+        )}
+
         {/* Filter tabs */}
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth:'none' }}>
           {['all','notice','event','urgent'].map(t => (
@@ -103,8 +153,8 @@ export default function Announcements() {
               className="px-3 py-2 rounded-xl text-[11px] font-semibold transition-all capitalize flex-shrink-0"
               style={{
                 background: filter===t ? (t==='all' ? 'var(--indigo)' : TYPE_COLORS[t]) : 'white',
-                color: filter===t ? 'white' : 'var(--ink-2)',
-                border: `1px solid ${filter===t ? 'transparent' : 'var(--border)'}`,
+                color:      filter===t ? 'white' : 'var(--ink-2)',
+                border:     `1px solid ${filter===t ? 'transparent' : 'var(--border)'}`,
               }}>
               {t==='all' ? 'All' : t.charAt(0).toUpperCase()+t.slice(1)}
             </button>
@@ -112,11 +162,13 @@ export default function Announcements() {
         </div>
 
         {loading ? (
-          <div className="card p-12 text-center text-[13px]" style={{ color:'var(--ink-4)' }}>Loading...</div>
+          <div className="card p-12 text-center text-[13px]"
+            style={{ color:'var(--ink-4)' }}>Loading...</div>
         ) : (
           <div className="space-y-3">
             {filtered.length === 0 && (
-              <div className="card p-12 text-center text-[13px]" style={{ color:'var(--ink-4)' }}>No announcements yet</div>
+              <div className="card p-12 text-center text-[13px]"
+                style={{ color:'var(--ink-4)' }}>No announcements yet</div>
             )}
             {filtered.map(a => {
               const aud = audienceStyle[a.audience] || audienceStyle.EVERYONE
@@ -127,29 +179,50 @@ export default function Announcements() {
                       <div className="flex items-center gap-2 flex-wrap">
                         {a.isPinned && <Pin size={11} style={{ color:'var(--amber)' }} />}
                         <StatusBadge status={a.type?.toLowerCase()} />
-                        <span className="badge flex items-center gap-1" style={{ background:aud.bg, color:aud.color }}>
+                        <span className="badge flex items-center gap-1"
+                          style={{ background:aud.bg, color:aud.color }}>
                           <Users size={9} />{aud.label}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <button onClick={() => togglePin(a.id)}
                           className="text-[10px] px-2 py-1 rounded-lg font-semibold"
-                          style={{ background:a.isPinned?'#fffbeb':'var(--surface-3)', color:a.isPinned?'var(--amber)':'var(--ink-3)' }}>
-                          {a.isPinned?'Unpin':'Pin'}
+                          style={{
+                            background: a.isPinned ? '#fffbeb' : 'var(--surface-3)',
+                            color:      a.isPinned ? 'var(--amber)' : 'var(--ink-3)',
+                          }}>
+                          {a.isPinned ? 'Unpin' : 'Pin'}
                         </button>
-                        <button onClick={() => handleDelete(a.id)} style={{ color:'var(--ink-4)' }}>
+                        <button onClick={() => handleDelete(a.id)}
+                          style={{ color:'var(--ink-4)' }}>
                           <Trash2 size={13}/>
                         </button>
                       </div>
                     </div>
-                    <h3 className="text-[14px] md:text-[15px] font-bold mb-2" style={{ color:'var(--ink)', letterSpacing:'-0.01em' }}>{a.title}</h3>
-                    <p className="text-[12px] md:text-[13px] leading-relaxed" style={{ color:'var(--ink-2)' }}>{a.body}</p>
-                    <div className="mt-3 pt-3 flex items-center justify-between flex-wrap gap-2" style={{ borderTop:'1px solid var(--border)' }}>
+
+                    <h3 className="text-[14px] md:text-[15px] font-bold mb-2"
+                      style={{ color:'var(--ink)', letterSpacing:'-0.01em' }}>
+                      {a.title}
+                    </h3>
+                    <p className="text-[12px] md:text-[13px] leading-relaxed"
+                      style={{ color:'var(--ink-2)' }}>
+                      {a.body}
+                    </p>
+
+                    <div className="mt-3 pt-3 flex items-center justify-between flex-wrap gap-2"
+                      style={{ borderTop:'1px solid var(--border)' }}>
                       <span className="text-[11px]" style={{ color:'var(--ink-4)' }}>
                         Posted by {a.postedBy} · {a.postedAt}
                       </span>
-                      <div className="flex items-center gap-1 text-[11px] font-medium" style={{ color:aud.color }}>
-                        <Users size={11}/> {getRecipientCount(a.audience)} recipients
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 text-[11px] font-medium"
+                          style={{ color:aud.color }}>
+                          <Users size={11}/> {aud.label}
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px]"
+                          style={{ color:'var(--ink-4)' }}>
+                          <Mail size={10}/> Email sent
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -160,18 +233,20 @@ export default function Announcements() {
         )}
       </div>
 
-      {/* Post Modal */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Post Announcement" width="max-w-xl">
+      {/* ── Post Modal ── */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)}
+        title="Post Announcement" width="max-w-xl">
         <div className="space-y-4">
 
           {/* Type */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide block mb-2" style={{ color:'var(--ink-2)' }}>Type</label>
+            <label className="text-[11px] font-bold uppercase tracking-wide block mb-2"
+              style={{ color:'var(--ink-2)' }}>Type</label>
             <div className="flex gap-2">
               {['NOTICE','EVENT','URGENT'].map(t => (
                 <button key={t} onClick={() => setForm(f=>({...f,type:t}))}
                   className="flex-1 py-2 rounded-xl text-[11px] font-semibold capitalize transition-all"
-                  style={form.type===t
+                  style={form.type === t
                     ? { background: TYPE_COLORS[t.toLowerCase()]+'18', color: TYPE_COLORS[t.toLowerCase()], border:`1px solid ${TYPE_COLORS[t.toLowerCase()]}44` }
                     : { background:'var(--surface-3)', color:'var(--ink-3)', border:'1px solid var(--border)' }}>
                   {t.toLowerCase()}
@@ -182,12 +257,13 @@ export default function Announcements() {
 
           {/* Audience */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide block mb-2" style={{ color:'var(--ink-2)' }}>Send To</label>
+            <label className="text-[11px] font-bold uppercase tracking-wide block mb-2"
+              style={{ color:'var(--ink-2)' }}>Send To</label>
             <div className="grid grid-cols-3 gap-2">
-              {Object.entries(AUDIENCE_LABELS).map(([key,val]) => (
+              {Object.entries(AUDIENCE_LABELS).map(([key, val]) => (
                 <button key={key} onClick={() => setForm(f=>({...f,audience:key}))}
                   className="p-2.5 rounded-xl text-left transition-all"
-                  style={form.audience===key
+                  style={form.audience === key
                     ? { background:val.bg, border:`2px solid ${val.color}`, color:val.color }
                     : { background:'var(--surface-3)', border:'1px solid var(--border)', color:'var(--ink-3)' }}>
                   <div className="text-[11px] font-bold">{val.label}</div>
@@ -195,32 +271,55 @@ export default function Announcements() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl" style={{ background:'var(--surface-3)', border:'1px solid var(--border)' }}>
-              <Users size={13} style={{ color:'var(--indigo)' }} />
+
+            {/* Recipient count — real from API */}
+            <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl"
+              style={{ background:'var(--surface-3)', border:'1px solid var(--border)' }}>
+              <Mail size={13} style={{ color:'var(--indigo)' }} />
               <span className="text-[12px] font-medium" style={{ color:'var(--ink-2)' }}>
-                Sending to <strong style={{ color:'var(--indigo)' }}>{getRecipientCount(form.audience)} recipients</strong>
+                {loadingCount ? (
+                  <span style={{ color:'var(--ink-4)' }}>Counting recipients...</span>
+                ) : (
+                  <>
+                    Email will be sent to{' '}
+                    <strong style={{ color:'var(--indigo)' }}>{recipientCount} recipients</strong>
+                    {recipientCount === 0 && (
+                      <span className="ml-1 text-[10px]" style={{ color:'var(--rose)' }}>
+                        (No emails found — fill in flat management first)
+                      </span>
+                    )}
+                  </>
+                )}
               </span>
             </div>
           </div>
 
           {/* Title */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5" style={{ color:'var(--ink-2)' }}>Title</label>
-            <input className="input" placeholder="Announcement title" value={form.title}
-              onChange={e=>setForm(f=>({...f,title:e.target.value}))} />
+            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5"
+              style={{ color:'var(--ink-2)' }}>Title</label>
+            <input className="input" placeholder="Announcement title"
+              value={form.title}
+              onChange={e => setForm(f=>({...f,title:e.target.value}))} />
           </div>
 
           {/* Body */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5" style={{ color:'var(--ink-2)' }}>Message</label>
-            <textarea className="input resize-none h-24" placeholder="Full message..."
-              value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))} />
+            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5"
+              style={{ color:'var(--ink-2)' }}>Message</label>
+            <textarea className="input resize-none h-28" placeholder="Full message..."
+              value={form.body}
+              onChange={e => setForm(f=>({...f,body:e.target.value}))} />
           </div>
 
           <div className="flex gap-2 pt-1">
-            <button onClick={handleAdd} disabled={submitting} className="btn-primary flex-1 justify-center">
-              <PlusCircle size={14}/>
-              {submitting ? 'Posting...' : `Post to ${getRecipientCount(form.audience)}`}
+            <button onClick={handleAdd} disabled={submitting || !form.title.trim() || !form.body.trim()}
+              className="btn-primary flex-1 justify-center">
+              <Mail size={14}/>
+              {submitting
+                ? 'Posting & Sending...'
+                : `Post & Email ${loadingCount ? '...' : recipientCount}`
+              }
             </button>
             <button onClick={() => setShowAdd(false)} className="btn-ghost">Cancel</button>
           </div>

@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { KpiCard, StatusBadge, WhatsAppIcon } from '../components/ui'
+import { KpiCard, StatusBadge } from '../components/ui'
 import Topbar from '../components/layout/Topbar'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/config'
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
-import { useRef } from 'react'
+import { ChevronRight, Calendar, Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 function fmt(n) {
@@ -16,7 +15,6 @@ function fmt(n) {
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-// Generate last N months from today
 function getLastNMonths(n) {
   const result = []
   const now = new Date()
@@ -27,7 +25,6 @@ function getLastNMonths(n) {
   return result
 }
 
-// Inline month picker — shows last 6 months as pills
 function MonthSelector({ value, onChange }) {
   const months = getLastNMonths(6)
   const [open, setOpen] = useState(false)
@@ -41,16 +38,12 @@ function MonthSelector({ value, onChange }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const display = value
-    ? `${MONTH_NAMES[value.month - 1]} ${value.year}`
-    : 'Select month'
-
+  const display    = value ? `${MONTH_NAMES[value.month - 1]} ${value.year}` : 'Select month'
   const isSelected = (m) => m.month === value?.month && m.year === value?.year
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
+      <button onClick={() => setOpen(!open)}
         className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
         style={{
           background: open ? 'var(--indigo)' : 'white',
@@ -66,25 +59,18 @@ function MonthSelector({ value, onChange }) {
       {open && (
         <div className="absolute top-full mt-2 z-50 rounded-2xl p-2 animate-in"
           style={{
-            background: 'white',
-            border: '1px solid var(--border)',
-            boxShadow: '0 8px 24px rgba(26,26,46,0.12)',
-            minWidth: '180px',
-            right: 0,
+            background: 'white', border: '1px solid var(--border)',
+            boxShadow: '0 8px 24px rgba(26,26,46,0.12)', minWidth: '180px', right: 0,
           }}>
           {months.map(m => (
-            <button
-              key={`${m.month}-${m.year}`}
+            <button key={`${m.month}-${m.year}`}
               onClick={() => { onChange(m); setOpen(false) }}
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all mb-0.5"
               style={isSelected(m)
                 ? { background: 'var(--indigo)', color: 'white' }
-                : { background: 'transparent', color: 'var(--ink-2)' }
-              }>
+                : { background: 'transparent', color: 'var(--ink-2)' }}>
               <span>{MONTH_NAMES[m.month - 1]} {m.year}</span>
-              {isSelected(m) && (
-                <span className="text-[10px] font-bold opacity-70">✓</span>
-              )}
+              {isSelected(m) && <span className="text-[10px] font-bold opacity-70">✓</span>}
             </button>
           ))}
         </div>
@@ -105,8 +91,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function Dashboard() {
-  const navigate  = useNavigate()
-  const now       = new Date()
+  const navigate = useNavigate()
+  const now      = new Date()
   const { user } = useAuth()
 
   const [selectedMonth, setSelectedMonth] = useState({
@@ -123,6 +109,9 @@ export default function Dashboard() {
   const [visitors,      setVisitors]      = useState([])
   const [expenses,      setExpenses]      = useState([])
   const [loading,       setLoading]       = useState(true)
+  const [sendingAll,    setSendingAll]    = useState(false)
+  const [sendingFlat,   setSendingFlat]   = useState(null)
+  const [reminderMsg,   setReminderMsg]   = useState(null)
 
   useEffect(() => { fetchAll() }, [selectedMonth])
 
@@ -155,12 +144,34 @@ export default function Dashboard() {
     }
   }
 
-  const handleSendReminders = async () => {
+  const handleSendAllReminders = async () => {
+    setSendingAll(true)
+    setReminderMsg(null)
     try {
-      await api.post(`/api/maintenance/reminders?month=${selectedMonth.month}&year=${selectedMonth.year}`)
-      alert('WhatsApp reminders sent to all defaulters!')
+      const res = await api.post(
+        `/api/maintenance/reminders?month=${selectedMonth.month}&year=${selectedMonth.year}`
+      )
+      setReminderMsg(res.data.message || 'Reminder emails sent!')
+      setTimeout(() => setReminderMsg(null), 5000)
     } catch {
       alert('Failed to send reminders')
+    } finally {
+      setSendingAll(false)
+    }
+  }
+
+  const handleSendSingleReminder = async (flatNo, payerName) => {
+    setSendingFlat(flatNo)
+    try {
+      await api.post(
+        `/api/maintenance/reminders?month=${selectedMonth.month}&year=${selectedMonth.year}&flatNo=${flatNo}`
+      )
+      setReminderMsg(`Reminder sent to flat ${flatNo}`)
+      setTimeout(() => setReminderMsg(null), 3000)
+    } catch {
+      alert('Failed to send reminder')
+    } finally {
+      setSendingFlat(null)
     }
   }
 
@@ -169,19 +180,19 @@ export default function Dashboard() {
     collected: t.collected || 0,
   }))
 
-  const maintenance   = dashboard?.maintenance || {}
-  const expensesTotal = dashboard?.expenses?.total || 0
-  const societyFund   = dashboard?.societyFund || {}
-  const defaulters    = payments.filter(p => p.status === 'UNPAID')
+  const maintenance    = dashboard?.maintenance || {}
+  const expensesTotal  = dashboard?.expenses?.total || 0
+  const societyFund    = dashboard?.societyFund || {}
+  const defaulters     = payments.filter(p => p.status === 'UNPAID')
   const openComplaints = complaints.filter(c => c.status !== 'RESOLVED')
-  const expColors     = ['#5b52f0','#059669','#d97706','#e11d48','#0284c7','#7c3aed']
+  const expColors      = ['#5b52f0','#059669','#d97706','#e11d48','#0284c7','#7c3aed']
 
   const currentMonthLabel = `${MONTH_NAMES[selectedMonth.month - 1]} ${selectedMonth.year}`
 
- const flatGrid = flats.map(f => {
-  const pay = payments.find(p => p.flatNo === f.flatNo)
-  return { ...f, payStatus: pay?.status || 'UNPAID' }
-})
+  const flatGrid = flats.map(f => {
+    const pay = payments.find(p => p.flatNo === f.flatNo)
+    return { ...f, payStatus: pay?.status || 'UNPAID' }
+  })
 
   if (loading) return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
@@ -198,10 +209,7 @@ export default function Dashboard() {
         title="Dashboard"
         subtitle={`Akriti Adeshwar · ${currentMonthLabel}`}
         actions={
-          <MonthSelector
-            value={selectedMonth}
-            onChange={m => setSelectedMonth(m)}
-          />
+          <MonthSelector value={selectedMonth} onChange={m => setSelectedMonth(m)} />
         }
       />
       <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-3 md:space-y-4">
@@ -283,24 +291,24 @@ export default function Dashboard() {
                 </div>
                 <div className="grid gap-1"
                   style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))' }}>
-               {flatGrid.map(f => {
-  const isPaid = f.payStatus === 'PAID'
-  const isMe   = f.flatNo === user?.flatNo
-  return (
-    <div key={f.flatNo} title={f.flatNo}
-      onClick={() => navigate('/maintenance')}
-      className="aspect-square rounded-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
-      style={{
-        background: isMe ? 'var(--indigo)' : isPaid ? '#d1fae5' : '#ffe4e6',
-        color:      isMe ? 'white'          : isPaid ? '#065f46' : '#9f1239',
-        fontSize:   '7px', fontWeight: 700,
-        outline:    isMe ? '2px solid var(--indigo)' : 'none',
-        outlineOffset: '1px',
-      }}>
-      {f.flatNo}
-    </div>
-  )
-})}
+                  {flatGrid.map(f => {
+                    const isPaid = f.payStatus === 'PAID'
+                    const isMe   = f.flatNo === user?.flatNo
+                    return (
+                      <div key={f.flatNo} title={f.flatNo}
+                        onClick={() => navigate('/maintenance')}
+                        className="aspect-square rounded-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
+                        style={{
+                          background:    isMe ? 'var(--indigo)' : isPaid ? '#d1fae5' : '#ffe4e6',
+                          color:         isMe ? 'white'          : isPaid ? '#065f46' : '#9f1239',
+                          fontSize:      '7px', fontWeight: 700,
+                          outline:       isMe ? '2px solid var(--indigo)' : 'none',
+                          outlineOffset: '1px',
+                        }}>
+                        {f.flatNo}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -310,11 +318,24 @@ export default function Dashboard() {
           <div className="card flex flex-col" style={{ maxHeight: '420px' }}>
             <div className="card-header">
               <span className="card-title">Defaulters · {currentMonthLabel}</span>
-              <button onClick={handleSendReminders}
-                className="btn-whatsapp py-1 px-2 text-[10px]">
-                <WhatsAppIcon size={11} /> All
+              <button onClick={handleSendAllReminders} disabled={sendingAll}
+                className="btn-primary py-1 px-2 text-[10px]">
+                <Mail size={11} />
+                {sendingAll ? '...' : 'Email All'}
               </button>
             </div>
+
+            {/* Reminder success message */}
+            {reminderMsg && (
+              <div className="mx-3 mt-2 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5"
+                style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
+                <Mail size={11} style={{ color: 'var(--emerald)', flexShrink: 0 }} />
+                <span className="text-[10px] font-medium" style={{ color: '#065f46' }}>
+                  {reminderMsg}
+                </span>
+              </div>
+            )}
+
             <div className="flex-1 overflow-y-auto">
               {defaulters.length === 0
                 ? <div className="py-8 text-center text-[13px]"
@@ -336,10 +357,11 @@ export default function Dashboard() {
                       {fmt(d.amount || 4200)}
                     </div>
                     <button
-                      onClick={() => alert(`Reminder sent to ${d.payerName}!`)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0"
-                      style={{ background: '#25D366' }}>
-                      <WhatsAppIcon size={12} />
+                      onClick={() => handleSendSingleReminder(d.flatNo, d.payerName)}
+                      disabled={sendingFlat === d.flatNo}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0 transition-opacity"
+                      style={{ background: 'var(--indigo)', opacity: sendingFlat === d.flatNo ? 0.5 : 1 }}>
+                      <Mail size={12} />
                     </button>
                   </div>
                 ))
@@ -474,8 +496,8 @@ export default function Dashboard() {
                     </div>
                     <span className="badge"
                       style={v.status==='IN'
-                        ? {background:'#ecfdf5',color:'#059669'}
-                        : {background:'var(--surface-3)',color:'var(--ink-3)'}}>
+                        ? { background:'#ecfdf5', color:'#059669' }
+                        : { background:'var(--surface-3)', color:'var(--ink-3)' }}>
                       {v.status==='IN' ? 'In' : 'Out'}
                     </span>
                   </div>

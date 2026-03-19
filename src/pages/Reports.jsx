@@ -29,14 +29,256 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 function getMonthRange(from, to) {
   const result = []
-  let y = from.year
-  let m = from.month
+  let y = from.year, m = from.month
   while (y < to.year || (y === to.year && m <= to.month)) {
     result.push({ month: m, year: y })
     m++
     if (m > 12) { m = 1; y++ }
   }
   return result
+}
+
+// ── PDF Export ────────────────────────────────────────────
+function exportToPDF({ trendData, rangeLabel, totalCollected, totalExpenses, totalSurplus, flats }) {
+  const ownerCount  = flats.filter(f => f.ownerType === 'OWNER_OCCUPIED').length
+  const rentedCount = flats.filter(f => f.ownerType === 'RENTED').length
+  const vacantCount = flats.filter(f => f.ownerType === 'VACANT').length
+
+  const tableRows = [...trendData].reverse().map(d => {
+    const total      = d.total || 40
+    const monthlyAmt = d.monthlyAmount || 4200
+    const pct = total > 0 ? Math.round((d.collected||0) / (total * monthlyAmt) * 100) : 0
+    const surplusColor = (d.surplus||0) >= 0 ? '#059669' : '#e11d48'
+    return `
+      <tr>
+        <td><strong>${d.label}</strong></td>
+        <td style="color:#059669">${fmt(d.collected||0)}</td>
+        <td style="color:#e11d48">${fmt(d.pending||0)}</td>
+        <td style="color:#d97706">${fmt(d.expenses||0)}</td>
+        <td style="color:${surplusColor}">${(d.surplus||0)>=0?'+':''}${fmt(d.surplus||0)}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:6px;background:#f0f0f7;border-radius:4px;overflow:hidden;">
+              <div style="width:${pct}%;height:100%;background:${pct>=85?'#059669':pct>=70?'#d97706':'#e11d48'};border-radius:4px;"></div>
+            </div>
+            <span style="font-weight:700;color:${pct>=85?'#059669':pct>=70?'#d97706':'#e11d48'}">${pct}%</span>
+          </div>
+        </td>
+      </tr>
+    `
+  }).join('')
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Akriti Adeshwar — Financial Report</title>
+      <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: Arial, sans-serif; color: #1a1a2e; background: white; }
+
+        .header {
+          background: linear-gradient(135deg, #5b52f0, #7c6ff7);
+          color: white;
+          padding: 32px 40px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+        }
+        .header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; }
+        .header p  { font-size: 14px; opacity: 0.8; margin-top: 4px; }
+        .header .date { font-size: 13px; opacity: 0.7; text-align: right; }
+
+        .body { padding: 32px 40px; }
+
+        .kpi-row {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-bottom: 32px;
+        }
+        .kpi {
+          border: 1px solid #e8e8f0;
+          border-radius: 12px;
+          padding: 18px;
+          text-align: center;
+        }
+        .kpi .label {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: #8888aa;
+          margin-bottom: 6px;
+        }
+        .kpi .value {
+          font-size: 28px;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+        }
+
+        .section-title {
+          font-size: 15px;
+          font-weight: 700;
+          margin-bottom: 12px;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #e8e8f0;
+          color: #1a1a2e;
+          letter-spacing: -0.01em;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 32px;
+          font-size: 13px;
+        }
+        thead tr {
+          background: #f7f7fb;
+        }
+        th {
+          text-align: left;
+          padding: 10px 14px;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: #8888aa;
+          border-bottom: 2px solid #e8e8f0;
+        }
+        td {
+          padding: 12px 14px;
+          border-bottom: 1px solid #f0f0f7;
+          color: #1a1a2e;
+        }
+        tr:hover td { background: #f7f7fb; }
+
+        .composition {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-bottom: 32px;
+        }
+        .comp-card {
+          border: 1px solid #e8e8f0;
+          border-radius: 12px;
+          padding: 16px;
+          text-align: center;
+        }
+        .comp-card .count {
+          font-size: 32px;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+        }
+        .comp-card .comp-label {
+          font-size: 11px;
+          color: #8888aa;
+          margin-top: 4px;
+        }
+
+        .footer {
+          margin-top: 40px;
+          padding-top: 16px;
+          border-top: 1px solid #e8e8f0;
+          display: flex;
+          justify-content: space-between;
+          font-size: 11px;
+          color: #b8b8cc;
+        }
+
+        @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+
+      <!-- Header -->
+      <div class="header">
+        <div>
+          <h1>Akriti Adeshwar</h1>
+          <p>Society Management · Financial Report</p>
+          <p style="margin-top:8px;font-size:13px;opacity:0.9;">Period: ${rangeLabel}</p>
+        </div>
+        <div class="date">
+          Generated on<br>
+          <strong>${new Date().toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}</strong>
+        </div>
+      </div>
+
+      <div class="body">
+
+        <!-- KPIs -->
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="label">${trendData.length}M Collection</div>
+            <div class="value" style="color:#059669">${fmt(totalCollected)}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">${trendData.length}M Expenses</div>
+            <div class="value" style="color:#d97706">${fmt(totalExpenses)}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">${trendData.length}M Surplus</div>
+            <div class="value" style="color:${totalSurplus>=0?'#5b52f0':'#e11d48'}">${totalSurplus>=0?'+':''}${fmt(totalSurplus)}</div>
+          </div>
+        </div>
+
+        <!-- Monthly Breakdown -->
+        <div class="section-title">Monthly Breakdown</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Collected</th>
+              <th>Pending</th>
+              <th>Expenses</th>
+              <th>Surplus</th>
+              <th>Collection Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <!-- Flat Composition -->
+        <div class="section-title">Flat Composition · ${flats.length} Total Units</div>
+        <div class="composition">
+          <div class="comp-card">
+            <div class="count" style="color:#5b52f0">${ownerCount}</div>
+            <div class="comp-label">Owner Occupied</div>
+          </div>
+          <div class="comp-card">
+            <div class="count" style="color:#d97706">${rentedCount}</div>
+            <div class="comp-label">Rented</div>
+          </div>
+          <div class="comp-card">
+            <div class="count" style="color:#e11d48">${vacantCount}</div>
+            <div class="comp-label">Vacant / Unknown</div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <span>Akriti Adeshwar Apartment · Society Management Portal</span>
+          <span>Confidential · For internal use only</span>
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `
+
+  const printWindow = window.open('', '_blank', 'width=900,height=700')
+  printWindow.document.write(html)
+  printWindow.document.close()
+  printWindow.onload = () => {
+    printWindow.focus()
+    printWindow.print()
+  }
 }
 
 export default function Reports() {
@@ -54,6 +296,7 @@ export default function Reports() {
   const [trendData, setTrendData] = useState([])
   const [flats, setFlats]         = useState([])
   const [loading, setLoading]     = useState(true)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => { fetchData() }, [fromMonth, toMonth])
 
@@ -98,6 +341,15 @@ export default function Reports() {
     .toLocaleString('default',{month:'short',year:'numeric'})} → ${new Date(toMonth.year, toMonth.month-1)
     .toLocaleString('default',{month:'short',year:'numeric'})}`
 
+  const handleExport = () => {
+    setExporting(true)
+    try {
+      exportToPDF({ trendData, rangeLabel, totalCollected, totalExpenses, totalSurplus, flats })
+    } finally {
+      setTimeout(() => setExporting(false), 1000)
+    }
+  }
+
   if (loading) return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background:'var(--surface-2)' }}>
       <Topbar title="Reports" subtitle="Loading..." />
@@ -117,20 +369,19 @@ export default function Reports() {
             <MonthRangePicker
               from={fromMonth} to={toMonth}
               onFromChange={f => {
-                // Ensure from is not after to
-                if (f.year < toMonth.year || (f.year === toMonth.year && f.month <= toMonth.month)) {
+                if (f.year < toMonth.year || (f.year === toMonth.year && f.month <= toMonth.month))
                   setFromMonth(f)
-                }
               }}
               onToChange={t => {
-                // Ensure to is not before from
-                if (t.year > fromMonth.year || (t.year === fromMonth.year && t.month >= fromMonth.month)) {
+                if (t.year > fromMonth.year || (t.year === fromMonth.year && t.month >= fromMonth.month))
                   setToMonth(t)
-                }
               }}
             />
-            <button onClick={() => alert('Export coming soon!')} className="btn-ghost">
-              <FileDown size={14}/><span className="hidden sm:inline"> Export</span>
+            <button onClick={handleExport} disabled={exporting} className="btn-primary">
+              <FileDown size={14}/>
+              <span className="hidden sm:inline">
+                {exporting ? 'Preparing...' : 'Export PDF'}
+              </span>
             </button>
           </div>
         }
@@ -224,8 +475,7 @@ export default function Reports() {
                     ? Math.round((d.collected||0) / (total * monthlyAmt) * 100)
                     : 0
                   return (
-                    <tr key={i}
-                      className="hover:bg-[var(--surface-2)] transition-colors"
+                    <tr key={i} className="hover:bg-[var(--surface-2)] transition-colors"
                       style={{ borderBottom:'1px solid var(--border)' }}>
                       <td className="px-4 py-3 text-[13px] font-bold"
                         style={{ color:'var(--ink)' }}>{d.label}</td>
@@ -268,9 +518,9 @@ export default function Reports() {
             <div className="card-title mb-4">Flat Composition</div>
             <div className="space-y-3">
               {[
-                { label:'Owner Occupied', count:ownerFlats.length, color:'var(--indigo)', bg:'#eeeeff' },
-                { label:'Rented',         count:rentedFlats.length, color:'var(--amber)',  bg:'#fffbeb' },
-                { label:'Vacant / Unknown', count:vacantFlats.length, color:'var(--rose)', bg:'#fff1f2' },
+                { label:'Owner Occupied',    count:ownerFlats.length,  color:'var(--indigo)', bg:'#eeeeff' },
+                { label:'Rented',            count:rentedFlats.length, color:'var(--amber)',  bg:'#fffbeb' },
+                { label:'Vacant / Unknown',  count:vacantFlats.length, color:'var(--rose)',   bg:'#fff1f2' },
               ].map(s => (
                 <div key={s.label}>
                   <div className="flex justify-between text-[12px] mb-1.5">

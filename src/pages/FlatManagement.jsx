@@ -11,17 +11,18 @@ const OWNER_TYPES = [
 ]
 
 const EMPTY_FORM = {
-  ownerType:     'OWNER_OCCUPIED',
-  ownerName:     '',
-  ownerPhone:    '',
-  ownerEmail:    '',
-  residentName:  '',
-  residentPhone: '',
-  residentEmail: '',
-  parkingSlot:   '',
+  ownerType:         'OWNER_OCCUPIED',
+  ownerName:         '',
+  ownerPhone:        '',
+  ownerEmail:        '',
+  residentName:      '',
+  residentPhone:     '',
+  residentEmail:     '',
+  parkingSlot:       '',
+  maintenanceAmount: '4200',
 }
 
-// ── Field component outside to prevent re-mount on keystroke ──
+// Field component defined OUTSIDE to prevent re-mount on keystroke
 const Field = ({ label, required, error, children }) => (
   <div>
     <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1"
@@ -89,14 +90,15 @@ export default function FlatManagement() {
   const openEdit = (flat) => {
     setErrors({})
     setForm({
-      ownerType:     flat.ownerType || 'VACANT',
-      ownerName:     flat.ownerName === 'Unknown' ? '' : (flat.ownerName || ''),
-      ownerPhone:    flat.ownerPhone || '',
-      ownerEmail:    flat.ownerEmail || '',
-      residentName:  flat.residentName || '',
-      residentPhone: flat.residentPhone || '',
-      residentEmail: flat.residentEmail || '',
-      parkingSlot:   flat.parkingSlot || '',
+      ownerType:         flat.ownerType || 'VACANT',
+      ownerName:         flat.ownerName === 'Unknown' ? '' : (flat.ownerName || ''),
+      ownerPhone:        flat.ownerPhone || '',
+      ownerEmail:        flat.ownerEmail || '',
+      residentName:      flat.residentName || '',
+      residentPhone:     flat.residentPhone || '',
+      residentEmail:     flat.residentEmail || '',
+      parkingSlot:       flat.parkingSlot || '',
+      maintenanceAmount: flat.maintenanceAmount || 4200,
     })
     setEditing(flat)
   }
@@ -119,6 +121,8 @@ export default function FlatManagement() {
       else if (!/\S+@\S+\.\S+/.test(form.residentEmail))
         e.residentEmail = 'Enter a valid email'
     }
+    if (!form.maintenanceAmount || parseInt(form.maintenanceAmount) <= 0)
+      e.maintenanceAmount = 'Enter a valid maintenance amount'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -129,8 +133,9 @@ export default function FlatManagement() {
     try {
       await api.put(`/api/flats/${editing.flatNo}`, {
         ...form,
-        ownerName:  form.ownerType === 'VACANT' ? 'Unknown' : form.ownerName,
-        ownerPhone: form.ownerPhone || null,
+        ownerName:         form.ownerType === 'VACANT' ? 'Unknown' : form.ownerName,
+        ownerPhone:        form.ownerPhone || null,
+        maintenanceAmount: parseInt(form.maintenanceAmount) || 4200,
       })
       await fetchFlats()
       setSavedId(editing.flatNo)
@@ -161,20 +166,20 @@ export default function FlatManagement() {
           style={{ background:'var(--indigo-lt)', border:'1px solid var(--indigo-md)' }}>
           <Info size={14} className="flex-shrink-0 mt-0.5" style={{ color:'var(--indigo)' }} />
           <p className="text-[11px] leading-relaxed" style={{ color:'var(--indigo)' }}>
-            Email is mandatory — residents use it to reset their password.
-            After saving, a login account is automatically created with default password
-            <strong> flatNo@123</strong> (e.g. <strong>2H@123</strong>).
-            Tenants use <strong>flatNo_tenant</strong> (e.g. <strong>4B_tenant</strong>).
+            Email is mandatory — residents use it to reset their password. After saving, a login
+            account is automatically created with default password <strong>flatNo@123</strong>{' '}
+            (e.g. <strong>2H@123</strong>). Tenants use <strong>flatNo_tenant</strong>{' '}
+            (e.g. <strong>4B_tenant</strong>).
           </p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           {[
-            { label:'Total Flats', value:stats.total,    color:'var(--indigo)', onClick: () => setFilter('all') },
-            { label:'Info Pending',value:stats.unknown,  color:'var(--rose)',   onClick: () => setFilter('unknown') },
-            { label:'Occupied',    value:stats.occupied, color:'var(--emerald)',onClick: () => setFilter('occupied') },
-            { label:'Vacant',      value:stats.vacant,   color:'var(--ink-3)',  onClick: () => setFilter('vacant') },
+            { label:'Total Flats',  value:stats.total,    color:'var(--indigo)', onClick: () => setFilter('all') },
+            { label:'Info Pending', value:stats.unknown,  color:'var(--rose)',   onClick: () => setFilter('unknown') },
+            { label:'Occupied',     value:stats.occupied, color:'var(--emerald)',onClick: () => setFilter('occupied') },
+            { label:'Vacant',       value:stats.vacant,   color:'var(--ink-3)', onClick: () => setFilter('vacant') },
           ].map(s => (
             <div key={s.label} onClick={s.onClick}
               className="card p-3 cursor-pointer hover:scale-105 transition-transform">
@@ -246,12 +251,12 @@ export default function FlatManagement() {
           <div className="card overflow-hidden">
             <div className="hidden md:grid text-[10px] font-bold uppercase tracking-wide px-5 py-3"
               style={{
-                gridTemplateColumns:'80px 100px 1fr 1fr 140px 44px',
+                gridTemplateColumns:'80px 100px 1fr 1fr 110px 44px',
                 background:'var(--surface-3)', color:'var(--ink-3)',
                 borderBottom:'1px solid var(--border)'
               }}>
               <span>Flat</span><span>Type</span><span>Owner</span>
-              <span>Resident / Tenant</span><span>Parking</span><span></span>
+              <span>Resident / Tenant</span><span>Maintenance</span><span></span>
             </div>
 
             <div className="overflow-y-auto" style={{ maxHeight:'calc(100dvh - 420px)' }}>
@@ -275,8 +280,7 @@ export default function FlatManagement() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-semibold"
-                            style={{ color:'var(--ink)' }}>
+                          <span className="text-[13px] font-semibold" style={{ color:'var(--ink)' }}>
                             {unknown ? '—' : (f.ownerName || f.residentName)}
                           </span>
                           {unknown && (
@@ -287,7 +291,7 @@ export default function FlatManagement() {
                           )}
                         </div>
                         <div className="text-[11px]" style={{ color:'var(--ink-3)' }}>
-                          {f.ownerPhone || 'No phone'} · {ts.label}
+                          {f.ownerPhone || 'No phone'} · {ts.label} · ₹{(f.maintenanceAmount || 4200).toLocaleString()}
                         </div>
                       </div>
                       <button onClick={() => openEdit(f)}
@@ -301,7 +305,7 @@ export default function FlatManagement() {
 
                     {/* Desktop */}
                     <div className="hidden md:grid items-center px-5 py-3"
-                      style={{ gridTemplateColumns:'80px 100px 1fr 1fr 140px 44px' }}>
+                      style={{ gridTemplateColumns:'80px 100px 1fr 1fr 110px 44px' }}>
                       <span className="text-[13px] font-bold font-mono"
                         style={{ color:ts.color }}>{f.flatNo}</span>
                       <span>
@@ -341,8 +345,14 @@ export default function FlatManagement() {
                           </span>
                         }
                       </div>
-                      <span className="text-[11px]"
-                        style={{ color:'var(--ink-3)' }}>{f.parkingSlot || '—'}</span>
+                      {/* Maintenance amount column */}
+                      <div>
+                        <div className="text-[12px] font-bold"
+                          style={{ color:'var(--indigo)' }}>
+                          ₹{(f.maintenanceAmount || 4200).toLocaleString()}
+                        </div>
+                        <div className="text-[9px]" style={{ color:'var(--ink-4)' }}>per month</div>
+                      </div>
                       <button onClick={() => openEdit(f)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
                         style={{
@@ -479,7 +489,7 @@ export default function FlatManagement() {
               </div>
             )}
 
-            {/* Vacant */}
+            {/* Vacant info */}
             {form.ownerType === 'VACANT' && (
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
                 style={{ background:'#f0f9ff', border:'1px solid #bae6fd' }}>
@@ -489,6 +499,32 @@ export default function FlatManagement() {
                 </span>
               </div>
             )}
+
+            {/* Maintenance Amount */}
+            <div className="rounded-xl p-4 space-y-3"
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border)' }}>
+              <div className="text-[11px] font-bold uppercase tracking-wide"
+                style={{ color:'var(--emerald)' }}>Maintenance</div>
+              <Field label="Monthly Amount (₹)" required error={errors.maintenanceAmount}>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-semibold"
+                    style={{ color:'var(--ink-3)' }}>₹</span>
+                  <input className="input pl-7" placeholder="4200" type="number" min="0"
+                    value={form.maintenanceAmount}
+                    onChange={e => {
+                      setForm(f => ({ ...f, maintenanceAmount: e.target.value }))
+                      setErrors(er => ({ ...er, maintenanceAmount: undefined }))
+                    }} />
+                </div>
+              </Field>
+              <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg"
+                style={{ background:'#ecfdf5', border:'1px solid #6ee7b7' }}>
+                <Info size={11} style={{ color:'var(--emerald)', flexShrink:0 }} />
+                <span className="text-[10px]" style={{ color:'#065f46' }}>
+                  This amount will be used when generating monthly dues for this flat.
+                </span>
+              </div>
+            </div>
 
             {/* Parking */}
             <div>
