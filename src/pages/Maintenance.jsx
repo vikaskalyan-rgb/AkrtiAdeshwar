@@ -5,11 +5,18 @@ import { CheckCircle2, Search, Info, Mail } from 'lucide-react'
 import api from '../api/config'
 import { useAuth } from '../context/AuthContext'
 
+// Full format for modals and tables
 function fmt(n) {
-  if (n >= 1000) return `₹${(n / 1000).toFixed(1)}K`
+  if (n >= 100000) return `₹${(n/100000).toFixed(2)}L`
+  if (n >= 1000)   return `₹${(n/1000).toFixed(1)}K`
   return `₹${n}`
 }
 
+// Compact format for wing tiles — show exact amount, no K rounding
+function fmtTile(n) {
+  if (!n) return '₹4,200'
+  return `₹${n.toLocaleString('en-IN')}`
+}
 function getLast6Months() {
   const months = []
   const now = new Date()
@@ -374,10 +381,10 @@ export default function Maintenance() {
                                       style={{ color: ss.color }}>
                                       {st === 'PAID' ? '✓ Paid' : '✗ Due'}
                                     </span>
-                                    <span className="text-[8px] mt-0.5"
-                                      style={{ color: ss.color, opacity: 0.8 }}>
-                                      {fmt(pay?.amount || MONTHLY_AMOUNT)}
-                                    </span>
+                                   <span className="text-[8px] mt-0.5"
+  style={{ color: ss.color, opacity: 0.8 }}>
+  {fmtTile(pay?.amount || MONTHLY_AMOUNT)}
+</span>
                                   </div>
                                 )
                               })}

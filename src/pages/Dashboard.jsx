@@ -9,10 +9,8 @@ import { useAuth } from '../context/AuthContext'
 
 function fmt(n) {
   if (n >= 100000) return `₹${(n/100000).toFixed(2)}L`
-  if (n >= 1000)   return `₹${(n/1000).toFixed(1)}K`
-  return `₹${n}`
+  return `₹${n.toLocaleString('en-IN')}`
 }
-
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 function getLastNMonths(n) {
@@ -151,7 +149,7 @@ export default function Dashboard() {
       const res = await api.post(
         `/api/maintenance/reminders?month=${selectedMonth.month}&year=${selectedMonth.year}`
       )
-      setReminderMsg(res.data.message || 'Reminder emails sent!')
+      setReminderMsg({ text: res.data.message || 'Reminder emails sent!', success: true })
       setTimeout(() => setReminderMsg(null), 5000)
     } catch {
       alert('Failed to send reminders')
@@ -160,20 +158,26 @@ export default function Dashboard() {
     }
   }
 
-  const handleSendSingleReminder = async (flatNo, payerName) => {
-    setSendingFlat(flatNo)
-    try {
-      await api.post(
-        `/api/maintenance/reminders?month=${selectedMonth.month}&year=${selectedMonth.year}&flatNo=${flatNo}`
-      )
-      setReminderMsg(`Reminder sent to flat ${flatNo}`)
-      setTimeout(() => setReminderMsg(null), 3000)
-    } catch {
-      alert('Failed to send reminder')
-    } finally {
-      setSendingFlat(null)
-    }
+ const handleSendSingleReminder = async (flatNo, payerName) => {
+  setSendingFlat(flatNo)
+  try {
+    const res = await api.post(
+      `/api/maintenance/reminders?month=${selectedMonth.month}&year=${selectedMonth.year}&flatNo=${flatNo}`
+    )
+    const sent = res.data.sent ?? 0
+    setReminderMsg({
+      text: sent > 0
+        ? `✓ Reminder emailed to flat ${flatNo}`
+        : `⚠ No email registered for flat ${flatNo} — update in Flat Management`,
+      success: sent > 0,
+    })
+    setTimeout(() => setReminderMsg(null), 4000)
+  } catch {
+    alert('Failed to send reminder')
+  } finally {
+    setSendingFlat(null)
   }
+}
 
   const chartData = trend.map(t => ({
     name:      new Date(t.year, t.month - 1).toLocaleString('default', { month: 'short' }),
@@ -327,14 +331,21 @@ export default function Dashboard() {
 
             {/* Reminder success message */}
             {reminderMsg && (
-              <div className="mx-3 mt-2 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5"
-                style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
-                <Mail size={11} style={{ color: 'var(--emerald)', flexShrink: 0 }} />
-                <span className="text-[10px] font-medium" style={{ color: '#065f46' }}>
-                  {reminderMsg}
-                </span>
-              </div>
-            )}
+  <div className="mx-3 mt-2 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5"
+    style={{
+      background: reminderMsg.success ? '#ecfdf5' : '#fffbeb',
+      border: `1px solid ${reminderMsg.success ? '#6ee7b7' : '#fde68a'}`,
+    }}>
+    <Mail size={11} style={{
+      color: reminderMsg.success ? 'var(--emerald)' : 'var(--amber)',
+      flexShrink: 0
+    }} />
+    <span className="text-[10px] font-medium"
+      style={{ color: reminderMsg.success ? '#065f46' : '#78350f' }}>
+      {reminderMsg.text}
+    </span>
+  </div>
+)}
 
             <div className="flex-1 overflow-y-auto">
               {defaulters.length === 0
