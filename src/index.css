@@ -129,6 +129,12 @@ body {
   @media (max-width: 767px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   }
+  /* Prevent iOS auto-zoom on input focus */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
 
   /* Table → card list on mobile */
   .data-table { @apply card overflow-hidden; }
