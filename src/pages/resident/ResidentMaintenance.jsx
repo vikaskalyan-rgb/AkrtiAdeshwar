@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import Topbar from '../../components/layout/Topbar'
 import { StatusBadge, Modal } from '../../components/ui'
-import { CheckCircle2, CreditCard, Info } from 'lucide-react'
+import { CheckCircle2, CreditCard, Info, Smartphone, ExternalLink } from 'lucide-react'
 import api from '../../api/config'
 
 function fmt(n) {
@@ -10,19 +10,37 @@ function fmt(n) {
   return `₹${n}`
 }
 
+// ── UPI config ────────────────────────────────────────────
+const UPI_ID      = 'ppr.05219.21092023.00196023@cnrb'
+const PAYEE_NAME  = 'Akrti Aadeshwar Owners Association'
+
+function buildUpiUrl(amount, flatNo, monthLabel) {
+  const note = `Maintenance ${monthLabel} Flat ${flatNo}`
+  return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`
+}
+
 const PAYMENT_MODES = ['UPI', 'Cash', 'Bank Transfer', 'Cheque']
+
+// Pay step states
+const STEP = {
+  CHOOSE:   'choose',    // choose between Pay via UPI or Already Paid
+  UPI_APPS: 'upi_apps',  // show UPI app buttons
+  UPI_CONF: 'upi_conf',  // "Did payment succeed?" confirmation
+  MANUAL:   'manual',    // already paid — enter mode + ref
+}
 
 export default function ResidentMaintenance() {
   const { user } = useAuth()
   const now = new Date()
 
-  const [payments, setPayments]     = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [showPay, setShowPay]       = useState(null)
-  const [payMode, setPayMode]       = useState('UPI')
-  const [payRef, setPayRef]         = useState('')
+  const [payments,   setPayments]   = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [showPay,    setShowPay]    = useState(null)
+  const [step,       setStep]       = useState(STEP.CHOOSE)
+  const [payMode,    setPayMode]    = useState('UPI')
+  const [payRef,     setPayRef]     = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess]       = useState(null)
+  const [success,    setSuccess]    = useState(null)
 
   const currentMonth = now.getMonth() + 1
   const currentYear  = now.getFullYear()
@@ -42,37 +60,90 @@ export default function ResidentMaintenance() {
   }
 
   const currentMonthPay = payments.find(p => p.month === currentMonth && p.year === currentYear)
-  const MONTHLY_AMOUNT  = 4200
+  const MONTHLY_AMOUNT  = currentMonthPay?.amount || 4200
 
   const totalPaid    = payments.filter(p => p.status === 'PAID').reduce((s,p) => s + (p.amount||0), 0)
-  const totalPending = payments.filter(p => p.status === 'UNPAID').length * MONTHLY_AMOUNT
+  const totalPending = payments.filter(p => p.status === 'UNPAID').reduce((s,p) => s + (p.amount||4200), 0)
 
-  const getMonthLabel = (month, year) => {
-    return new Date(year, month-1).toLocaleString('default', { month:'short', year:'numeric' })
+  const getMonthLabel = (month, year) =>
+    new Date(year, month-1).toLocaleString('default', { month:'short', year:'numeric' })
+
+  const openPayModal = (payment) => {
+    setShowPay(payment)
+    setStep(STEP.CHOOSE)
+    setPayRef('')
+    setPayMode('UPI')
   }
 
-  const handleMarkPaid = async () => {
+  const closePayModal = () => {
+    setShowPay(null)
+    setStep(STEP.CHOOSE)
+    setPayRef('')
+    setPayMode('UPI')
+  }
+
+  const handleUpiAppClick = (appUrl) => {
+    window.location.href = appUrl
+    // After returning from UPI app, show confirmation
+    setTimeout(() => setStep(STEP.UPI_CONF), 2000)
+  }
+
+  const handleMarkPaid = async (mode, ref) => {
     if (!showPay) return
     setSubmitting(true)
     try {
       await api.post(
         `/api/maintenance/flat/${user.flatNo}/pay?month=${showPay.month}&year=${showPay.year}`,
         {
-          paymentMode: payMode.toUpperCase().replace(' ','_'),
-          transactionRef: payRef,
+          paymentMode:    mode.toUpperCase().replace(' ', '_'),
+          transactionRef: ref,
         }
       )
       await fetchPayments()
       setSuccess(showPay)
-      setShowPay(null)
-      setPayRef('')
-      setPayMode('UPI')
+      closePayModal()
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to mark payment')
     } finally {
       setSubmitting(false)
     }
   }
+
+  const amount       = showPay?.amount || MONTHLY_AMOUNT
+  const monthLabel   = showPay ? getMonthLabel(showPay.month, showPay.year) : ''
+  const upiUrl       = showPay ? buildUpiUrl(amount, user?.flatNo, monthLabel) : ''
+
+  // UPI app deep links
+  const upiApps = [
+    {
+      name: 'Google Pay',
+      color: '#4285F4',
+      bg:    '#EAF2FF',
+      url:   upiUrl.replace('upi://', 'gpay://upi/'),
+      emoji: '🔵',
+    },
+    {
+      name: 'PhonePe',
+      color: '#5f259f',
+      bg:    '#F3ECFF',
+      url:   `phonepe://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Maintenance ${monthLabel} Flat ${user?.flatNo}`)}`,
+      emoji: '🟣',
+    },
+    {
+      name: 'Paytm',
+      color: '#00BAF2',
+      bg:    '#E6F9FF',
+      url:   `paytmmp://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR`,
+      emoji: '🔷',
+    },
+    {
+      name: 'BHIM / Other',
+      color: '#FF6B35',
+      bg:    '#FFF0EB',
+      url:   upiUrl,
+      emoji: '📱',
+    },
+  ]
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background:'var(--surface-2)' }}>
@@ -93,24 +164,28 @@ export default function ResidentMaintenance() {
                   style={{ background: currentMonthPay.status === 'PAID' ? 'var(--emerald)' : 'var(--rose)' }} />
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-wide mb-1" style={{ color:'var(--ink-3)' }}>
+                    <div className="text-[11px] font-bold uppercase tracking-wide mb-1"
+                      style={{ color:'var(--ink-3)' }}>
                       {getMonthLabel(currentMonthPay.month, currentMonthPay.year)}
                     </div>
                     <div className="text-[28px] md:text-[32px] font-bold" style={{
                       color: currentMonthPay.status === 'PAID' ? 'var(--emerald)' : 'var(--rose)',
                       letterSpacing:'-0.03em'
                     }}>
-                      {currentMonthPay.status === 'PAID' ? '✓ Paid' : `₹${MONTHLY_AMOUNT.toLocaleString()} Due`}
+                      {currentMonthPay.status === 'PAID'
+                        ? '✓ Paid'
+                        : `₹${(currentMonthPay.amount||MONTHLY_AMOUNT).toLocaleString()} Due`}
                     </div>
                     <div className="text-[12px] mt-1" style={{ color:'var(--ink-3)' }}>
                       {currentMonthPay.status === 'PAID'
                         ? `Paid on ${currentMonthPay.paidOn} via ${currentMonthPay.paymentMode}`
-                        : 'Please pay and mark here'}
+                        : 'Tap below to pay or record payment'}
                     </div>
                   </div>
                   {currentMonthPay.status === 'UNPAID'
-                    ? <button onClick={() => setShowPay(currentMonthPay)} className="btn-primary px-5 py-3 text-[14px]">
-                        <CreditCard size={16}/> Mark Paid
+                    ? <button onClick={() => openPayModal(currentMonthPay)}
+                        className="btn-primary px-5 py-3 text-[14px]">
+                        <CreditCard size={16}/> Pay Now
                       </button>
                     : <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
                         style={{ background:'#ecfdf5' }}>
@@ -123,7 +198,8 @@ export default function ResidentMaintenance() {
 
             {/* No record for current month */}
             {!currentMonthPay && (
-              <div className="card p-5 flex items-center gap-3" style={{ background:'#fffbeb', border:'1px solid #fde68a' }}>
+              <div className="card p-5 flex items-center gap-3"
+                style={{ background:'#fffbeb', border:'1px solid #fde68a' }}>
                 <Info size={18} style={{ color:'var(--amber)' }} />
                 <div>
                   <div className="text-[13px] font-semibold" style={{ color:'#78350f' }}>
@@ -139,8 +215,10 @@ export default function ResidentMaintenance() {
             {/* Summary */}
             <div className="grid grid-cols-3 gap-2 md:gap-3">
               <div className="card p-3 md:p-4">
-                <div className="text-[10px] font-bold uppercase tracking-wide" style={{ color:'var(--ink-3)' }}>Paid</div>
-                <div className="text-[20px] font-bold mt-0.5" style={{ color:'var(--emerald)', letterSpacing:'-0.02em' }}>
+                <div className="text-[10px] font-bold uppercase tracking-wide"
+                  style={{ color:'var(--ink-3)' }}>Paid</div>
+                <div className="text-[20px] font-bold mt-0.5"
+                  style={{ color:'var(--emerald)', letterSpacing:'-0.02em' }}>
                   {fmt(totalPaid)}
                 </div>
                 <div className="text-[10px]" style={{ color:'var(--ink-3)' }}>
@@ -148,9 +226,11 @@ export default function ResidentMaintenance() {
                 </div>
               </div>
               <div className="card p-3 md:p-4">
-                <div className="text-[10px] font-bold uppercase tracking-wide" style={{ color:'var(--ink-3)' }}>Pending</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide"
+                  style={{ color:'var(--ink-3)' }}>Pending</div>
                 <div className="text-[20px] font-bold mt-0.5"
-                  style={{ color: totalPending > 0 ? 'var(--rose)' : 'var(--emerald)', letterSpacing:'-0.02em' }}>
+                  style={{ color: totalPending > 0 ? 'var(--rose)' : 'var(--emerald)',
+                           letterSpacing:'-0.02em' }}>
                   {totalPending > 0 ? fmt(totalPending) : 'Clear ✓'}
                 </div>
                 <div className="text-[10px]" style={{ color:'var(--ink-3)' }}>
@@ -158,11 +238,13 @@ export default function ResidentMaintenance() {
                 </div>
               </div>
               <div className="card p-3 md:p-4">
-                <div className="text-[10px] font-bold uppercase tracking-wide" style={{ color:'var(--ink-3)' }}>Monthly</div>
-                <div className="text-[20px] font-bold mt-0.5" style={{ color:'var(--indigo)', letterSpacing:'-0.02em' }}>
+                <div className="text-[10px] font-bold uppercase tracking-wide"
+                  style={{ color:'var(--ink-3)' }}>Monthly</div>
+                <div className="text-[20px] font-bold mt-0.5"
+                  style={{ color:'var(--indigo)', letterSpacing:'-0.02em' }}>
                   {fmt(MONTHLY_AMOUNT)}
                 </div>
-                <div className="text-[10px]" style={{ color:'var(--ink-3)' }}>fixed amount</div>
+                <div className="text-[10px]" style={{ color:'var(--ink-3)' }}>this month</div>
               </div>
             </div>
 
@@ -170,28 +252,28 @@ export default function ResidentMaintenance() {
             <div className="card overflow-hidden">
               <div className="card-header"><span className="card-title">Payment History</span></div>
               {payments.length === 0 ? (
-                <div className="py-12 text-center text-[13px]" style={{ color:'var(--ink-4)' }}>No payment records yet</div>
+                <div className="py-12 text-center text-[13px]"
+                  style={{ color:'var(--ink-4)' }}>No payment records yet</div>
               ) : payments.map(p => (
-                <div key={p.id} className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-2)] transition-colors"
+                <div key={p.id}
+                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-2)] transition-colors"
                   style={{ borderBottom:'1px solid var(--border)' }}>
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-semibold" style={{ color:'var(--ink)' }}>
                       {getMonthLabel(p.month, p.year)}
                     </div>
                     <div className="text-[11px] mt-0.5" style={{ color:'var(--ink-3)' }}>
-                      {p.status === 'PAID'
-                        ? `${p.paidOn} · ${p.paymentMode}`
-                        : 'Not paid yet'}
+                      {p.status === 'PAID' ? `${p.paidOn} · ${p.paymentMode}` : 'Not paid yet'}
                     </div>
                   </div>
                   <div className="text-right mr-3">
                     <div className="text-[13px] font-bold"
                       style={{ color: p.status === 'PAID' ? 'var(--emerald)' : 'var(--rose)' }}>
-                      {p.status === 'PAID' ? fmt(p.amount) : fmt(MONTHLY_AMOUNT)}
+                      ₹{(p.amount||MONTHLY_AMOUNT).toLocaleString()}
                     </div>
                   </div>
                   {p.status === 'UNPAID'
-                    ? <button onClick={() => setShowPay(p)}
+                    ? <button onClick={() => openPayModal(p)}
                         className="text-[11px] px-3 py-1.5 rounded-xl font-semibold flex-shrink-0"
                         style={{ background:'#ffe4e6', color:'#9f1239' }}>Pay</button>
                     : <StatusBadge status="paid" />
@@ -200,72 +282,249 @@ export default function ResidentMaintenance() {
               ))}
             </div>
 
-            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl"
-              style={{ background:'var(--indigo-lt)', border:'1px solid var(--indigo-md)' }}>
-              <Info size={14} style={{ color:'var(--indigo)' }} className="flex-shrink-0 mt-0.5" />
-              <p className="text-[12px]" style={{ color:'var(--indigo)' }}>
-                After paying via UPI/Cash, click <strong>Mark Paid</strong> to update the admin dashboard.
-              </p>
-            </div>
           </>
         )}
       </div>
 
-      {/* Pay Modal */}
-      <Modal open={!!showPay} onClose={() => { setShowPay(null); setPayRef('') }}
-        title={`Pay — ${showPay ? getMonthLabel(showPay.month, showPay.year) : ''}`}>
+      {/* ── Pay Modal ── */}
+      <Modal open={!!showPay} onClose={closePayModal}
+        title={`Pay — ${monthLabel}`}>
         {showPay && (
-          <div className="space-y-4">
-            <div className="rounded-xl p-4 text-center"
+          <>
+            {/* Amount header — always visible */}
+            <div className="rounded-xl p-4 text-center mb-4"
               style={{ background:'var(--indigo-lt)', border:'1px solid var(--indigo-md)' }}>
-              <div className="text-[12px] font-medium" style={{ color:'var(--ink-3)' }}>Amount</div>
-              <div className="text-[32px] font-bold mt-0.5"
+              <div className="text-[11px] font-medium" style={{ color:'var(--ink-3)' }}>Amount Due</div>
+              <div className="text-[34px] font-bold mt-0.5"
                 style={{ color:'var(--indigo)', letterSpacing:'-0.03em' }}>
-                ₹{MONTHLY_AMOUNT.toLocaleString()}
+                ₹{amount.toLocaleString()}
               </div>
               <div className="text-[11px] mt-0.5" style={{ color:'var(--ink-3)' }}>
-                {getMonthLabel(showPay.month, showPay.year)} · Flat {user?.flatNo}
+                {monthLabel} · Flat {user?.flatNo}
+              </div>
+              <div className="text-[10px] mt-1" style={{ color:'var(--ink-4)' }}>
+                Payee: {PAYEE_NAME}
               </div>
             </div>
 
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wide block mb-2"
-                style={{ color:'var(--ink-2)' }}>Payment Mode</label>
-              <div className="grid grid-cols-2 gap-2">
-                {PAYMENT_MODES.map(m => (
-                  <button key={m} onClick={() => setPayMode(m)}
-                    className="py-2.5 rounded-xl text-[12px] font-semibold transition-all"
-                    style={payMode === m
-                      ? { background:'var(--indigo)', color:'white', border:'1px solid var(--indigo)' }
-                      : { background:'var(--surface-3)', color:'var(--ink-2)', border:'1px solid var(--border)' }}>
-                    {m}
+            {/* ── STEP 1: Choose ── */}
+            {step === STEP.CHOOSE && (
+              <div className="space-y-3">
+                <p className="text-[12px] text-center font-medium" style={{ color:'var(--ink-3)' }}>
+                  How would you like to pay?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Option 1 — Pay via UPI */}
+                  <button onClick={() => setStep(STEP.UPI_APPS)}
+                    className="flex flex-col items-center gap-2.5 p-4 rounded-2xl transition-all hover:scale-105"
+                    style={{ background:'var(--indigo-lt)', border:'2px solid var(--indigo)' }}>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                      style={{ background:'var(--indigo)' }}>
+                      <Smartphone size={22} className="text-white" />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-bold" style={{ color:'var(--indigo)' }}>
+                        Pay via UPI
+                      </div>
+                      <div className="text-[10px] mt-0.5" style={{ color:'var(--ink-3)' }}>
+                        GPay · PhonePe · Paytm
+                      </div>
+                    </div>
                   </button>
-                ))}
+
+                  {/* Option 2 — Already Paid */}
+                  <button onClick={() => setStep(STEP.MANUAL)}
+                    className="flex flex-col items-center gap-2.5 p-4 rounded-2xl transition-all hover:scale-105"
+                    style={{ background:'#ecfdf5', border:'2px solid var(--emerald)' }}>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                      style={{ background:'var(--emerald)' }}>
+                      <CheckCircle2 size={22} className="text-white" />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-bold" style={{ color:'var(--emerald)' }}>
+                        Already Paid
+                      </div>
+                      <div className="text-[10px] mt-0.5" style={{ color:'var(--ink-3)' }}>
+                        Record cash / UPI done
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Bank details */}
+                <div className="rounded-xl p-3" style={{ background:'var(--surface-3)', border:'1px solid var(--border)' }}>
+                  <div className="text-[9px] font-bold uppercase tracking-wide mb-2"
+                    style={{ color:'var(--ink-3)' }}>Bank Transfer Details</div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    {[
+                      ['Account No', '5219101005304'],
+                      ['IFSC', 'CNRB0005219'],
+                      ['Bank', 'Canara Bank'],
+                      ['UPI ID', UPI_ID],
+                    ].map(([k, v]) => (
+                      <div key={k}>
+                        <div className="text-[9px]" style={{ color:'var(--ink-4)' }}>{k}</div>
+                        <div className="text-[10px] font-semibold" style={{ color:'var(--ink-2)' }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5"
-                style={{ color:'var(--ink-2)' }}>
-                Reference <span style={{ color:'var(--ink-4)' }}>(optional)</span>
-              </label>
-              <input className="input" placeholder="UPI ID, receipt no., etc."
-                value={payRef} onChange={e => setPayRef(e.target.value)} />
-            </div>
+            {/* ── STEP 2: UPI Apps ── */}
+            {step === STEP.UPI_APPS && (
+              <div className="space-y-3">
+                <p className="text-[12px] text-center font-medium" style={{ color:'var(--ink-3)' }}>
+                  Choose your UPI app — amount will be pre-filled
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {upiApps.map(app => (
+                    <button key={app.name}
+                      onClick={() => handleUpiAppClick(app.url)}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl transition-all hover:scale-105"
+                      style={{ background: app.bg, border: `1.5px solid ${app.color}22` }}>
+                      <span className="text-[28px] leading-none">{app.emoji}</span>
+                      <div className="text-left">
+                        <div className="text-[13px] font-bold" style={{ color: app.color }}>
+                          {app.name}
+                        </div>
+                        <div className="text-[10px]" style={{ color:'var(--ink-3)' }}>
+                          Tap to open
+                        </div>
+                      </div>
+                      <ExternalLink size={12} className="ml-auto flex-shrink-0"
+                        style={{ color: app.color }} />
+                    </button>
+                  ))}
+                </div>
 
-            <div className="flex gap-2">
-              <button onClick={handleMarkPaid} disabled={submitting}
-                className="btn-primary flex-1 justify-center">
-                <CheckCircle2 size={14}/>
-                {submitting ? 'Recording...' : 'Confirm Payment'}
-              </button>
-              <button onClick={() => { setShowPay(null); setPayRef('') }} className="btn-ghost">Cancel</button>
-            </div>
-          </div>
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                  style={{ background:'#fffbeb', border:'1px solid #fde68a' }}>
+                  <Info size={13} style={{ color:'var(--amber)', flexShrink:0 }} />
+                  <span className="text-[11px]" style={{ color:'#78350f' }}>
+                    After paying, come back to this app and confirm your payment.
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button onClick={() => setStep(STEP.UPI_CONF)}
+                    className="btn-primary flex-1 justify-center">
+                    <CheckCircle2 size={14} /> I've Paid — Confirm
+                  </button>
+                  <button onClick={() => setStep(STEP.CHOOSE)} className="btn-ghost">Back</button>
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 3: UPI Confirmation ── */}
+            {step === STEP.UPI_CONF && (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                    style={{ background:'var(--indigo-lt)' }}>
+                    <Smartphone size={32} style={{ color:'var(--indigo)' }} />
+                  </div>
+                  <p className="text-[14px] font-bold" style={{ color:'var(--ink)' }}>
+                    Did your payment go through?
+                  </p>
+                  <p className="text-[12px] text-center" style={{ color:'var(--ink-3)' }}>
+                    Check your UPI app for a success message before confirming.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5"
+                    style={{ color:'var(--ink-2)' }}>
+                    UPI Transaction ID <span style={{ color:'var(--ink-4)', fontWeight:400 }}>(optional but recommended)</span>
+                  </label>
+                  <input className="input" placeholder="e.g. 406812345678"
+                    value={payRef}
+                    onChange={e => setPayRef(e.target.value)} />
+                  <p className="text-[10px] mt-1" style={{ color:'var(--ink-3)' }}>
+                    Find it in your UPI app under transaction history
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* YES — success */}
+                  <button
+                    onClick={() => handleMarkPaid('UPI', payRef)}
+                    disabled={submitting}
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all"
+                    style={{ background:'#ecfdf5', border:'2px solid var(--emerald)' }}>
+                    <CheckCircle2 size={28} style={{ color:'var(--emerald)' }} />
+                    <div className="text-[13px] font-bold" style={{ color:'var(--emerald)' }}>
+                      {submitting ? 'Recording...' : 'Yes, Payment Done ✓'}
+                    </div>
+                  </button>
+
+                  {/* NO — failed */}
+                  <button
+                    onClick={() => setStep(STEP.UPI_APPS)}
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all"
+                    style={{ background:'#fff1f2', border:'2px solid var(--rose)' }}>
+                    <span className="text-[28px]">✗</span>
+                    <div className="text-[13px] font-bold" style={{ color:'var(--rose)' }}>
+                      No, Try Again
+                    </div>
+                  </button>
+                </div>
+
+                <button onClick={() => setStep(STEP.CHOOSE)}
+                  className="w-full text-center text-[11px]" style={{ color:'var(--ink-4)' }}>
+                  ← Back to payment options
+                </button>
+              </div>
+            )}
+
+            {/* ── STEP 4: Manual / Already Paid ── */}
+            {step === STEP.MANUAL && (
+              <div className="space-y-4">
+                <p className="text-[12px] text-center font-medium" style={{ color:'var(--ink-3)' }}>
+                  Select how you paid and confirm
+                </p>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wide block mb-2"
+                    style={{ color:'var(--ink-2)' }}>Payment Mode</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PAYMENT_MODES.map(m => (
+                      <button key={m} onClick={() => setPayMode(m)}
+                        className="py-2.5 rounded-xl text-[12px] font-semibold transition-all"
+                        style={payMode === m
+                          ? { background:'var(--indigo)', color:'white', border:'1px solid var(--indigo)' }
+                          : { background:'var(--surface-3)', color:'var(--ink-2)', border:'1px solid var(--border)' }}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5"
+                    style={{ color:'var(--ink-2)' }}>
+                    Reference <span style={{ color:'var(--ink-4)', fontWeight:400 }}>(optional)</span>
+                  </label>
+                  <input className="input" placeholder="UPI transaction ID, receipt no. etc."
+                    value={payRef} onChange={e => setPayRef(e.target.value)} />
+                </div>
+
+                <div className="flex gap-2">
+                  <button onClick={() => handleMarkPaid(payMode, payRef)} disabled={submitting}
+                    className="btn-primary flex-1 justify-center">
+                    <CheckCircle2 size={14}/>
+                    {submitting ? 'Recording...' : 'Confirm Payment'}
+                  </button>
+                  <button onClick={() => setStep(STEP.CHOOSE)} className="btn-ghost">Back</button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </Modal>
 
-      {/* Success Modal */}
+      {/* ── Success Modal ── */}
       <Modal open={!!success} onClose={() => setSuccess(null)} title="Payment Recorded!">
         {success && (
           <div className="text-center py-4 space-y-3">
@@ -273,13 +532,16 @@ export default function ResidentMaintenance() {
               style={{ background:'#ecfdf5' }}>
               <CheckCircle2 size={36} style={{ color:'var(--emerald)' }} />
             </div>
-            <h3 className="text-[18px] font-bold" style={{ color:'var(--ink)' }}>Payment Recorded!</h3>
+            <h3 className="text-[18px] font-bold" style={{ color:'var(--ink)' }}>
+              Payment Recorded! 🎉
+            </h3>
             <p className="text-[13px]" style={{ color:'var(--ink-3)' }}>
-              ₹{MONTHLY_AMOUNT.toLocaleString()} for{' '}
+              ₹{(success.amount||MONTHLY_AMOUNT).toLocaleString()} for{' '}
               <strong>{getMonthLabel(success.month, success.year)}</strong>{' '}
               has been recorded. Admin dashboard updated.
             </p>
-            <button onClick={() => setSuccess(null)} className="btn-primary px-8 py-2.5 mx-auto">Done</button>
+            <button onClick={() => setSuccess(null)}
+              className="btn-primary px-8 py-2.5 mx-auto">Done</button>
           </div>
         )}
       </Modal>
