@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, CreditCard, MessageSquareWarning,
-  Megaphone, Users, Building2, FileBarChart2, Receipt, LogOut, Menu, X, Network
+  Megaphone, Users, Building2, FileBarChart2, Receipt, LogOut, Menu, X, Network, Users2
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useState } from 'react'
@@ -19,6 +19,7 @@ const NAV = [
     { to: '/resident/expenses',      icon: Receipt,       label: 'Expenses',       ownerOnly: true },
     { to: '/resident/directory',     icon: Building2,     label: 'Flat Directory' },
     { to: '/resident/org-chart',     icon: Network,       label: 'Committee' },
+    { to: '/resident/workers', icon: Users2, label: 'Workers' },
     { to: '/resident/reports',       icon: FileBarChart2, label: 'Reports',        ownerOnly: true },
   ]},
 ]
