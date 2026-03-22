@@ -73,6 +73,7 @@ function ResidentShell() {
         <Route path="/resident/announcements" element={<ResidentAnnouncements />} />
         <Route path="/resident/visitors"      element={<ResidentVisitors />} />
         <Route path="/resident/directory"     element={<ResidentDirectory />} />
+        <Route path="/resident/workers" element={<Workers />} />
         <Route path="/resident/org-chart" element={<OrgChart />} />
 
         {/* Owner only */}
