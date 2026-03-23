@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { Shield, MapPin  } from 'lucide-react'
 import {
   LayoutDashboard, CreditCard, Receipt, MessageSquareWarning,
-  Megaphone, Users, Building2, FileBarChart2, LogOut, Menu, X, Settings2, Network, Users2
+  Megaphone, Users, Building2, FileBarChart2, LogOut, Menu, X, Settings2, Network, Users2,PackageSearch, Package, CalendarDays,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useState } from 'react'
