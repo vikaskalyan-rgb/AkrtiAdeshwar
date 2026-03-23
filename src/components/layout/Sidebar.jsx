@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { Shield, MapPin  } from 'lucide-react'
 import {
   LayoutDashboard, CreditCard, Receipt, MessageSquareWarning,
   Megaphone, Users, Building2, FileBarChart2, LogOut, Menu, X, Settings2, Network, Users2
@@ -16,7 +17,10 @@ const NAV = [
   { label: 'Community', items: [
     { to: '/complaints',    icon: MessageSquareWarning, label: 'Complaints', badgeKey: 'complaints' },
     { to: '/announcements', icon: Megaphone,            label: 'Announcements' },
+    { to: '/nearby', icon: MapPin, label: 'Nearby Places' },
+    { to: '/watchman', icon: Shield, label: 'Night Patrol' },
     { to: '/visitors',      icon: Users,                label: 'Visitors' },
+    
   ]},
   { label: 'Management', items: [
     { to: '/org-chart',        icon: Network,       label: 'Committee' },

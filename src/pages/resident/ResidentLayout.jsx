@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, CreditCard, MessageSquareWarning,
-  Megaphone, Users, Building2, FileBarChart2, Receipt, LogOut, Menu, X, Network, Users2
+  Megaphone, Users, Building2, FileBarChart2, Receipt, LogOut, Menu, X, Network, Users2, Shield ,MapPin
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useState } from 'react'
@@ -16,6 +16,8 @@ const NAV = [
   { label: 'Society', items: [
     { to: '/resident/announcements', icon: Megaphone,     label: 'Announcements' },
     { to: '/resident/visitors',      icon: Users,         label: 'Visitors' },
+    { to: '/resident/watchman', icon: Shield, label: 'Night Patrol' },
+    { to: '/resident/nearby', icon: MapPin, label: 'Nearby Places' },
     { to: '/resident/expenses',      icon: Receipt,       label: 'Expenses',       ownerOnly: true },
     { to: '/resident/directory',     icon: Building2,     label: 'Flat Directory' },
     { to: '/resident/org-chart',     icon: Network,       label: 'Committee' },

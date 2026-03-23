@@ -19,6 +19,8 @@ import ResidentMaintenance from './pages/resident/ResidentMaintenance'
 import ResidentComplaints from './pages/resident/ResidentComplaints'
 import OrgChart from './pages/OrgChart'
 import Workers from './pages/Workers'
+import WatchmanLog from './pages/Watchmanlog.jsx'
+import NearbyPlaces from './pages/NearbyPlaces'
 import {
   ResidentAnnouncements,
   ResidentVisitors,
@@ -48,6 +50,8 @@ function AdminShell() {
           <Route path="/complaints"      element={<Complaints />} />
           <Route path="/announcements"   element={<Announcements />} />
           <Route path="/visitors"        element={<Visitors />} />
+          <Route path="/watchman" element={<WatchmanLog />} />
+          <Route path="/nearby" element={<NearbyPlaces />} />
           <Route path="/org-chart" element={<OrgChart />} />
           <Route path="/resident/org-chart" element={<OrgChart />} />
           <Route path="/flats"           element={<FlatDirectory />} />
@@ -72,6 +76,8 @@ function ResidentShell() {
         <Route path="/resident/complaints"    element={<ResidentComplaints />} />
         <Route path="/resident/announcements" element={<ResidentAnnouncements />} />
         <Route path="/resident/visitors"      element={<ResidentVisitors />} />
+        <Route path="/resident/watchman" element={<WatchmanLog />} />
+        <Route path="/resident/nearby" element={<NearbyPlaces />} />
         <Route path="/resident/directory"     element={<ResidentDirectory />} />
         <Route path="/resident/workers" element={<Workers />} />
         <Route path="/resident/org-chart" element={<OrgChart />} />
