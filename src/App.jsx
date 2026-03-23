@@ -20,9 +20,9 @@ import ResidentComplaints from './pages/resident/ResidentComplaints'
 import OrgChart from './pages/OrgChart'
 import Workers from './pages/Workers'
 import WatchmanLog from './pages/Watchmanlog.jsx'
-import NearbyPlaces from './pages/NearbyPlaces'
+import NearbyPlaces from './pages/Nearbyplaces'
 import LostFound       from './pages/LostFound'
-import DeliveryTracker from './pages/DeliveryTracker'
+import DeliveryTracker from './pages/Deliverytracker'
 import AmenityBooking  from './pages/AmenityBooking'
 import {
   ResidentAnnouncements,
