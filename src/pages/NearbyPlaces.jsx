@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext'
 
 // ── Categories ────────────────────────────────────────────
 const CATEGORIES = [
+    { value: 'EMERGENCY', label: 'Emergency', icon: Phone, color: '#dc2626', bg: '#fef2f2' },
   { value: 'HOSPITAL',    label: 'Hospital',        icon: Cross,       color: '#e11d48', bg: '#fff1f2' },
   { value: 'CLINIC',      label: 'Clinic',          icon: Heart,       color: '#f43f5e', bg: '#fff1f2' },
   { value: 'SCHOOL',      label: 'School',          icon: GraduationCap, color: '#0284c7', bg: '#f0f9ff' },

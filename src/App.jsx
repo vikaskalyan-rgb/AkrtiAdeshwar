@@ -21,6 +21,9 @@ import OrgChart from './pages/OrgChart'
 import Workers from './pages/Workers'
 import WatchmanLog from './pages/Watchmanlog.jsx'
 import NearbyPlaces from './pages/NearbyPlaces'
+import LostFound       from './pages/LostFound'
+import DeliveryTracker from './pages/DeliveryTracker'
+import AmenityBooking  from './pages/AmenityBooking'
 import {
   ResidentAnnouncements,
   ResidentVisitors,
@@ -61,6 +64,9 @@ function AdminShell() {
 <Route path="/resident/workers" element={<Workers />} />
           <Route path="/reports"         element={<Reports />} />
           <Route path="*"                element={<Navigate to="/" replace />} />
+          <Route path="/lost-found"  element={<LostFound />} />
+<Route path="/deliveries"  element={<DeliveryTracker />} />
+<Route path="/amenities"   element={<AmenityBooking />} />
         </Routes>
       </main>
     </div>
@@ -81,6 +87,9 @@ function ResidentShell() {
         <Route path="/resident/directory"     element={<ResidentDirectory />} />
         <Route path="/resident/workers" element={<Workers />} />
         <Route path="/resident/org-chart" element={<OrgChart />} />
+        <Route path="/lost-found"  element={<LostFound />} />
+<Route path="/deliveries"  element={<DeliveryTracker />} />
+<Route path="/amenities"   element={<AmenityBooking />} />
 
         {/* Owner only */}
         <Route path="/resident/expenses" element={

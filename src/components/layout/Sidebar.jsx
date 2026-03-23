@@ -20,6 +20,9 @@ const NAV = [
     { to: '/nearby', icon: MapPin, label: 'Nearby Places' },
     { to: '/watchman', icon: Shield, label: 'Night Patrol' },
     { to: '/visitors',      icon: Users,                label: 'Visitors' },
+    { to: '/lost-found', icon: PackageSearch, label: 'Lost & Found' },
+{ to: '/deliveries', icon: Package,       label: 'Deliveries' },
+{ to: '/amenities',  icon: CalendarDays,  label: 'Hall Booking' },
     
   ]},
   { label: 'Management', items: [
