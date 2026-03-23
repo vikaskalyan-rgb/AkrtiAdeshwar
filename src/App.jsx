@@ -32,7 +32,7 @@ import {
   ResidentReports,
 } from './pages/resident/ResidentReadOnly'
 
-// Redirect tenants away from owner-only pages
+// csac Redirect tenants away from owner-only pages
 function OwnerOnlyRoute({ children }) {
   const { user } = useAuth()
   if (user?.role === 'tenant') {
