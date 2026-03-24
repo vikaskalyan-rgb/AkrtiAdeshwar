@@ -241,19 +241,18 @@ export default function LostFound() {
         })
       }
 
-      // Send email via announcements endpoint if needed
-      if (form.postAction === 'EMAIL_ONLY' || form.postAction === 'POST_AND_EMAIL') {
-        await api.post('/api/announcements', {
-          title:   `${form.type === 'LOST' ? '😢 Lost' : '🎉 Found'}: ${form.title}`,
-          content: [
-            form.description,
-            form.location ? `Location: ${form.location}` : '',
-            `Posted by Flat ${user?.flatNo}. Please contact them if you have information.`,
-          ].filter(Boolean).join('\n\n'),
-          type:     'NOTICE',
-          audience: 'EVERYONE',
-        })
-      }
+    if (form.postAction === 'EMAIL_ONLY' || form.postAction === 'POST_AND_EMAIL') {
+  await api.post('/api/announcements', {
+  title:    `${form.type === 'LOST' ? '😢 Lost' : '🎉 Found'}: ${form.title}`,
+  body:     [                        // ← was 'content', should be 'body'
+    form.description,
+    form.location ? `Location: ${form.location}` : '',
+    `Posted by Flat ${user?.flatNo}. Please contact them if you have any information.`,
+  ].filter(Boolean).join('\n\n'),
+  type:     'NOTICE',
+  audience: 'EVERYONE',
+})
+}
 
       await fetchItems()
       setShowAdd(false)

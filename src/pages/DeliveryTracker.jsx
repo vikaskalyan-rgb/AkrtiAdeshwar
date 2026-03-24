@@ -170,53 +170,32 @@ export default function DeliveryTracker() {
   }
 
   const handleSave = async () => {
-    if (!validate()) return
-    setSaving(true)
-    try {
-      // Log the delivery
-      await api.post('/api/deliveries', {
-        flatNo:      form.flatNo,
-        courierName: form.courierName,
-        description: form.description,
-        loggedBy:    user?.identifier,
-      })
+  if (!validate()) return
+  setSaving(true)
+  try {
+    await api.post('/api/deliveries', {
+      flatNo:      form.flatNo,
+      courierName: form.courierName,
+      description: form.description,
+      loggedBy:    user?.identifier,
+      sendEmail:   form.sendEmail,  // ← backend reads this
+    })
 
-      // Send email to resident via announcements endpoint
-      if (form.sendEmail) {
-        try {
-          await api.post('/api/maintenance/reminders/delivery', {
-            flatNo:      form.flatNo,
-            courierName: form.courierName || 'a courier',
-            description: form.description || 'parcel',
-          })
-        } catch {
-          // Fallback — use announcements email to that flat's owner
-          // We post a targeted announcement — backend filters by flat
-          await api.post('/api/announcements', {
-            title:   `📦 Parcel arrived for Flat ${form.flatNo}`,
-            content: `Your ${form.courierName ? form.courierName + ' ' : ''}parcel${form.description ? ' (' + form.description + ')' : ''} has arrived at the security desk. Please collect it at your earliest convenience.\n\nThank you,\nAkriti Adeshwar Security`,
-            type:     'NOTICE',
-            audience: 'FLAT_' + form.flatNo, // backend falls back to EVERYONE if not found
-          })
-        }
-      }
+    await fetchDeliveries()
+    setShowLog(false)
+    setForm({ flatNo: '', courierName: '', description: '', sendEmail: true })
 
-      await fetchDeliveries()
-      setShowLog(false)
-      setForm({ flatNo: '', courierName: '', description: '', sendEmail: true })
+    setResultBanner({
+      text: form.sendEmail
+        ? `✓ Parcel logged & email sent to Flat ${form.flatNo}`
+        : `✓ Parcel logged for Flat ${form.flatNo}`,
+      success: true,
+    })
+    setTimeout(() => setResultBanner(null), 5000)
 
-      setResultBanner({
-        text: form.sendEmail
-          ? `✓ Parcel logged & email sent to Flat ${form.flatNo}`
-          : `✓ Parcel logged for Flat ${form.flatNo}`,
-        success: true,
-      })
-      setTimeout(() => setResultBanner(null), 5000)
-
-    } catch { alert('Failed to log') }
-    finally { setSaving(false) }
-  }
-
+  } catch { alert('Failed to log') }
+  finally { setSaving(false) }
+}
   const handleCollect = async (id) => {
     try {
       await api.patch(`/api/deliveries/${id}/collect`)
