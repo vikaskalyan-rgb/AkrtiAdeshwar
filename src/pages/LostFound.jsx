@@ -1,19 +1,51 @@
 import { useState, useEffect } from 'react'
 import Topbar from '../components/layout/Topbar'
 import { Modal } from '../components/ui'
-import { PlusCircle, Search, CheckCircle2, PackageSearch, MapPin } from 'lucide-react'
+import { PlusCircle, Search, CheckCircle2, MapPin, Mail, Package } from 'lucide-react'
 import api from '../api/config'
 import { useAuth } from '../context/AuthContext'
 
 const TYPES = [
-  { value: 'LOST',  label: 'I Lost Something',  emoji: '😢', color: '#e11d48', bg: '#fff1f2', border: '#fca5a5' },
-  { value: 'FOUND', label: 'I Found Something',  emoji: '🎉', color: '#059669', bg: '#ecfdf5', border: '#6ee7b7' },
+  { value: 'LOST',  label: 'I Lost Something', emoji: '😢', color: '#e11d48', bg: '#fff1f2', border: '#fca5a5' },
+  { value: 'FOUND', label: 'I Found Something', emoji: '🎉', color: '#059669', bg: '#ecfdf5', border: '#6ee7b7' },
+]
+
+const POST_ACTIONS = [
+  {
+    value:  'POST_ONLY',
+    label:  'Post Here Only',
+    desc:   'Visible in app, no email',
+    emoji:  '📋',
+    color:  'var(--indigo)',
+    bg:     'var(--indigo-lt)',
+    border: 'var(--indigo)',
+  },
+  {
+    value:  'EMAIL_ONLY',
+    label:  'Send Email Only',
+    desc:   'Email residents, no app post',
+    emoji:  '📧',
+    color:  '#0284c7',
+    bg:     '#f0f9ff',
+    border: '#7dd3fc',
+  },
+  {
+    value:  'POST_AND_EMAIL',
+    label:  'Post & Email',
+    desc:   'Post in app AND email all',
+    emoji:  '🔔',
+    color:  '#059669',
+    bg:     '#ecfdf5',
+    border: '#6ee7b7',
+  },
 ]
 
 const EMPTY_FORM = {
-  type: 'LOST', title: '', description: '', location: '',
+  type: 'LOST', title: '', description: '',
+  location: '', postAction: 'POST_AND_EMAIL',
 }
 
+// ── Field — outside to prevent re-mount ──────────────────
 const Field = ({ label, required, children }) => (
   <div>
     <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: 'var(--ink-2)' }}>
@@ -23,65 +55,138 @@ const Field = ({ label, required, children }) => (
   </div>
 )
 
-const ItemForm = ({ form, setForm, errors, saving, onSave, onCancel }) => (
-  <div className="space-y-4">
-    <div className="grid grid-cols-2 gap-3">
-      {TYPES.map(t => (
-        <button key={t.value} onClick={() => setForm(f => ({ ...f, type: t.value }))}
-          className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all"
-          style={form.type === t.value
-            ? { background: t.bg, border: `2px solid ${t.color}` }
-            : { background: 'var(--surface-3)', border: '2px solid var(--border)' }}>
-          <span className="text-[28px]">{t.emoji}</span>
-          <span className="text-[12px] font-bold"
-            style={{ color: form.type === t.value ? t.color : 'var(--ink-2)' }}>
-            {t.label}
-          </span>
+// ── ItemForm — outside to prevent re-mount ────────────────
+const ItemForm = ({ form, setForm, errors, saving, recipientCount, onSave, onCancel }) => {
+  const selectedAction = POST_ACTIONS.find(a => a.value === form.postAction) || POST_ACTIONS[2]
+  const willEmail = form.postAction === 'EMAIL_ONLY' || form.postAction === 'POST_AND_EMAIL'
+
+  return (
+    <div className="space-y-4">
+
+      {/* Type */}
+      <div className="grid grid-cols-2 gap-3">
+        {TYPES.map(t => (
+          <button key={t.value}
+            onClick={() => setForm(f => ({ ...f, type: t.value }))}
+            className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all"
+            style={form.type === t.value
+              ? { background: t.bg, border: `2px solid ${t.color}` }
+              : { background: 'var(--surface-3)', border: '2px solid var(--border)' }}>
+            <span className="text-[28px]">{t.emoji}</span>
+            <span className="text-[12px] font-bold"
+              style={{ color: form.type === t.value ? t.color : 'var(--ink-2)' }}>
+              {t.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* What is it */}
+      <Field label="What is it?" required>
+        <input className="input"
+          placeholder='e.g. "Blue umbrella", "House keys", "Gold earring"'
+          value={form.title}
+          onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+        {errors?.title && (
+          <p className="text-[10px] mt-1" style={{ color: 'var(--rose)' }}>{errors.title}</p>
+        )}
+      </Field>
+
+      {/* Description */}
+      <Field label="Description (optional)">
+        <textarea className="input resize-none h-16"
+          placeholder="Color, brand, any identifying features..."
+          value={form.description}
+          onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+      </Field>
+
+      {/* Location */}
+      <Field label="Location (optional)">
+        <input className="input"
+          placeholder='e.g. "Near lift on Floor 2", "Parking area"'
+          value={form.location}
+          onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+      </Field>
+
+      {/* ── Post Action ── */}
+      <div>
+        <label className="text-[11px] font-bold uppercase tracking-wide block mb-2"
+          style={{ color: 'var(--ink-2)' }}>How to notify residents?</label>
+        <div className="grid grid-cols-3 gap-2">
+          {POST_ACTIONS.map(a => (
+            <button key={a.value}
+              onClick={() => setForm(f => ({ ...f, postAction: a.value }))}
+              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all text-center"
+              style={form.postAction === a.value
+                ? { background: a.bg, border: `2px solid ${a.border}` }
+                : { background: 'var(--surface-3)', border: '2px solid var(--border)' }}>
+              <span className="text-[22px]">{a.emoji}</span>
+              <span className="text-[10px] font-bold leading-tight"
+                style={{ color: form.postAction === a.value ? a.color : 'var(--ink-2)' }}>
+                {a.label}
+              </span>
+              <span className="text-[9px] leading-tight" style={{ color: 'var(--ink-4)' }}>
+                {a.desc}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Recipient info */}
+        {willEmail && (
+          <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl"
+            style={{ background: '#f0f9ff', border: '1px solid #7dd3fc' }}>
+            <Mail size={12} style={{ color: '#0284c7', flexShrink: 0 }} />
+            <span className="text-[11px]" style={{ color: '#0369a1' }}>
+              Email will be sent to <strong>{recipientCount} residents</strong>
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Submit */}
+      <div className="flex gap-2 pt-1">
+        <button onClick={onSave} disabled={saving}
+          className="btn-primary flex-1 justify-center gap-2"
+          style={{ background: selectedAction.color }}>
+          {saving ? 'Posting...' : (
+            <>
+              <span>{selectedAction.emoji}</span>
+              <span>
+                {form.postAction === 'POST_ONLY'
+                  ? 'Post Here'
+                  : form.postAction === 'EMAIL_ONLY'
+                  ? 'Send Email'
+                  : `Post & Email ${recipientCount}`}
+              </span>
+            </>
+          )}
         </button>
-      ))}
+        <button onClick={onCancel} className="btn-ghost">Cancel</button>
+      </div>
     </div>
+  )
+}
 
-    <Field label="What is it?" required>
-      <input className="input" placeholder='e.g. "Blue umbrella", "House keys", "Gold earring"'
-        value={form.title}
-        onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
-      {errors?.title && <p className="text-[10px] mt-1" style={{ color: 'var(--rose)' }}>{errors.title}</p>}
-    </Field>
-
-    <Field label="Description (optional)">
-      <textarea className="input resize-none h-16"
-        placeholder="Color, brand, any identifying features..."
-        value={form.description}
-        onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
-    </Field>
-
-    <Field label="Location (optional)">
-      <input className="input" placeholder='e.g. "Near lift on Floor 2", "Parking area"'
-        value={form.location}
-        onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
-    </Field>
-
-    <div className="flex gap-2">
-      <button onClick={onSave} disabled={saving} className="btn-primary flex-1 justify-center">
-        {saving ? 'Posting...' : 'Post'}
-      </button>
-      <button onClick={onCancel} className="btn-ghost">Cancel</button>
-    </div>
-  </div>
-)
-
+// ── Main component ────────────────────────────────────────
 export default function LostFound() {
-  const { user }  = useAuth()
-  const [items,   setItems]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search,  setSearch]  = useState('')
-  const [filter,  setFilter]  = useState('ALL') // ALL, LOST, FOUND, OPEN, RETURNED
-  const [showAdd, setShowAdd] = useState(false)
-  const [form,    setForm]    = useState(EMPTY_FORM)
-  const [errors,  setErrors]  = useState({})
-  const [saving,  setSaving]  = useState(false)
+  const { user } = useAuth()
 
-  useEffect(() => { fetchItems() }, [])
+  const [items,          setItems]          = useState([])
+  const [loading,        setLoading]        = useState(true)
+  const [search,         setSearch]         = useState('')
+  const [filter,         setFilter]         = useState('ALL')
+  const [showAdd,        setShowAdd]        = useState(false)
+  const [form,           setForm]           = useState(EMPTY_FORM)
+  const [errors,         setErrors]         = useState({})
+  const [saving,         setSaving]         = useState(false)
+  const [recipientCount, setRecipientCount] = useState(0)
+  const [resultBanner,   setResultBanner]   = useState(null)
+
+  useEffect(() => {
+    fetchItems()
+    fetchRecipientCount()
+  }, [])
 
   const fetchItems = async () => {
     setLoading(true)
@@ -90,6 +195,13 @@ export default function LostFound() {
       setItems(res.data)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
+  }
+
+  const fetchRecipientCount = async () => {
+    try {
+      const res = await api.get('/api/announcements/recipient-count?audience=EVERYONE')
+      setRecipientCount(res.data.count || 0)
+    } catch { setRecipientCount(0) }
   }
 
   const filtered = items.filter(i => {
@@ -105,9 +217,9 @@ export default function LostFound() {
     return matchSearch && matchFilter
   })
 
-  const openCount     = items.filter(i => i.status === 'OPEN').length
-  const lostCount     = items.filter(i => i.type === 'LOST' && i.status === 'OPEN').length
-  const foundCount    = items.filter(i => i.type === 'FOUND' && i.status === 'OPEN').length
+  const openCount  = items.filter(i => i.status === 'OPEN').length
+  const lostCount  = items.filter(i => i.type === 'LOST'  && i.status === 'OPEN').length
+  const foundCount = items.filter(i => i.type === 'FOUND' && i.status === 'OPEN').length
 
   const validate = () => {
     const e = {}
@@ -120,16 +232,47 @@ export default function LostFound() {
     if (!validate()) return
     setSaving(true)
     try {
-      await api.post('/api/lost-found', {
-        ...form,
-        flatNo:   user?.flatNo,
-        postedBy: user?.name || user?.identifier,
-      })
+      // Post to app if needed
+      if (form.postAction !== 'EMAIL_ONLY') {
+        await api.post('/api/lost-found', {
+          ...form,
+          flatNo:   user?.flatNo,
+          postedBy: user?.name || user?.identifier,
+        })
+      }
+
+      // Send email via announcements endpoint if needed
+      if (form.postAction === 'EMAIL_ONLY' || form.postAction === 'POST_AND_EMAIL') {
+        await api.post('/api/announcements', {
+          title:   `${form.type === 'LOST' ? '😢 Lost' : '🎉 Found'}: ${form.title}`,
+          content: [
+            form.description,
+            form.location ? `Location: ${form.location}` : '',
+            `Posted by Flat ${user?.flatNo}. Please contact them if you have information.`,
+          ].filter(Boolean).join('\n\n'),
+          type:     'NOTICE',
+          audience: 'EVERYONE',
+        })
+      }
+
       await fetchItems()
       setShowAdd(false)
       setForm(EMPTY_FORM)
-    } catch { alert('Failed to post') }
-    finally { setSaving(false) }
+
+      const msg = form.postAction === 'POST_ONLY'
+        ? '✓ Posted successfully'
+        : form.postAction === 'EMAIL_ONLY'
+        ? `✓ Email sent to ${recipientCount} residents`
+        : `✓ Posted and emailed ${recipientCount} residents`
+
+      setResultBanner({ text: msg, success: true })
+      setTimeout(() => setResultBanner(null), 5000)
+
+    } catch {
+      alert('Failed to post')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleResolve = async (id) => {
@@ -154,7 +297,8 @@ export default function LostFound() {
   const formatDate = (str) => {
     if (!str) return ''
     return new Date(str).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric'
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric', month: 'short', year: 'numeric',
     })
   }
 
@@ -172,12 +316,31 @@ export default function LostFound() {
 
       <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-3">
 
+        {/* Result banner */}
+        {resultBanner && (
+          <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl"
+            style={{
+              background: '#ecfdf5',
+              border: '1px solid #6ee7b7',
+            }}>
+            <div className="flex items-center gap-2">
+              <Mail size={14} style={{ color: 'var(--emerald)', flexShrink: 0 }} />
+              <span className="text-[12px] font-medium" style={{ color: '#065f46' }}>
+                {resultBanner.text}
+              </span>
+            </div>
+            <button onClick={() => setResultBanner(null)}
+              className="text-[16px] leading-none font-bold"
+              style={{ color: '#065f46' }}>×</button>
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: 'Open',  value: openCount,  color: 'var(--indigo)', bg: 'var(--indigo-lt)' },
-            { label: 'Lost',  value: lostCount,  color: '#e11d48', bg: '#fff1f2' },
-            { label: 'Found', value: foundCount, color: '#059669', bg: '#ecfdf5' },
+            { label: 'Lost',  value: lostCount,  color: '#e11d48',       bg: '#fff1f2' },
+            { label: 'Found', value: foundCount, color: '#059669',       bg: '#ecfdf5' },
           ].map(s => (
             <div key={s.label} className="card p-3 text-center">
               <div className="text-[22px] font-bold" style={{ color: s.color }}>{s.value}</div>
@@ -222,7 +385,7 @@ export default function LostFound() {
 
         ) : filtered.length === 0 ? (
           <div className="card p-12 text-center">
-            <PackageSearch size={36} className="mx-auto mb-3"
+            <Package size={36} className="mx-auto mb-3"
               style={{ color: 'var(--ink-4)' }} strokeWidth={1} />
             <p className="text-[14px] font-bold" style={{ color: 'var(--ink-2)' }}>
               {search ? 'No items match your search' : 'Nothing lost or found yet!'}
@@ -240,7 +403,7 @@ export default function LostFound() {
               return (
                 <div key={item.id} className="card p-4"
                   style={{
-                    border: `1.5px solid ${isOpen ? t.border : 'var(--border)'}`,
+                    border:  `1.5px solid ${isOpen ? t.border : 'var(--border)'}`,
                     opacity: isOpen ? 1 : 0.7,
                   }}>
                   <div className="flex items-start gap-3">
@@ -305,8 +468,13 @@ export default function LostFound() {
       </div>
 
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Post Lost / Found Item">
-        <ItemForm form={form} setForm={setForm} errors={errors}
-          saving={saving} onSave={handleSave} onCancel={() => setShowAdd(false)} />
+        <ItemForm
+          form={form} setForm={setForm}
+          errors={errors} saving={saving}
+          recipientCount={recipientCount}
+          onSave={handleSave}
+          onCancel={() => setShowAdd(false)}
+        />
       </Modal>
     </div>
   )
