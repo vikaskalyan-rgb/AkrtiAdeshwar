@@ -16,7 +16,10 @@ const SLOT_LABELS  = {
 
 function formatPatrolDate(dateStr) {
   const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+  return d.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+  })
 }
 
 function getCompliancColor(pct) {

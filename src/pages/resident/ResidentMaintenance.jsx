@@ -31,7 +31,7 @@ const STEP = {
 
 export default function ResidentMaintenance() {
   const { user } = useAuth()
-  const now = new Date()
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
 
   const [payments,   setPayments]   = useState([])
   const [loading,    setLoading]    = useState(true)
@@ -66,7 +66,7 @@ export default function ResidentMaintenance() {
   const totalPending = payments.filter(p => p.status === 'UNPAID').reduce((s,p) => s + (p.amount||4200), 0)
 
   const getMonthLabel = (month, year) =>
-    new Date(year, month-1).toLocaleString('default', { month:'short', year:'numeric' })
+  new Date(year, month-1).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month:'short', year:'numeric' })
 
   const openPayModal = (payment) => {
     setShowPay(payment)

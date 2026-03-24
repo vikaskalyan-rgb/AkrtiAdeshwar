@@ -655,11 +655,11 @@ const WorkerRow = ({ w, group, canEdit, onEdit, showFlat = false }) => (
           </span>
         )}
         {w.joiningDate && (
-          <span className="text-[10px]" style={{ color: 'var(--ink-4)' }}>
-            Since {new Date(w.joiningDate).toLocaleDateString('en-IN',
-              { month: 'short', year: 'numeric' })}
-          </span>
-        )}
+  <span className="text-[10px]" style={{ color: 'var(--ink-4)' }}>
+    Since {new Date(w.joiningDate + 'T12:00:00').toLocaleDateString('en-IN',
+      { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' })}
+  </span>
+)}
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5">

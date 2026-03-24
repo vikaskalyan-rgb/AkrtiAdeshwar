@@ -77,10 +77,15 @@ export default function Visitors() {
     }
   }
 
-  const formatTime = (dateStr) => {
-    try { return format(new Date(dateStr), 'h:mm a') }
-    catch { return dateStr }
-  }
+const formatTime = (dateStr) => {
+  if (!dateStr) return ''
+  try {
+    return new Date(dateStr).toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit', minute: '2-digit', hour12: true,
+    })
+  } catch { return dateStr }
+}
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background:'var(--surface-2)' }}>

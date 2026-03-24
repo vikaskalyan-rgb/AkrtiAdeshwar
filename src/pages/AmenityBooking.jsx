@@ -162,7 +162,8 @@ export default function AmenityBooking() {
   const [errors,      setErrors]      = useState({})
   const [saving,      setSaving]      = useState(false)
 
-  const today    = new Date()
+const now      = new Date()
+const today    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const [calYear,  setCalYear]  = useState(today.getFullYear())
   const [calMonth, setCalMonth] = useState(today.getMonth())
 
@@ -249,19 +250,20 @@ export default function AmenityBooking() {
   }
 
   const formatDate = (str) => {
-    if (!str) return ''
-    return new Date(str + 'T12:00:00').toLocaleDateString('en-IN', {
-      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
-    })
-  }
+  if (!str) return ''
+  return new Date(str + 'T12:00:00').toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+  })
+}
 
-  const formatCreated = (str) => {
-    if (!str) return ''
-    return new Date(str).toLocaleDateString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      day: 'numeric', month: 'short'
-    })
-  }
+const formatCreated = (str) => {
+  if (!str) return ''
+  return new Date(str).toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: 'numeric', month: 'short'
+  })
+}
 
   // ── Calendar ─────────────────────────────────────────────
   const calDays = () => {

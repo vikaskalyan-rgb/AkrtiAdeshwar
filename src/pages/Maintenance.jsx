@@ -35,13 +35,13 @@ function fmtTile(n) {
 
 function getLast6Months() {
   const months = []
-  const now = new Date()
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     months.push({
       month: d.getMonth() + 1,
       year:  d.getFullYear(),
-      label: d.toLocaleString('default', { month: 'short', year: 'numeric' }),
+      label: d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' }),
     })
   }
   return months

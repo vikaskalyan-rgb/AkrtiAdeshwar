@@ -15,7 +15,7 @@ const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'
 
 function getLastNMonths(n) {
   const result = []
-  const now = new Date()
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   for (let i = 0; i < n; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     result.push({ month: d.getMonth() + 1, year: d.getFullYear() })
@@ -90,13 +90,13 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const now      = new Date()
-  const { user } = useAuth()
+ const { user } = useAuth()
+const nowIST   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
 
-  const [selectedMonth, setSelectedMonth] = useState({
-    month: now.getMonth() + 1,
-    year:  now.getFullYear(),
-  })
+const [selectedMonth, setSelectedMonth] = useState({
+  month: nowIST.getMonth() + 1,
+  year:  nowIST.getFullYear(),
+})
 
   const [dashboard,     setDashboard]     = useState(null)
   const [trend,         setTrend]         = useState([])
@@ -406,7 +406,7 @@ export default function Dashboard() {
                     <div className="text-[12px] font-medium leading-tight"
                       style={{ color: 'var(--ink)' }}>{c.title}</div>
                     <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>
-                      {c.flatNo} · {c.createdAt}
+                      {c.flatNo} · {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' }) : ''}
                     </div>
                   </div>
                   <StatusBadge status={c.status === 'IN_PROGRESS' ? 'in-progress' : c.status?.toLowerCase()} />
@@ -473,8 +473,10 @@ export default function Dashboard() {
                     <StatusBadge status={a.type?.toLowerCase()} />
                     <div className="text-[12px] font-medium mt-1 leading-tight"
                       style={{ color: 'var(--ink)' }}>{a.title}</div>
-                    <div className="text-[10px] mt-0.5"
-                      style={{ color: 'var(--ink-3)' }}>{a.postedAt}</div>
+                    <div className="text-[10px] mt.0.5"
+  style={{ color: 'var(--ink-3)' }}>
+  {a.postedAt ? new Date(a.postedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+</div>
                   </div>
                 ))
               }

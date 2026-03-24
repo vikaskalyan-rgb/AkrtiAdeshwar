@@ -282,16 +282,16 @@ function exportToPDF({ trendData, rangeLabel, totalCollected, totalExpenses, tot
 }
 
 export default function Reports() {
-  const now = new Date()
+const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
 
-  const [fromMonth, setFromMonth] = useState({
-    month: now.getMonth() - 4 <= 0 ? now.getMonth() + 8 : now.getMonth() - 4,
-    year:  now.getMonth() - 4 <= 0 ? now.getFullYear() - 1 : now.getFullYear()
-  })
-  const [toMonth, setToMonth] = useState({
-    month: now.getMonth() + 1,
-    year:  now.getFullYear()
-  })
+const [fromMonth, setFromMonth] = useState({
+  month: now.getMonth() - 4 <= 0 ? now.getMonth() + 8 : now.getMonth() - 4,
+  year:  now.getMonth() - 4 <= 0 ? now.getFullYear() - 1 : now.getFullYear()
+})
+const [toMonth, setToMonth] = useState({
+  month: now.getMonth() + 1,
+  year:  now.getFullYear()
+})
 
   const [trendData, setTrendData] = useState([])
   const [flats, setFlats]         = useState([])
@@ -315,7 +315,7 @@ export default function Reports() {
             expenses: expRes.data.total || 0,
             surplus:  (mainRes.data.collected || 0) - (expRes.data.total || 0),
             label: new Date(m.year, m.month - 1)
-              .toLocaleString('default', { month: 'short', year: '2-digit' }),
+  .toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: '2-digit' }),
           }
         })),
         api.get('/api/flats'),
@@ -338,8 +338,8 @@ export default function Reports() {
   const ownerFlats  = flats.filter(f => f.ownerType === 'OWNER_OCCUPIED')
 
   const rangeLabel = `${new Date(fromMonth.year, fromMonth.month-1)
-    .toLocaleString('default',{month:'short',year:'numeric'})} → ${new Date(toMonth.year, toMonth.month-1)
-    .toLocaleString('default',{month:'short',year:'numeric'})}`
+  .toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month:'short', year:'numeric' })} → ${new Date(toMonth.year, toMonth.month-1)
+  .toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month:'short', year:'numeric' })}`
 
   const handleExport = () => {
     setExporting(true)

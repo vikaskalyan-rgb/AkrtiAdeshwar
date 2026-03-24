@@ -31,9 +31,8 @@ const EMPTY_FORM = {
   description: '',
   category: 'STAFFING',
   amount: '',
-  date: new Date().toISOString().split('T')[0]
+  date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
 }
-
 const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null
   return (
@@ -46,8 +45,8 @@ const CustomTooltip = ({ active, payload }) => {
 
 export default function Expenses() {
   const { user } = useAuth()
-  const now = new Date()
-  const [selectedMonth, setSelectedMonth] = useState({ month: now.getMonth()+1, year: now.getFullYear(), label:'Mar 2026' })
+ const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+const [selectedMonth, setSelectedMonth] = useState({ month: nowIST.getMonth()+1, year: nowIST.getFullYear(), label:'Mar 2026' })
   const [expenses, setExpenses] = useState([])
   const [summary, setSummary] = useState({ total:0, byCategory:{} })
   const [allMonthTotals, setAllMonthTotals] = useState({})
