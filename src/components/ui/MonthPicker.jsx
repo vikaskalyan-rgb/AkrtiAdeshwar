@@ -15,7 +15,7 @@ export function MonthPicker({ value, onChange, label }) {
   }, [])
 
   const select = (month) => {
-    onChange({ month: month + 1, year: viewYear })
+    onChange({ month: month + 1, year: viewYear }) 
     setOpen(false)
   }
 

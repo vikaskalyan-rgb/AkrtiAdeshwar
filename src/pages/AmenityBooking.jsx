@@ -3,11 +3,13 @@ import Topbar from '../components/layout/Topbar'
 import { Modal } from '../components/ui'
 import {
   PlusCircle, CheckCircle2, XCircle, Clock,
-  CalendarDays, Building2, ChevronLeft, ChevronRight, Mail
+  CalendarDays, Building2, ChevronLeft, ChevronRight,
+  Mail, Smartphone, ExternalLink, Info
 } from 'lucide-react'
 import api from '../api/config'
 import { useAuth } from '../context/AuthContext'
 
+// ── Constants ─────────────────────────────────────────────
 const AMENITIES = [
   { value: 'COMMUNITY_HALL', label: 'Community Hall', icon: Building2, color: '#5b52f0', bg: '#eeeeff' },
 ]
@@ -19,9 +21,20 @@ const TIME_SLOTS = [
 ]
 
 const STATUS_STYLE = {
-  PENDING:  { color: '#d97706', bg: '#fffbeb', border: '#fde68a',  label: 'Pending' },
-  APPROVED: { color: '#059669', bg: '#ecfdf5', border: '#6ee7b7',  label: 'Approved' },
-  REJECTED: { color: '#e11d48', bg: '#fff1f2', border: '#fca5a5',  label: 'Rejected' },
+  PENDING:          { color: '#d97706', bg: '#fffbeb', border: '#fde68a', label: 'Pending Approval' },
+  APPROVED:         { color: '#0284c7', bg: '#f0f9ff', border: '#7dd3fc', label: 'Approved — Pay ₹2,000' },
+  PAYMENT_PENDING:  { color: '#0284c7', bg: '#f0f9ff', border: '#7dd3fc', label: 'Pay ₹2,000 to Confirm' },
+  CONFIRMED:        { color: '#059669', bg: '#ecfdf5', border: '#6ee7b7', label: 'Confirmed ✓' },
+  REJECTED:         { color: '#e11d48', bg: '#fff1f2', border: '#fca5a5', label: 'Rejected' },
+}
+
+const HALL_BOOKING_FEE = 2000
+const UPI_ID           = 'ppr.05219.21092023.00196023@cnrb'
+const PAYEE_NAME       = 'Akrti Aadeshwar Owners Association'
+
+function buildUpiUrl(flatNo, purpose) {
+  const note = `Hall Booking ${purpose} Flat ${flatNo}`
+  return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${HALL_BOOKING_FEE}&cu=INR&tn=${encodeURIComponent(note)}`
 }
 
 // ── Field — outside to prevent re-mount ──────────────────
@@ -37,29 +50,33 @@ const Field = ({ label, required, hint, children }) => (
 
 // ── BookingForm — outside to prevent re-mount ─────────────
 const BookingForm = ({ form, setForm, errors, saving, takenDates, onSave, onCancel }) => {
-  const today = new Date().toISOString().split('T')[0]
+  const today   = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
   const isTaken = form.bookingDate && takenDates.includes(form.bookingDate)
 
   return (
     <div className="space-y-4">
 
-      {/* Amenity display */}
+      {/* Amenity */}
       <div>
         <label className="text-[11px] font-bold uppercase tracking-wide block mb-2"
           style={{ color: 'var(--ink-2)' }}>Amenity</label>
         {AMENITIES.map(a => {
           const Icon = a.icon
           return (
-            <div key={a.value}
-              className="flex items-center gap-3 p-3 rounded-xl"
+            <div key={a.value} className="flex items-center gap-3 p-3 rounded-xl"
               style={{ background: a.bg, border: `2px solid ${a.color}` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center"
                 style={{ background: a.color }}>
                 <Icon size={16} className="text-white" />
               </div>
-              <span className="text-[13px] font-bold" style={{ color: a.color }}>
-                {a.label}
-              </span>
+              <div>
+                <span className="text-[13px] font-bold" style={{ color: a.color }}>
+                  {a.label}
+                </span>
+                <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>
+                  Booking fee: ₹2,000 (payable after approval)
+                </div>
+              </div>
             </div>
           )
         })}
@@ -83,8 +100,7 @@ const BookingForm = ({ form, setForm, errors, saving, takenDates, onSave, onCanc
       {/* Time */}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Start Time" required>
-          <select className="select w-full"
-            value={form.startTime}
+          <select className="select w-full" value={form.startTime}
             onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}>
             <option value="">From...</option>
             {TIME_SLOTS.map(t => <option key={t}>{t}</option>)}
@@ -94,8 +110,7 @@ const BookingForm = ({ form, setForm, errors, saving, takenDates, onSave, onCanc
           )}
         </Field>
         <Field label="End Time">
-          <select className="select w-full"
-            value={form.endTime}
+          <select className="select w-full" value={form.endTime}
             onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}>
             <option value="">To...</option>
             {TIME_SLOTS.map(t => <option key={t}>{t}</option>)}
@@ -120,13 +135,13 @@ const BookingForm = ({ form, setForm, errors, saving, takenDates, onSave, onCanc
         <div className="flex items-center gap-2">
           <Mail size={12} style={{ color: 'var(--indigo)', flexShrink: 0 }} />
           <p className="text-[11px]" style={{ color: 'var(--indigo)' }}>
-            Your request will be emailed to all committee admins for approval.
+            Request will be emailed to all committee admins for approval.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Clock size={12} style={{ color: 'var(--indigo)', flexShrink: 0 }} />
           <p className="text-[11px]" style={{ color: 'var(--indigo)' }}>
-            You will receive an email once approved or rejected.
+            Once approved, pay <strong>₹2,000</strong> via UPI to confirm the booking.
           </p>
         </div>
       </div>
@@ -142,28 +157,228 @@ const BookingForm = ({ form, setForm, errors, saving, takenDates, onSave, onCanc
   )
 }
 
+// ── Pay Modal — shown to resident after approval ──────────
+const PayBookingModal = ({ booking, onPaid, onCancel }) => {
+  const { user }   = useAuth()
+  const [step, setStep]       = useState('choose') // choose | apps | confirm
+  const [payRef, setPayRef]   = useState('')
+  const [paying, setPaying]   = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  const upiUrl  = buildUpiUrl(user?.flatNo, booking?.purpose)
+
+  const UPI_APPS = [
+    { name: 'Google Pay',  emoji: '🔵', color: '#4285F4', bg: '#EAF2FF',
+      url: upiUrl.replace('upi://', 'gpay://upi/') },
+    { name: 'PhonePe',     emoji: '🟣', color: '#5f259f', bg: '#F3ECFF',
+      url: `phonepe://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${HALL_BOOKING_FEE}&cu=INR` },
+    { name: 'Paytm',       emoji: '🔷', color: '#00BAF2', bg: '#E6F9FF',
+      url: `paytmmp://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${HALL_BOOKING_FEE}&cu=INR` },
+    { name: 'BHIM / Other',emoji: '📱', color: '#FF6B35', bg: '#FFF0EB',
+      url: upiUrl },
+  ]
+
+  const handleUpiClick = (url) => {
+    window.location.href = url
+    setTimeout(() => setStep('confirm'), 2000)
+  }
+
+  const handleConfirmPaid = async () => {
+    setPaying(true)
+    try {
+      await api.patch(`/api/amenity-bookings/${booking.id}/confirm-payment`, {
+        transactionRef: payRef,
+      })
+      setSuccess(true)
+      setTimeout(() => { onPaid() }, 2000)
+    } catch {
+      alert('Failed to confirm payment. Please try again.')
+    } finally {
+      setPaying(false)
+    }
+  }
+
+  if (success) return (
+    <div className="flex flex-col items-center gap-3 py-6">
+      <div className="text-[56px]">🎉</div>
+      <div className="text-[18px] font-bold" style={{ color: '#059669' }}>
+        Booking Confirmed!
+      </div>
+      <div className="text-[13px] text-center" style={{ color: 'var(--ink-3)' }}>
+        Community Hall is booked for <strong>{booking.purpose}</strong>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+
+      {/* Amount banner */}
+      <div className="rounded-xl p-4 text-center"
+        style={{ background: 'var(--indigo-lt)', border: '1px solid var(--indigo-md)' }}>
+        <div className="text-[11px] font-medium" style={{ color: 'var(--ink-3)' }}>
+          Hall Booking Fee
+        </div>
+        <div className="text-[36px] font-bold" style={{ color: 'var(--indigo)', letterSpacing: '-0.03em' }}>
+          ₹2,000
+        </div>
+        <div className="text-[11px] mt-0.5" style={{ color: 'var(--ink-3)' }}>
+          {booking.purpose} · {booking.bookingDate}
+        </div>
+        <div className="text-[10px] mt-1" style={{ color: 'var(--ink-4)' }}>
+          Payee: {PAYEE_NAME}
+        </div>
+      </div>
+
+      {/* Step: Choose */}
+      {step === 'choose' && (
+        <div className="space-y-3">
+          <p className="text-[12px] text-center font-medium" style={{ color: 'var(--ink-3)' }}>
+            Pay ₹2,000 to confirm your hall booking
+          </p>
+          <button onClick={() => setStep('apps')}
+            className="w-full flex items-center gap-3 p-4 rounded-2xl transition-all hover:scale-105"
+            style={{ background: 'var(--indigo-lt)', border: '2px solid var(--indigo)' }}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+              style={{ background: 'var(--indigo)' }}>
+              <Smartphone size={22} className="text-white" />
+            </div>
+            <div className="text-left">
+              <div className="text-[13px] font-bold" style={{ color: 'var(--indigo)' }}>
+                Pay via UPI
+              </div>
+              <div className="text-[10px]" style={{ color: 'var(--ink-3)' }}>
+                GPay · PhonePe · Paytm · BHIM
+              </div>
+            </div>
+          </button>
+
+          {/* Bank details */}
+          <div className="rounded-xl p-3"
+            style={{ background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
+            <div className="text-[9px] font-bold uppercase tracking-wide mb-2"
+              style={{ color: 'var(--ink-3)' }}>Bank Transfer Details</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              {[
+                ['Account No', '5219101005304'],
+                ['IFSC', 'CNRB0005219'],
+                ['Bank', 'Canara Bank'],
+                ['UPI ID', UPI_ID],
+              ].map(([k, v]) => (
+                <div key={k}>
+                  <div className="text-[9px]" style={{ color: 'var(--ink-4)' }}>{k}</div>
+                  <div className="text-[10px] font-semibold" style={{ color: 'var(--ink-2)' }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => setStep('confirm')}
+            className="w-full text-center text-[11px] font-medium py-2"
+            style={{ color: 'var(--indigo)' }}>
+            Already paid via bank transfer? Confirm here →
+          </button>
+        </div>
+      )}
+
+      {/* Step: UPI Apps */}
+      {step === 'apps' && (
+        <div className="space-y-3">
+          <p className="text-[12px] text-center font-medium" style={{ color: 'var(--ink-3)' }}>
+            Choose your UPI app — ₹2,000 will be pre-filled
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {UPI_APPS.map(app => (
+              <button key={app.name} onClick={() => handleUpiClick(app.url)}
+                className="flex items-center gap-2 p-3 rounded-xl transition-all hover:scale-105"
+                style={{ background: app.bg, border: `1.5px solid ${app.color}33` }}>
+                <span className="text-[24px]">{app.emoji}</span>
+                <div className="text-left flex-1">
+                  <div className="text-[12px] font-bold" style={{ color: app.color }}>
+                    {app.name}
+                  </div>
+                </div>
+                <ExternalLink size={11} style={{ color: app.color, flexShrink: 0 }} />
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+            style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
+            <Info size={12} style={{ color: 'var(--amber)', flexShrink: 0 }} />
+            <span className="text-[10px]" style={{ color: '#78350f' }}>
+              After paying, come back and tap "I've Paid" below.
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setStep('confirm')}
+              className="btn-primary flex-1 justify-center">
+              <CheckCircle2 size={13} /> I've Paid — Confirm
+            </button>
+            <button onClick={() => setStep('choose')} className="btn-ghost">Back</button>
+          </div>
+        </div>
+      )}
+
+      {/* Step: Confirm */}
+      {step === 'confirm' && (
+        <div className="space-y-4">
+          <p className="text-[13px] font-bold text-center" style={{ color: 'var(--ink)' }}>
+            Confirm your payment of ₹2,000
+          </p>
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5"
+              style={{ color: 'var(--ink-2)' }}>
+              UPI Transaction ID <span style={{ color: 'var(--ink-4)', fontWeight: 400 }}>(optional but recommended)</span>
+            </label>
+            <input className="input" placeholder="e.g. 406812345678"
+              value={payRef}
+              onChange={e => setPayRef(e.target.value)} />
+            <p className="text-[10px] mt-1" style={{ color: 'var(--ink-3)' }}>
+              Find it in your UPI app under transaction history
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleConfirmPaid} disabled={paying}
+              className="btn-primary flex-1 justify-center">
+              <CheckCircle2 size={14} />
+              {paying ? 'Confirming...' : 'Yes, I Paid ₹2,000 ✓'}
+            </button>
+            <button onClick={() => setStep('apps')} className="btn-ghost">Back</button>
+          </div>
+        </div>
+      )}
+
+      <button onClick={onCancel}
+        className="w-full text-center text-[11px]" style={{ color: 'var(--ink-4)' }}>
+        Cancel
+      </button>
+    </div>
+  )
+}
+
 // ── Main Component ────────────────────────────────────────
 export default function AmenityBooking() {
   const { user }  = useAuth()
   const isAdmin   = user?.role === 'admin'
 
-  const [bookings,    setBookings]    = useState([])
-  const [loading,     setLoading]     = useState(true)
-  const [filter,      setFilter]      = useState('ALL')
-  const [showBook,    setShowBook]    = useState(false)
-  const [actionModal, setActionModal] = useState(null)
-  const [adminNote,   setAdminNote]   = useState('')
-  const [acting,      setActing]      = useState(false)
+  const [bookings,     setBookings]     = useState([])
+  const [loading,      setLoading]      = useState(true)
+  const [filter,       setFilter]       = useState('ALL')
+  const [showBook,     setShowBook]     = useState(false)
+  const [actionModal,  setActionModal]  = useState(null)
+  const [payModal,     setPayModal]     = useState(null) // booking to pay for
+  const [adminNote,    setAdminNote]    = useState('')
+  const [acting,       setActing]       = useState(false)
   const [resultBanner, setResultBanner] = useState(null)
-  const [form,        setForm]        = useState({
+  const [form,         setForm]         = useState({
     amenity: 'COMMUNITY_HALL', bookingDate: '',
     startTime: '', endTime: '', purpose: '',
   })
-  const [errors,      setErrors]      = useState({})
-  const [saving,      setSaving]      = useState(false)
+  const [errors,       setErrors]       = useState({})
+  const [saving,       setSaving]       = useState(false)
 
-const now      = new Date()
-const today    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+  const now   = new Date()
+  const today = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const [calYear,  setCalYear]  = useState(today.getFullYear())
   const [calMonth, setCalMonth] = useState(today.getMonth())
 
@@ -182,7 +397,7 @@ const today    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata'
   }
 
   const takenDates = bookings
-    .filter(b => b.status !== 'REJECTED')
+    .filter(b => b.status === 'CONFIRMED' || b.status === 'APPROVED')
     .map(b => b.bookingDate)
 
   const filtered = bookings.filter(b =>
@@ -191,9 +406,9 @@ const today    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata'
 
   const validate = () => {
     const e = {}
-    if (!form.bookingDate)       e.bookingDate = 'Please select a date'
-    if (!form.startTime)         e.startTime   = 'Select start time'
-    if (!form.purpose?.trim())   e.purpose     = 'Please enter the purpose'
+    if (!form.bookingDate)     e.bookingDate = 'Please select a date'
+    if (!form.startTime)       e.startTime   = 'Select start time'
+    if (!form.purpose?.trim()) e.purpose     = 'Please enter the purpose'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -209,7 +424,7 @@ const today    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata'
       })
       await fetchBookings()
       setShowBook(false)
-      setForm({ amenity:'COMMUNITY_HALL', bookingDate:'', startTime:'', endTime:'', purpose:'' })
+      setForm({ amenity: 'COMMUNITY_HALL', bookingDate: '', startTime: '', endTime: '', purpose: '' })
       setResultBanner({
         text: '✓ Request submitted! All admins have been notified by email.',
         success: true,
@@ -233,7 +448,9 @@ const today    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata'
       setActionModal(null)
       setAdminNote('')
       setResultBanner({
-        text: `✓ Booking ${actionModal.action === 'approve' ? 'approved' : 'rejected'} — resident notified by email`,
+        text: actionModal.action === 'approve'
+          ? '✓ Approved! Resident notified to pay ₹2,000 to confirm booking.'
+          : '✓ Booking rejected — resident notified by email.',
         success: actionModal.action === 'approve',
       })
       setTimeout(() => setResultBanner(null), 5000)
@@ -250,22 +467,22 @@ const today    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata'
   }
 
   const formatDate = (str) => {
-  if (!str) return ''
-  return new Date(str + 'T12:00:00').toLocaleDateString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
-  })
-}
+    if (!str) return ''
+    return new Date(str + 'T12:00:00').toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+    })
+  }
 
-const formatCreated = (str) => {
-  if (!str) return ''
-  return new Date(str).toLocaleDateString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: 'numeric', month: 'short'
-  })
-}
+  const formatCreated = (str) => {
+    if (!str) return ''
+    return new Date(str).toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric', month: 'short'
+    })
+  }
 
-  // ── Calendar ─────────────────────────────────────────────
+  // ── Calendar ──────────────────────────────────────────────
   const calDays = () => {
     const first    = new Date(calYear, calMonth, 1).getDay()
     const total    = new Date(calYear, calMonth + 1, 0).getDate()
@@ -274,7 +491,8 @@ const formatCreated = (str) => {
     for (let i = 0; i < first; i++) days.push(null)
     for (let d = 1; d <= total; d++) {
       const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-      const booking = bookings.find(b => b.bookingDate === dateStr && b.status !== 'REJECTED')
+      const booking = bookings.find(b =>
+        b.bookingDate === dateStr && b.status !== 'REJECTED')
       days.push({ day: d, dateStr, booking, isToday: dateStr === todayStr })
     }
     return days
@@ -353,8 +571,10 @@ const formatCreated = (str) => {
                 className="aspect-square flex items-center justify-center rounded-lg text-[11px] font-medium relative"
                 style={!d ? {} : d.booking
                   ? {
-                      background: d.booking.status === 'APPROVED' ? '#ecfdf5' : '#fffbeb',
-                      color:      d.booking.status === 'APPROVED' ? '#059669' : '#d97706',
+                      background: d.booking.status === 'CONFIRMED' ? '#ecfdf5'
+                                : d.booking.status === 'APPROVED'  ? '#f0f9ff' : '#fffbeb',
+                      color:      d.booking.status === 'CONFIRMED' ? '#059669'
+                                : d.booking.status === 'APPROVED'  ? '#0284c7' : '#d97706',
                       fontWeight: 700,
                     }
                   : d.isToday
@@ -369,9 +589,10 @@ const formatCreated = (str) => {
             ))}
           </div>
 
-          <div className="flex gap-4 mt-3 justify-center">
+          <div className="flex gap-3 mt-3 justify-center flex-wrap">
             {[
-              { color: '#059669', bg: '#ecfdf5', l: 'Approved' },
+              { color: '#059669', bg: '#ecfdf5', l: 'Confirmed' },
+              { color: '#0284c7', bg: '#f0f9ff', l: 'Pay Pending' },
               { color: '#d97706', bg: '#fffbeb', l: 'Pending' },
               { color: 'white',   bg: 'var(--indigo)', l: 'Today' },
             ].map(({ color, bg, l }) => (
@@ -386,10 +607,11 @@ const formatCreated = (str) => {
         {/* Filter tabs */}
         <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {[
-            { v: 'ALL',      l: 'All' },
-            { v: 'PENDING',  l: '⏳ Pending' },
-            { v: 'APPROVED', l: '✅ Approved' },
-            { v: 'REJECTED', l: '❌ Rejected' },
+            { v: 'ALL',       l: 'All' },
+            { v: 'PENDING',   l: '⏳ Pending' },
+            { v: 'APPROVED',  l: '💳 Pay Now' },
+            { v: 'CONFIRMED', l: '✅ Confirmed' },
+            { v: 'REJECTED',  l: '❌ Rejected' },
           ].map(({ v, l }) => (
             <button key={v} onClick={() => setFilter(v)}
               className="px-3 py-1.5 rounded-xl text-[11px] font-semibold flex-shrink-0 transition-all"
@@ -403,7 +625,7 @@ const formatCreated = (str) => {
           ))}
         </div>
 
-        {/* Bookings */}
+        {/* Bookings list */}
         {loading ? (
           <div className="card p-12 text-center text-[13px]"
             style={{ color: 'var(--ink-4)' }}>Loading...</div>
@@ -425,9 +647,26 @@ const formatCreated = (str) => {
             {filtered.map(b => {
               const ss    = STATUS_STYLE[b.status] || STATUS_STYLE.PENDING
               const isOwn = b.flatNo === user?.flatNo
+              const needsPayment = isOwn && b.status === 'APPROVED'
+
               return (
                 <div key={b.id} className="card p-4"
-                  style={{ border: `1.5px solid ${ss.border}` }}>
+                  style={{
+                    border: `1.5px solid ${ss.border}`,
+                    background: needsPayment ? '#f0f9ff' : 'white',
+                  }}>
+
+                  {/* Pay now banner */}
+                  {needsPayment && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+                      style={{ background: '#0284c7', }}>
+                      <span className="text-[14px]">💳</span>
+                      <span className="text-[12px] font-bold text-white flex-1">
+                        Approved! Pay ₹2,000 to confirm your booking
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[14px] font-bold" style={{ color: 'var(--ink)' }}>
@@ -455,9 +694,28 @@ const formatCreated = (str) => {
                         Admin note: {b.adminNote}
                       </div>
                     )}
+                    {b.status === 'CONFIRMED' && (
+                      <div className="mt-2 flex items-center gap-1.5"
+                        style={{ color: '#059669' }}>
+                        <CheckCircle2 size={13} />
+                        <span className="text-[11px] font-semibold">
+                          Payment received · Booking confirmed
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-2 mt-3">
+                    {/* Resident: Pay ₹2000 after approval */}
+                    {needsPayment && (
+                      <button onClick={() => setPayModal(b)}
+                        className="btn-primary flex-1 justify-center"
+                        style={{ background: '#0284c7' }}>
+                        <Smartphone size={13} /> Pay ₹2,000 to Confirm
+                      </button>
+                    )}
+
+                    {/* Admin: approve/reject */}
                     {isAdmin && b.status === 'PENDING' && (
                       <>
                         <button
@@ -474,6 +732,8 @@ const formatCreated = (str) => {
                         </button>
                       </>
                     )}
+
+                    {/* Resident: cancel pending */}
                     {isOwn && b.status === 'PENDING' && (
                       <button onClick={() => handleCancel(b.id)}
                         className="px-3 py-1.5 rounded-xl text-[11px] font-semibold"
@@ -499,6 +759,19 @@ const formatCreated = (str) => {
         />
       </Modal>
 
+      {/* Pay ₹2000 Modal */}
+      <Modal open={!!payModal}
+        onClose={() => setPayModal(null)}
+        title="Pay Hall Booking Fee" width="max-w-sm">
+        {payModal && (
+          <PayBookingModal
+            booking={payModal}
+            onPaid={() => { setPayModal(null); fetchBookings(); setResultBanner({ text: '🎉 Booking confirmed! Community Hall is yours.', success: true }) }}
+            onCancel={() => setPayModal(null)}
+          />
+        )}
+      </Modal>
+
       {/* Admin Approve/Reject Modal */}
       <Modal open={!!actionModal}
         onClose={() => { setActionModal(null); setAdminNote('') }}
@@ -516,6 +789,16 @@ const formatCreated = (str) => {
               </div>
             </div>
 
+            {actionModal.action === 'approve' && (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                style={{ background: '#f0f9ff', border: '1px solid #7dd3fc' }}>
+                <span className="text-[13px]">💳</span>
+                <span className="text-[11px]" style={{ color: '#0369a1' }}>
+                  After approval, resident will be asked to pay <strong>₹2,000</strong> to confirm the booking.
+                </span>
+              </div>
+            )}
+
             <div>
               <label className="text-[11px] font-semibold block mb-1.5"
                 style={{ color: 'var(--ink-2)' }}>
@@ -523,7 +806,7 @@ const formatCreated = (str) => {
               </label>
               <textarea className="input resize-none h-16"
                 placeholder={actionModal.action === 'approve'
-                  ? 'e.g. Approved. Please clean up after the event.'
+                  ? 'e.g. Approved. Please pay ₹2,000 and clean up after the event.'
                   : 'e.g. Hall is already reserved for society meeting.'}
                 value={adminNote}
                 onChange={e => setAdminNote(e.target.value)} />
