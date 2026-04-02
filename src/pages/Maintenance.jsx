@@ -158,6 +158,16 @@ export default function Maintenance() {
       alert('Failed to send reminder')
     }
   }
+  const handleUndoPay = async (payment) => {
+  if (!confirm(`Undo payment for Flat ${payment.flatNo} — ${selectedMonth.label}? This will mark it as UNPAID.`)) return
+  try {
+    await api.post(`/api/maintenance/flat/${payment.flatNo}/unpay?month=${payment.month}&year=${payment.year}`)
+    await fetchPayments()
+    closeModal()
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to undo payment')
+  }
+}
 
   const filteredPayments = useMemo(() => {
     return payments
@@ -801,15 +811,23 @@ export default function Maintenance() {
               )}
 
               {/* ── PAID ── */}
-              {selectedPayment.status === 'PAID' && (
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-                  style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
-                  <CheckCircle2 size={14} style={{ color: 'var(--emerald)' }} />
-                  <span className="text-[12px] font-medium" style={{ color: '#065f46' }}>
-                    Paid on {selectedPayment.paidOn} via {selectedPayment.paymentMode}
-                  </span>
-                </div>
-              )}
+{selectedPayment.status === 'PAID' && (
+  <div className="space-y-2">
+    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+      style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
+      <CheckCircle2 size={14} style={{ color: 'var(--emerald)' }} />
+      <span className="text-[12px] font-medium" style={{ color: '#065f46' }}>
+        Paid on {selectedPayment.paidOn} via {selectedPayment.paymentMode}
+      </span>
+    </div>
+    <button
+      onClick={() => handleUndoPay(selectedPayment)}
+      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-semibold"
+      style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fca5a5' }}>
+      ↩ Undo — Mark as Unpaid
+    </button>
+  </div>
+)}
             </div>
           )
         })()}

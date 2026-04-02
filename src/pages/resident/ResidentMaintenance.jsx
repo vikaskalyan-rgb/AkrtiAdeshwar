@@ -108,6 +108,15 @@ export default function ResidentMaintenance() {
       setSubmitting(false)
     }
   }
+  const handleUndoPay = async (payment) => {
+  if (!confirm(`Undo payment for ${getMonthLabel(payment.month, payment.year)}? This will mark it as unpaid.`)) return
+  try {
+    await api.post(`/api/maintenance/flat/${user.flatNo}/unpay?month=${payment.month}&year=${payment.year}`)
+    await fetchPayments()
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to undo payment')
+  }
+}
 
   const amount       = showPay?.amount || MONTHLY_AMOUNT
   const monthLabel   = showPay ? getMonthLabel(showPay.month, showPay.year) : ''
@@ -272,12 +281,16 @@ export default function ResidentMaintenance() {
                       ₹{(p.amount||MONTHLY_AMOUNT).toLocaleString()}
                     </div>
                   </div>
-                  {p.status === 'UNPAID'
-                    ? <button onClick={() => openPayModal(p)}
-                        className="text-[11px] px-3 py-1.5 rounded-xl font-semibold flex-shrink-0"
-                        style={{ background:'#ffe4e6', color:'#9f1239' }}>Pay</button>
-                    : <StatusBadge status="paid" />
-                  }
+                 {p.status === 'UNPAID'
+  ? <button onClick={() => openPayModal(p)}
+      className="text-[11px] px-3 py-1.5 rounded-xl font-semibold flex-shrink-0"
+      style={{ background:'#ffe4e6', color:'#9f1239' }}>Pay</button>
+  : <button onClick={() => handleUndoPay(p)}
+      className="text-[11px] px-3 py-1.5 rounded-xl font-semibold flex-shrink-0"
+      style={{ background:'#fff1f2', color:'#e11d48', border: '1px solid #fca5a5' }}>
+      ↩ Undo
+    </button>
+}
                 </div>
               ))}
             </div>
