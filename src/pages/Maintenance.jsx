@@ -211,17 +211,49 @@ export default function Maintenance() {
     return matchSearch && matchStatus
   }
 
-  // ── All UPI apps use standard upi:// scheme (same as QR code) ──
-  const getUpiApps = (amount) => {
-    const url = buildUpiUrl(amount, user?.flatNo, selectedMonth.label)
-    return [
-      { name: 'Google Pay',   color: '#4285F4', bg: '#EAF2FF', emoji: '🔵', url },
-      { name: 'PhonePe',      color: '#5f259f', bg: '#F3ECFF', emoji: '🟣', url },
-      { name: 'Paytm',        color: '#00BAF2', bg: '#E6F9FF', emoji: '🔷', url },
-      { name: 'BHIM / Other', color: '#FF6B35', bg: '#FFF0EB', emoji: '📱', url },
-    ]
-  }
+  // In both Maintenance.jsx and ResidentMaintenance.jsx
+// Replace getUpiApps / upiApps with this:
 
+const getUpiApps = (amount) => {
+  const note = encodeURIComponent(`Maintenance ${selectedMonth.label} Flat ${user?.flatNo}`)
+  const pa   = encodeURIComponent(UPI_ID)
+  const pn   = encodeURIComponent(PAYEE_NAME)
+
+  return [
+    {
+      name:  'Google Pay',
+      color: '#4285F4',
+      bg:    '#EAF2FF',
+      emoji: '🔵',
+      // GPay specific scheme — opens GPay directly
+      url: `gpay://upi/pay?pa=${pa}&pn=${pn}&cu=INR&tn=${note}`,
+    },
+    {
+      name:  'PhonePe',
+      color: '#5f259f',
+      bg:    '#F3ECFF',
+      emoji: '🟣',
+      // PhonePe specific scheme
+      url: `phonepe://pay?pa=${pa}&pn=${pn}&cu=INR&tn=${note}`,
+    },
+    {
+      name:  'Paytm',
+      color: '#00BAF2',
+      bg:    '#E6F9FF',
+      emoji: '🔷',
+      // Paytm specific scheme
+      url: `paytmmp://pay?pa=${pa}&pn=${pn}&cu=INR&tn=${note}`,
+    },
+    {
+      name:  'BHIM / Other',
+      color: '#FF6B35',
+      bg:    '#FFF0EB',
+      emoji: '📱',
+      // Generic UPI — opens default UPI app
+      url: `upi://pay?pa=${pa}&pn=${pn}&cu=INR&tn=${note}`,
+    },
+  ]
+}
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
       <Topbar
