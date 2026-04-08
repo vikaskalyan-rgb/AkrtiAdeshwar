@@ -158,16 +158,17 @@ export default function Maintenance() {
       alert('Failed to send reminder')
     }
   }
+
   const handleUndoPay = async (payment) => {
-  if (!confirm(`Undo payment for Flat ${payment.flatNo} — ${selectedMonth.label}? This will mark it as UNPAID.`)) return
-  try {
-    await api.post(`/api/maintenance/flat/${payment.flatNo}/unpay?month=${payment.month}&year=${payment.year}`)
-    await fetchPayments()
-    closeModal()
-  } catch (err) {
-    alert(err.response?.data?.message || 'Failed to undo payment')
+    if (!confirm(`Undo payment for Flat ${payment.flatNo} — ${selectedMonth.label}? This will mark it as UNPAID.`)) return
+    try {
+      await api.post(`/api/maintenance/flat/${payment.flatNo}/unpay?month=${payment.month}&year=${payment.year}`)
+      await fetchPayments()
+      closeModal()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to undo payment')
+    }
   }
-}
 
   const filteredPayments = useMemo(() => {
     return payments
@@ -210,36 +211,16 @@ export default function Maintenance() {
     return matchSearch && matchStatus
   }
 
-  const getUpiApps = (amount) => [
-    {
-      name:  'Google Pay',
-      color: '#4285F4',
-      bg:    '#EAF2FF',
-      emoji: '🔵',
-      url:   buildUpiUrl(amount, user?.flatNo, selectedMonth.label).replace('upi://', 'gpay://upi/'),
-    },
-    {
-      name:  'PhonePe',
-      color: '#5f259f',
-      bg:    '#F3ECFF',
-      emoji: '🟣',
-      url:   `phonepe://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Maintenance ${selectedMonth.label} Flat ${user?.flatNo}`)}`,
-    },
-    {
-      name:  'Paytm',
-      color: '#00BAF2',
-      bg:    '#E6F9FF',
-      emoji: '🔷',
-      url:   `paytmmp://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR`,
-    },
-    {
-      name:  'BHIM / Other',
-      color: '#FF6B35',
-      bg:    '#FFF0EB',
-      emoji: '📱',
-      url:   buildUpiUrl(amount, user?.flatNo, selectedMonth.label),
-    },
-  ]
+  // ── All UPI apps use standard upi:// scheme (same as QR code) ──
+  const getUpiApps = (amount) => {
+    const url = buildUpiUrl(amount, user?.flatNo, selectedMonth.label)
+    return [
+      { name: 'Google Pay',   color: '#4285F4', bg: '#EAF2FF', emoji: '🔵', url },
+      { name: 'PhonePe',      color: '#5f259f', bg: '#F3ECFF', emoji: '🟣', url },
+      { name: 'Paytm',        color: '#00BAF2', bg: '#E6F9FF', emoji: '🔷', url },
+      { name: 'BHIM / Other', color: '#FF6B35', bg: '#FFF0EB', emoji: '📱', url },
+    ]
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
@@ -611,7 +592,6 @@ export default function Maintenance() {
               {/* ── UNPAID: Admin's OWN flat ── */}
               {selectedPayment.status === 'UNPAID' && isOwn && (
                 <>
-                  {/* Amount banner */}
                   <div className="rounded-xl p-3 text-center"
                     style={{ background:'var(--indigo-lt)', border:'1px solid var(--indigo-md)' }}>
                     <div className="text-[11px]" style={{ color:'var(--ink-3)' }}>Amount Due</div>
@@ -624,7 +604,6 @@ export default function Maintenance() {
                     </div>
                   </div>
 
-                  {/* Success */}
                   {paySuccess && (
                     <div className="flex flex-col items-center gap-2 py-3">
                       <CheckCircle2 size={36} style={{ color:'var(--emerald)' }} />
@@ -635,7 +614,6 @@ export default function Maintenance() {
                     </div>
                   )}
 
-                  {/* CHOOSE */}
                   {!paySuccess && payStep === PAY_STEP.CHOOSE && (
                     <div className="space-y-3">
                       <p className="text-[12px] text-center" style={{ color:'var(--ink-3)' }}>
@@ -681,7 +659,6 @@ export default function Maintenance() {
                     </div>
                   )}
 
-                  {/* UPI APPS */}
                   {!paySuccess && payStep === PAY_STEP.UPI_APPS && (
                     <div className="space-y-3">
                       <p className="text-[12px] text-center" style={{ color:'var(--ink-3)' }}>
@@ -720,7 +697,6 @@ export default function Maintenance() {
                     </div>
                   )}
 
-                  {/* UPI CONFIRM */}
                   {!paySuccess && payStep === PAY_STEP.UPI_CONF && (
                     <div className="space-y-3">
                       <p className="text-[13px] font-bold text-center" style={{ color:'var(--ink)' }}>
@@ -757,7 +733,6 @@ export default function Maintenance() {
                     </div>
                   )}
 
-                  {/* MANUAL */}
                   {!paySuccess && payStep === PAY_STEP.MANUAL && (
                     <div className="space-y-3">
                       <p className="text-[12px] text-center" style={{ color:'var(--ink-3)' }}>
@@ -811,23 +786,23 @@ export default function Maintenance() {
               )}
 
               {/* ── PAID ── */}
-{selectedPayment.status === 'PAID' && (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-      style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
-      <CheckCircle2 size={14} style={{ color: 'var(--emerald)' }} />
-      <span className="text-[12px] font-medium" style={{ color: '#065f46' }}>
-        Paid on {selectedPayment.paidOn} via {selectedPayment.paymentMode}
-      </span>
-    </div>
-    <button
-      onClick={() => handleUndoPay(selectedPayment)}
-      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-semibold"
-      style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fca5a5' }}>
-      ↩ Undo — Mark as Unpaid
-    </button>
-  </div>
-)}
+              {selectedPayment.status === 'PAID' && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                    style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
+                    <CheckCircle2 size={14} style={{ color: 'var(--emerald)' }} />
+                    <span className="text-[12px] font-medium" style={{ color: '#065f46' }}>
+                      Paid on {selectedPayment.paidOn} via {selectedPayment.paymentMode}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleUndoPay(selectedPayment)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-semibold"
+                    style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fca5a5' }}>
+                    ↩ Undo — Mark as Unpaid
+                  </button>
+                </div>
+              )}
             </div>
           )
         })()}

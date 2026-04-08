@@ -21,12 +21,11 @@ function buildUpiUrl(amount, flatNo, monthLabel) {
 
 const PAYMENT_MODES = ['UPI', 'Cash', 'Bank Transfer', 'Cheque']
 
-// Pay step states
 const STEP = {
-  CHOOSE:   'choose',    // choose between Pay via UPI or Already Paid
-  UPI_APPS: 'upi_apps',  // show UPI app buttons
-  UPI_CONF: 'upi_conf',  // "Did payment succeed?" confirmation
-  MANUAL:   'manual',    // already paid — enter mode + ref
+  CHOOSE:   'choose',
+  UPI_APPS: 'upi_apps',
+  UPI_CONF: 'upi_conf',
+  MANUAL:   'manual',
 }
 
 export default function ResidentMaintenance() {
@@ -66,7 +65,7 @@ export default function ResidentMaintenance() {
   const totalPending = payments.filter(p => p.status === 'UNPAID').reduce((s,p) => s + (p.amount||4200), 0)
 
   const getMonthLabel = (month, year) =>
-  new Date(year, month-1).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month:'short', year:'numeric' })
+    new Date(year, month-1).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month:'short', year:'numeric' })
 
   const openPayModal = (payment) => {
     setShowPay(payment)
@@ -84,7 +83,6 @@ export default function ResidentMaintenance() {
 
   const handleUpiAppClick = (appUrl) => {
     window.location.href = appUrl
-    // After returning from UPI app, show confirmation
     setTimeout(() => setStep(STEP.UPI_CONF), 2000)
   }
 
@@ -108,50 +106,27 @@ export default function ResidentMaintenance() {
       setSubmitting(false)
     }
   }
+
   const handleUndoPay = async (payment) => {
-  if (!confirm(`Undo payment for ${getMonthLabel(payment.month, payment.year)}? This will mark it as unpaid.`)) return
-  try {
-    await api.post(`/api/maintenance/flat/${user.flatNo}/unpay?month=${payment.month}&year=${payment.year}`)
-    await fetchPayments()
-  } catch (err) {
-    alert(err.response?.data?.message || 'Failed to undo payment')
+    if (!confirm(`Undo payment for ${getMonthLabel(payment.month, payment.year)}? This will mark it as unpaid.`)) return
+    try {
+      await api.post(`/api/maintenance/flat/${user.flatNo}/unpay?month=${payment.month}&year=${payment.year}`)
+      await fetchPayments()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to undo payment')
+    }
   }
-}
 
-  const amount       = showPay?.amount || MONTHLY_AMOUNT
-  const monthLabel   = showPay ? getMonthLabel(showPay.month, showPay.year) : ''
-  const upiUrl       = showPay ? buildUpiUrl(amount, user?.flatNo, monthLabel) : ''
+  const amount     = showPay?.amount || MONTHLY_AMOUNT
+  const monthLabel = showPay ? getMonthLabel(showPay.month, showPay.year) : ''
 
-  // UPI app deep links
+  // ── All UPI apps use standard upi:// scheme (same as QR code) ──
+  const upiUrl = showPay ? buildUpiUrl(amount, user?.flatNo, monthLabel) : ''
   const upiApps = [
-    {
-      name: 'Google Pay',
-      color: '#4285F4',
-      bg:    '#EAF2FF',
-      url:   upiUrl.replace('upi://', 'gpay://upi/'),
-      emoji: '🔵',
-    },
-    {
-      name: 'PhonePe',
-      color: '#5f259f',
-      bg:    '#F3ECFF',
-      url:   `phonepe://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Maintenance ${monthLabel} Flat ${user?.flatNo}`)}`,
-      emoji: '🟣',
-    },
-    {
-      name: 'Paytm',
-      color: '#00BAF2',
-      bg:    '#E6F9FF',
-      url:   `paytmmp://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR`,
-      emoji: '🔷',
-    },
-    {
-      name: 'BHIM / Other',
-      color: '#FF6B35',
-      bg:    '#FFF0EB',
-      url:   upiUrl,
-      emoji: '📱',
-    },
+    { name: 'Google Pay',   color: '#4285F4', bg: '#EAF2FF', emoji: '🔵', url: upiUrl },
+    { name: 'PhonePe',      color: '#5f259f', bg: '#F3ECFF', emoji: '🟣', url: upiUrl },
+    { name: 'Paytm',        color: '#00BAF2', bg: '#E6F9FF', emoji: '🔷', url: upiUrl },
+    { name: 'BHIM / Other', color: '#FF6B35', bg: '#FFF0EB', emoji: '📱', url: upiUrl },
   ]
 
   return (
@@ -281,30 +256,27 @@ export default function ResidentMaintenance() {
                       ₹{(p.amount||MONTHLY_AMOUNT).toLocaleString()}
                     </div>
                   </div>
-                 {p.status === 'UNPAID'
-  ? <button onClick={() => openPayModal(p)}
-      className="text-[11px] px-3 py-1.5 rounded-xl font-semibold flex-shrink-0"
-      style={{ background:'#ffe4e6', color:'#9f1239' }}>Pay</button>
-  : <button onClick={() => handleUndoPay(p)}
-      className="text-[11px] px-3 py-1.5 rounded-xl font-semibold flex-shrink-0"
-      style={{ background:'#fff1f2', color:'#e11d48', border: '1px solid #fca5a5' }}>
-      ↩ Undo
-    </button>
-}
+                  {p.status === 'UNPAID'
+                    ? <button onClick={() => openPayModal(p)}
+                        className="text-[11px] px-3 py-1.5 rounded-xl font-semibold flex-shrink-0"
+                        style={{ background:'#ffe4e6', color:'#9f1239' }}>Pay</button>
+                    : <button onClick={() => handleUndoPay(p)}
+                        className="text-[11px] px-3 py-1.5 rounded-xl font-semibold flex-shrink-0"
+                        style={{ background:'#fff1f2', color:'#e11d48', border: '1px solid #fca5a5' }}>
+                        ↩ Undo
+                      </button>
+                  }
                 </div>
               ))}
             </div>
-
           </>
         )}
       </div>
 
       {/* ── Pay Modal ── */}
-      <Modal open={!!showPay} onClose={closePayModal}
-        title={`Pay — ${monthLabel}`}>
+      <Modal open={!!showPay} onClose={closePayModal} title={`Pay — ${monthLabel}`}>
         {showPay && (
           <>
-            {/* Amount header — always visible */}
             <div className="rounded-xl p-4 text-center mb-4"
               style={{ background:'var(--indigo-lt)', border:'1px solid var(--indigo-md)' }}>
               <div className="text-[11px] font-medium" style={{ color:'var(--ink-3)' }}>Amount Due</div>
@@ -320,14 +292,13 @@ export default function ResidentMaintenance() {
               </div>
             </div>
 
-            {/* ── STEP 1: Choose ── */}
+            {/* STEP 1: Choose */}
             {step === STEP.CHOOSE && (
               <div className="space-y-3">
                 <p className="text-[12px] text-center font-medium" style={{ color:'var(--ink-3)' }}>
                   How would you like to pay?
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Option 1 — Pay via UPI */}
                   <button onClick={() => setStep(STEP.UPI_APPS)}
                     className="flex flex-col items-center gap-2.5 p-4 rounded-2xl transition-all hover:scale-105"
                     style={{ background:'var(--indigo-lt)', border:'2px solid var(--indigo)' }}>
@@ -344,8 +315,6 @@ export default function ResidentMaintenance() {
                       </div>
                     </div>
                   </button>
-
-                  {/* Option 2 — Already Paid */}
                   <button onClick={() => setStep(STEP.MANUAL)}
                     className="flex flex-col items-center gap-2.5 p-4 rounded-2xl transition-all hover:scale-105"
                     style={{ background:'#ecfdf5', border:'2px solid var(--emerald)' }}>
@@ -363,8 +332,6 @@ export default function ResidentMaintenance() {
                     </div>
                   </button>
                 </div>
-
-                {/* Bank details */}
                 <div className="rounded-xl p-3" style={{ background:'var(--surface-3)', border:'1px solid var(--border)' }}>
                   <div className="text-[9px] font-bold uppercase tracking-wide mb-2"
                     style={{ color:'var(--ink-3)' }}>Bank Transfer Details</div>
@@ -385,7 +352,7 @@ export default function ResidentMaintenance() {
               </div>
             )}
 
-            {/* ── STEP 2: UPI Apps ── */}
+            {/* STEP 2: UPI Apps */}
             {step === STEP.UPI_APPS && (
               <div className="space-y-3">
                 <p className="text-[12px] text-center font-medium" style={{ color:'var(--ink-3)' }}>
@@ -411,7 +378,6 @@ export default function ResidentMaintenance() {
                     </button>
                   ))}
                 </div>
-
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
                   style={{ background:'#fffbeb', border:'1px solid #fde68a' }}>
                   <Info size={13} style={{ color:'var(--amber)', flexShrink:0 }} />
@@ -419,7 +385,6 @@ export default function ResidentMaintenance() {
                     After paying, come back to this app and confirm your payment.
                   </span>
                 </div>
-
                 <div className="flex gap-2">
                   <button onClick={() => setStep(STEP.UPI_CONF)}
                     className="btn-primary flex-1 justify-center">
@@ -430,7 +395,7 @@ export default function ResidentMaintenance() {
               </div>
             )}
 
-            {/* ── STEP 3: UPI Confirmation ── */}
+            {/* STEP 3: UPI Confirmation */}
             {step === STEP.UPI_CONF && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center gap-2 py-2">
@@ -445,7 +410,6 @@ export default function ResidentMaintenance() {
                     Check your UPI app for a success message before confirming.
                   </p>
                 </div>
-
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5"
                     style={{ color:'var(--ink-2)' }}>
@@ -458,12 +422,8 @@ export default function ResidentMaintenance() {
                     Find it in your UPI app under transaction history
                   </p>
                 </div>
-
                 <div className="grid grid-cols-2 gap-3">
-                  {/* YES — success */}
-                  <button
-                    onClick={() => handleMarkPaid('UPI', payRef)}
-                    disabled={submitting}
+                  <button onClick={() => handleMarkPaid('UPI', payRef)} disabled={submitting}
                     className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all"
                     style={{ background:'#ecfdf5', border:'2px solid var(--emerald)' }}>
                     <CheckCircle2 size={28} style={{ color:'var(--emerald)' }} />
@@ -471,10 +431,7 @@ export default function ResidentMaintenance() {
                       {submitting ? 'Recording...' : 'Yes, Payment Done ✓'}
                     </div>
                   </button>
-
-                  {/* NO — failed */}
-                  <button
-                    onClick={() => setStep(STEP.UPI_APPS)}
+                  <button onClick={() => setStep(STEP.UPI_APPS)}
                     className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all"
                     style={{ background:'#fff1f2', border:'2px solid var(--rose)' }}>
                     <span className="text-[28px]">✗</span>
@@ -483,7 +440,6 @@ export default function ResidentMaintenance() {
                     </div>
                   </button>
                 </div>
-
                 <button onClick={() => setStep(STEP.CHOOSE)}
                   className="w-full text-center text-[11px]" style={{ color:'var(--ink-4)' }}>
                   ← Back to payment options
@@ -491,13 +447,12 @@ export default function ResidentMaintenance() {
               </div>
             )}
 
-            {/* ── STEP 4: Manual / Already Paid ── */}
+            {/* STEP 4: Manual */}
             {step === STEP.MANUAL && (
               <div className="space-y-4">
                 <p className="text-[12px] text-center font-medium" style={{ color:'var(--ink-3)' }}>
                   Select how you paid and confirm
                 </p>
-
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wide block mb-2"
                     style={{ color:'var(--ink-2)' }}>Payment Mode</label>
@@ -513,7 +468,6 @@ export default function ResidentMaintenance() {
                     ))}
                   </div>
                 </div>
-
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wide block mb-1.5"
                     style={{ color:'var(--ink-2)' }}>
@@ -522,7 +476,6 @@ export default function ResidentMaintenance() {
                   <input className="input" placeholder="UPI transaction ID, receipt no. etc."
                     value={payRef} onChange={e => setPayRef(e.target.value)} />
                 </div>
-
                 <div className="flex gap-2">
                   <button onClick={() => handleMarkPaid(payMode, payRef)} disabled={submitting}
                     className="btn-primary flex-1 justify-center">
