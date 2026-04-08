@@ -9,11 +9,11 @@ import { useAuth } from '../context/AuthContext'
 const UPI_ID     = 'ppr.05219.21092023.00196023@cnrb'
 const PAYEE_NAME = 'Akrti Aadeshwar Owners Association'
 
+// Fixed — no amount, treated as P2P, no merchant restrictions
 function buildUpiUrl(amount, flatNo, monthLabel) {
   const note = `Maintenance ${monthLabel} Flat ${flatNo}`
-  return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`
+  return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&cu=INR&tn=${encodeURIComponent(note)}`
 }
-
 const PAY_STEP = {
   CHOOSE:   'choose',
   UPI_APPS: 'upi_apps',
