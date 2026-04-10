@@ -22,6 +22,16 @@ const ADMIN_CATEGORIES = [
     ],
   },
   {
+    label: 'Community',
+    color: '#d97706',
+    items: [
+      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/lost-found',      icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
+      { to: '/deliveries',      icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+      { to: '/amenities',       icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  {
     label: 'Residents',
     color: '#0284c7',
     items: [
@@ -42,16 +52,6 @@ const ADMIN_CATEGORIES = [
       { to: '/org-chart',       icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
     ],
   },
-  {
-    label: 'Community',
-    color: '#d97706',
-    items: [
-      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/lost-found',      icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',      icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',       icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
-    ],
-  },
 ]
 
 const OWNER_CATEGORIES = [
@@ -67,6 +67,16 @@ const OWNER_CATEGORIES = [
     ],
   },
   {
+    label: 'Community',
+    color: '#d97706',
+    items: [
+      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
+      { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+      { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  {
     label: 'Society',
     color: '#0284c7',
     items: [
@@ -77,16 +87,6 @@ const OWNER_CATEGORIES = [
       { to: '/resident/directory',    icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/org-chart',    icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
       { to: '/resident/workers',      icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
-    ],
-  },
-  {
-    label: 'Community',
-    color: '#d97706',
-    items: [
-      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
     ],
   },
 ]
@@ -102,6 +102,16 @@ const TENANT_CATEGORIES = [
     ],
   },
   {
+    label: 'Community',
+    color: '#d97706',
+    items: [
+      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
+      { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+      { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  {
     label: 'Society',
     color: '#0284c7',
     items: [
@@ -112,16 +122,6 @@ const TENANT_CATEGORIES = [
       { to: '/resident/directory',    icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/org-chart',    icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
       { to: '/resident/workers',      icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
-    ],
-  },
-  {
-    label: 'Community',
-    color: '#d97706',
-    items: [
-      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
     ],
   },
 ]
