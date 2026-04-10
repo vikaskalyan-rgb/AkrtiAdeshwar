@@ -1,8 +1,10 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, CreditCard, MessageSquareWarning,
-  Megaphone, Users, Building2, FileBarChart2, Receipt, LogOut, Menu, X, Network, Users2, Shield ,MapPin, Package, CalendarDays, PackageSearch
+  Megaphone, Users, Building2, FileBarChart2, Receipt,
+  LogOut, Menu, X, Network, Users2, Shield, MapPin,
+  Package, CalendarDays, PackageSearch, ChevronLeft, Home
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useState } from 'react'
@@ -16,25 +18,17 @@ const NAV = [
   { label: 'Society', items: [
     { to: '/resident/announcements', icon: Megaphone,     label: 'Announcements' },
     { to: '/resident/visitors',      icon: Users,         label: 'Visitors' },
-    { to: '/resident/watchman', icon: Shield, label: 'Night Patrol' },
-    { to: '/resident/nearby', icon: MapPin, label: 'Nearby Places' },
+    { to: '/resident/watchman',      icon: Shield,        label: 'Night Patrol' },
+    { to: '/resident/nearby',        icon: MapPin,        label: 'Nearby Places' },
     { to: '/resident/expenses',      icon: Receipt,       label: 'Expenses',       ownerOnly: true },
     { to: '/resident/directory',     icon: Building2,     label: 'Flat Directory' },
     { to: '/resident/org-chart',     icon: Network,       label: 'Committee' },
-    { to: '/resident/workers',   icon: Users2,       label: 'Workers' },
-{ to: '/lost-found',         icon: PackageSearch,      label: 'Lost & Found' },
-{ to: '/deliveries',         icon: Package,      label: 'Deliveries' },
-{ to: '/amenities',          icon: CalendarDays, label: 'Hall Booking' },
-{ to: '/resident/reports',   icon: FileBarChart2, label: 'Reports', ownerOnly: true },
+    { to: '/resident/workers',       icon: Users2,        label: 'Workers' },
+    { to: '/lost-found',             icon: PackageSearch, label: 'Lost & Found' },
+    { to: '/deliveries',             icon: Package,       label: 'Deliveries' },
+    { to: '/amenities',              icon: CalendarDays,  label: 'Hall Booking' },
+    { to: '/resident/reports',       icon: FileBarChart2, label: 'Reports',        ownerOnly: true },
   ]},
-]
-
-const BOTTOM_NAV = [
-  { to: '/resident',               icon: LayoutDashboard,      label: 'Home' },
-  { to: '/resident/maintenance',   icon: CreditCard,           label: 'Pay' },
-  { to: '/resident/complaints',    icon: MessageSquareWarning, label: 'Issues' },
-  { to: '/resident/announcements', icon: Megaphone,            label: 'Notice' },
-  { to: '/resident/directory',     icon: Building2,            label: 'Flats' },
 ]
 
 const READ_ONLY = [
@@ -46,15 +40,42 @@ const READ_ONLY = [
   '/resident/org-chart',
 ]
 
+// Page title map — shown in mobile topbar
+const PAGE_TITLES = {
+  '/resident':               'Dashboard',
+  '/resident/maintenance':   'My Maintenance',
+  '/resident/complaints':    'My Complaints',
+  '/resident/announcements': 'Announcements',
+  '/resident/visitors':      'Visitors',
+  '/resident/watchman':      'Night Patrol',
+  '/resident/nearby':        'Nearby Places',
+  '/resident/expenses':      'Expenses',
+  '/resident/directory':     'Flat Directory',
+  '/resident/org-chart':     'Committee',
+  '/resident/workers':       'Workers',
+  '/resident/reports':       'Reports',
+  '/lost-found':             'Lost & Found',
+  '/deliveries':             'Deliveries',
+  '/amenities':              'Hall Booking',
+  '/home':                   'Home',
+}
+
 export default function ResidentLayout({ children }) {
   const { user, logout } = useAuth()
-  const location = useLocation()
+  const location  = useLocation()
+  const navigate  = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const isActive = (to) =>
     to === '/resident' ? location.pathname === '/resident' : location.pathname.startsWith(to)
 
-  const isOwner = user?.role === 'owner'
+  const isOwner  = user?.role === 'owner'
+  const isHome   = location.pathname === '/home'
+  const isDash   = location.pathname === '/resident'
+  // On mobile — show home screen route OR dashboard as "root" (no back button needed)
+  const isRoot   = isHome || isDash
+
+  const pageTitle = PAGE_TITLES[location.pathname] || 'Akriti Adeshwar'
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--surface-2)' }}>
@@ -73,7 +94,7 @@ export default function ResidentLayout({ children }) {
           </div>
           <div className="flex items-center gap-1.5 mt-1.5">
             <span className="w-1.5 h-1.5 rounded-full pulse-dot inline-block"
-              style={{ background: 'var(--emerald)' }}></span>
+              style={{ background: 'var(--emerald)' }} />
             <span className="text-[10px] font-medium" style={{ color: 'var(--ink-3)' }}>
               Flat {user?.flatNo} · {user?.role === 'owner' ? 'Owner' : 'Tenant'}
             </span>
@@ -106,8 +127,7 @@ export default function ResidentLayout({ children }) {
                       )}
                     </NavLink>
                   )
-                })
-              }
+                })}
             </div>
           ))}
         </nav>
@@ -120,8 +140,9 @@ export default function ResidentLayout({ children }) {
               {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold truncate"
-                style={{ color: 'var(--ink)' }}>{user?.name}</div>
+              <div className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                {user?.name}
+              </div>
               <div className="text-[10px]" style={{ color: 'var(--ink-3)' }}>
                 Flat {user?.flatNo} · {user?.role === 'owner' ? 'Owner' : 'Tenant'}
               </div>
@@ -135,24 +156,63 @@ export default function ResidentLayout({ children }) {
         </div>
       </aside>
 
-      {/* ── Mobile top bar ── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white flex items-center justify-between px-4 py-3"
+      {/* ── Mobile topbar ── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white flex items-center px-3 gap-2"
         style={{ borderBottom: '1px solid var(--border)', height: '56px' }}>
-        <div>
-          <div className="text-[9px] font-bold tracking-[2px] uppercase"
-            style={{ color: 'var(--emerald)' }}>
-            Resident · Flat {user?.flatNo}
-          </div>
-          <div className="text-[15px] font-bold leading-tight"
-            style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-            Akriti Adeshwar
-          </div>
-        </div>
-        <button onClick={() => setMobileMenuOpen(true)}
-          className="w-9 h-9 flex items-center justify-center rounded-xl"
-          style={{ background: 'var(--surface-3)', color: 'var(--ink-2)' }}>
-          <Menu size={18} />
-        </button>
+
+        {isRoot ? (
+          /* Home / Dashboard — show app name */
+          <>
+            <div className="flex-1">
+              <div className="text-[9px] font-bold tracking-[2px] uppercase"
+                style={{ color: 'var(--emerald)' }}>
+                Resident · Flat {user?.flatNo}
+              </div>
+              <div className="text-[15px] font-bold leading-tight"
+                style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+                Akriti Adeshwar
+              </div>
+            </div>
+            {/* Home button — navigate to HomeScreen */}
+            <button onClick={() => navigate('/home')}
+              className="w-9 h-9 flex items-center justify-center rounded-xl"
+              style={{ background: 'var(--surface-3)', color: 'var(--indigo)' }}>
+              <Home size={17} />
+            </button>
+            <button onClick={() => setMobileMenuOpen(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl"
+              style={{ background: 'var(--surface-3)', color: 'var(--ink-2)' }}>
+              <Menu size={18} />
+            </button>
+          </>
+        ) : (
+          /* Inside a page — show back button + page title */
+          <>
+            <button
+              onClick={() => navigate(-1)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ background: 'var(--surface-3)', color: 'var(--ink-2)' }}>
+              <ChevronLeft size={20} />
+            </button>
+            <div className="flex-1 min-w-0">
+              <div className="text-[15px] font-bold truncate"
+                style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
+                {pageTitle}
+              </div>
+            </div>
+            {/* Home shortcut */}
+            <button onClick={() => navigate('/home')}
+              className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ background: 'var(--surface-3)', color: 'var(--indigo)' }}>
+              <Home size={17} />
+            </button>
+            <button onClick={() => setMobileMenuOpen(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ background: 'var(--surface-3)', color: 'var(--ink-2)' }}>
+              <Menu size={18} />
+            </button>
+          </>
+        )}
       </div>
 
       {/* ── Mobile slide-in menu ── */}
@@ -180,6 +240,15 @@ export default function ResidentLayout({ children }) {
               </button>
             </div>
 
+            {/* Home button inside drawer */}
+            <button
+              onClick={() => { navigate('/home'); setMobileMenuOpen(false) }}
+              className="flex items-center gap-3 mx-3 mt-3 px-3 py-2.5 rounded-xl"
+              style={{ background: 'var(--indigo-lt)', color: 'var(--indigo)', border: '1px solid var(--indigo-md)' }}>
+              <Home size={16} />
+              <span className="text-[13px] font-semibold">Home Screen</span>
+            </button>
+
             <nav className="flex-1 overflow-y-auto px-3 py-3">
               {NAV.map(section => (
                 <div key={section.label} className="mb-4">
@@ -200,8 +269,7 @@ export default function ResidentLayout({ children }) {
                           <span className="flex-1">{item.label}</span>
                         </NavLink>
                       )
-                    })
-                  }
+                    })}
                 </div>
               ))}
             </nav>
@@ -214,8 +282,9 @@ export default function ResidentLayout({ children }) {
                   {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold truncate"
-                    style={{ color: 'var(--ink)' }}>{user?.name}</div>
+                  <div className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                    {user?.name}
+                  </div>
                   <div className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
                     Flat {user?.flatNo} · {user?.role === 'owner' ? 'Owner' : 'Tenant'}
                   </div>
@@ -232,40 +301,9 @@ export default function ResidentLayout({ children }) {
       )}
 
       {/* ── Main content ── */}
-      <main className="flex-1 overflow-hidden pt-[56px] md:pt-0 pb-[64px] md:pb-0">
+      <main className="flex-1 overflow-hidden pt-[56px] md:pt-0">
         {children}
       </main>
-
-      {/* ── Mobile bottom nav ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white flex items-center justify-around px-2"
-        style={{
-          height: 'var(--bottom-nav-h)',
-          borderTop: '1px solid var(--border)',
-          boxShadow: '0 -4px 12px rgba(26,26,46,0.06)'
-        }}>
-        {BOTTOM_NAV.map(item => {
-          const Icon   = item.icon
-          const active = isActive(item.to)
-          return (
-            <NavLink key={item.to} to={item.to}
-              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all relative"
-              style={{ color: active ? 'var(--emerald)' : 'var(--ink-4)' }}>
-              <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
-              <span className="text-[10px] font-semibold">{item.label}</span>
-              {active && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
-                  style={{ background: 'var(--emerald)' }} />
-              )}
-            </NavLink>
-          )
-        })}
-        <button onClick={() => setMobileMenuOpen(true)}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl"
-          style={{ color: 'var(--ink-4)' }}>
-          <Menu size={20} strokeWidth={1.8} />
-          <span className="text-[10px] font-semibold">More</span>
-        </button>
-      </nav>
     </div>
   )
 }
