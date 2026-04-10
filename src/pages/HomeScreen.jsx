@@ -26,6 +26,7 @@ const ADMIN_CATEGORIES = [
     color: '#d97706',
     items: [
       { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/nearby',          icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/lost-found',      icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
       { to: '/deliveries',      icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
       { to: '/amenities',       icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
@@ -48,7 +49,6 @@ const ADMIN_CATEGORIES = [
     items: [
       { to: '/workers',         icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
       { to: '/watchman',        icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/nearby',          icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/org-chart',       icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
     ],
   },
@@ -71,6 +71,7 @@ const OWNER_CATEGORIES = [
     color: '#d97706',
     items: [
       { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/nearby',       icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
       { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
       { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
@@ -83,7 +84,6 @@ const OWNER_CATEGORIES = [
       { to: '/resident/announcements',icon: Megaphone,            label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
       { to: '/resident/visitors',     icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
       { to: '/resident/watchman',     icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/resident/nearby',       icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/directory',    icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/org-chart',    icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
       { to: '/resident/workers',      icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
@@ -106,6 +106,7 @@ const TENANT_CATEGORIES = [
     color: '#d97706',
     items: [
       { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/nearby',       icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
       { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
       { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
@@ -118,7 +119,6 @@ const TENANT_CATEGORIES = [
       { to: '/resident/announcements',icon: Megaphone,            label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
       { to: '/resident/visitors',     icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
       { to: '/resident/watchman',     icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/resident/nearby',       icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/directory',    icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/org-chart',    icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
       { to: '/resident/workers',      icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
