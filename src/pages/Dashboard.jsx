@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../api/config'
 import { ChevronRight, Calendar, Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import StepsDashboardWidget from '../components/StepsDashboardWidget'
 
 function fmt(n) {
   if (n >= 100000) return `₹${(n/100000).toFixed(2)}L`
@@ -40,6 +41,7 @@ function MonthSelector({ value, onChange }) {
   const isSelected = (m) => m.month === value?.month && m.year === value?.year
 
   return (
+    
     <div className="relative" ref={ref}>
       <button onClick={() => setOpen(!open)}
         className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
@@ -217,7 +219,7 @@ const [selectedMonth, setSelectedMonth] = useState({
         }
       />
       <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-3 md:space-y-4">
-
+<StepsDashboardWidget />
         {/* KPI Row */}
         <div className="kpi-grid">
           <KpiCard
@@ -259,6 +261,7 @@ const [selectedMonth, setSelectedMonth] = useState({
                 Report →
               </button>
             </div>
+            
             <div className="p-3 md:p-4">
               <ResponsiveContainer width="100%" height={100}>
                 <BarChart data={chartData} barSize={22}>
@@ -317,6 +320,7 @@ const [selectedMonth, setSelectedMonth] = useState({
               </div>
             </div>
           </div>
+          
 
           {/* Defaulters */}
           <div className="card flex flex-col" style={{ maxHeight: '420px' }}>
@@ -328,6 +332,7 @@ const [selectedMonth, setSelectedMonth] = useState({
                 {sendingAll ? '...' : 'Email All'}
               </button>
             </div>
+            
 
             {/* Reminder success message */}
             {reminderMsg && (
@@ -346,6 +351,7 @@ const [selectedMonth, setSelectedMonth] = useState({
     </span>
   </div>
 )}
+
 
             <div className="flex-1 overflow-y-auto">
               {defaulters.length === 0
@@ -380,6 +386,7 @@ const [selectedMonth, setSelectedMonth] = useState({
             </div>
           </div>
         </div>
+        
 
         {/* Bottom row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

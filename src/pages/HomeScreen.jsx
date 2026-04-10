@@ -5,7 +5,7 @@ import {
   LayoutDashboard, CreditCard, MessageSquareWarning,
   Megaphone, Users, Building2, Receipt, LogOut,
   Shield, MapPin, Package, CalendarDays, Search,
-  Users2, Network, PackageSearch, BarChart3, ClipboardList, FileBarChart2
+  Users2, Network, PackageSearch, BarChart3, ClipboardList, FileBarChart2, Footprints 
 } from 'lucide-react'
 
 // ── Role-based categories ─────────────────────────────────
@@ -46,6 +46,7 @@ const ADMIN_CATEGORIES = [
     label: 'Community',
     color: '#d97706',
     items: [
+      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
       { to: '/lost-found',      icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
       { to: '/deliveries',      icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
       { to: '/amenities',       icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
@@ -58,7 +59,7 @@ const OWNER_CATEGORIES = [
     label: 'My Home',
     color: '#059669',
     items: [
-      { to: '/resident/dashboard',              icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident',              icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
       { to: '/resident/maintenance',  icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/complaints',   icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
       { to: '/resident/expenses',     icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
@@ -82,6 +83,7 @@ const OWNER_CATEGORIES = [
     label: 'Community',
     color: '#d97706',
     items: [
+      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
       { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
       { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
       { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
@@ -94,7 +96,7 @@ const TENANT_CATEGORIES = [
     label: 'My Home',
     color: '#059669',
     items: [
-      { to: '/resident/dashboard',              icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident',              icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
       { to: '/resident/maintenance',  icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/complaints',   icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
     ],
@@ -116,6 +118,7 @@ const TENANT_CATEGORIES = [
     label: 'Community',
     color: '#d97706',
     items: [
+      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
       { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
       { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
       { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
