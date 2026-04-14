@@ -5,7 +5,9 @@ import {
   LayoutDashboard, CreditCard, MessageSquareWarning,
   Megaphone, Users, Building2, Receipt, LogOut,
   Shield, MapPin, Package, CalendarDays, Search,
-  Users2, Network, PackageSearch, BarChart3, ClipboardList, FileBarChart2, Footprints 
+  Users2, Network, PackageSearch, BarChart3, ClipboardList,
+  FileBarChart2, Footprints, Feather, Lightbulb, ShoppingBag,
+  CalendarCheck, GraduationCap
 } from 'lucide-react'
 
 // ── Role-based categories ─────────────────────────────────
@@ -15,41 +17,46 @@ const ADMIN_CATEGORIES = [
     label: 'My Home',
     color: '#5b52f0',
     items: [
-      { to: '/dashboard',                icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/maintenance',     icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
-      { to: '/expenses',        icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
-      { to: '/reports',         icon: BarChart3,            label: 'Reports',        color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/dashboard',        icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/maintenance',      icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
+      { to: '/expenses',         icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
+      { to: '/reports',          icon: BarChart3,            label: 'Reports',        color: '#7c3aed', bg: '#f3f0ff' },
     ],
   },
   {
     label: 'Community',
     color: '#d97706',
     items: [
-      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/nearby',          icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-      { to: '/lost-found',      icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',      icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',       icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/steps',            icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/nearby',           icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
+      { to: '/lost-found',       icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
+      { to: '/deliveries',       icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+      { to: '/amenities',        icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board',  icon: Feather,              label: 'Creative Corner',color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',            icon: Lightbulb,            label: 'Ideas',          color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',         icon: ShoppingBag,          label: 'Buy & Sell',     color: '#059669', bg: '#ecfdf5' },
+      { to: '/weekly-activities',icon: CalendarCheck,        label: 'Activities',     color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',   icon: GraduationCap,        label: 'Classes',        color: '#e11d48', bg: '#fff1f2' },
     ],
   },
   {
     label: 'Residents',
     color: '#0284c7',
     items: [
-      { to: '/complaints',      icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
-      { to: '/announcements',   icon: Megaphone,            label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/visitors',        icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/flats',           icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-      { to: '/flat-management', icon: ClipboardList,        label: 'Flat Mgmt',      color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/complaints',       icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
+      { to: '/announcements',    icon: Megaphone,            label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/visitors',         icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/flats',            icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
+      { to: '/flat-management',  icon: ClipboardList,        label: 'Flat Mgmt',      color: '#7c3aed', bg: '#f3f0ff' },
     ],
   },
   {
     label: 'Society',
     color: '#059669',
     items: [
-      { to: '/workers',         icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/watchman',        icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/org-chart',       icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
+      { to: '/workers',          icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/watchman',         icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
+      { to: '/org-chart',        icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
     ],
   },
 ]
@@ -59,34 +66,39 @@ const OWNER_CATEGORIES = [
     label: 'My Home',
     color: '#059669',
     items: [
-      { to: '/resident',              icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/maintenance',  icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
-      { to: '/resident/complaints',   icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
-      { to: '/resident/expenses',     icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
-      { to: '/resident/reports',      icon: FileBarChart2,        label: 'Reports',        color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/expenses',    icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
+      { to: '/resident/reports',     icon: FileBarChart2,        label: 'Reports',        color: '#7c3aed', bg: '#f3f0ff' },
     ],
   },
   {
     label: 'Community',
     color: '#d97706',
     items: [
-      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/nearby',       icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-      { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/steps',            icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/nearby',  icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
+      { to: '/lost-found',       icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
+      { to: '/deliveries',       icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+      { to: '/amenities',        icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board',  icon: Feather,              label: 'Creative Corner',color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',            icon: Lightbulb,            label: 'Ideas',          color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',         icon: ShoppingBag,          label: 'Buy & Sell',     color: '#059669', bg: '#ecfdf5' },
+      { to: '/weekly-activities',icon: CalendarCheck,        label: 'Activities',     color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',   icon: GraduationCap,        label: 'Classes',        color: '#e11d48', bg: '#fff1f2' },
     ],
   },
   {
     label: 'Society',
     color: '#0284c7',
     items: [
-      { to: '/resident/announcements',icon: Megaphone,            label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/visitors',     icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/resident/watchman',     icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/resident/directory',    icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-      { to: '/resident/org-chart',    icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
-      { to: '/resident/workers',      icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/announcements', icon: Megaphone,  label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/visitors',      icon: Users,      label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/watchman',      icon: Shield,     label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
+      { to: '/resident/directory',     icon: Building2,  label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/org-chart',     icon: Network,    label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
+      { to: '/resident/workers',       icon: Users2,     label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
     ],
   },
 ]
@@ -96,32 +108,37 @@ const TENANT_CATEGORIES = [
     label: 'My Home',
     color: '#059669',
     items: [
-      { to: '/resident',              icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/maintenance',  icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
-      { to: '/resident/complaints',   icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
     ],
   },
   {
     label: 'Community',
     color: '#d97706',
     items: [
-      { to: '/steps', icon: Footprints, label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/nearby',       icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-      { to: '/lost-found',            icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',            icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',             icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/steps',            icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/nearby',  icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
+      { to: '/lost-found',       icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
+      { to: '/deliveries',       icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+      { to: '/amenities',        icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board',  icon: Feather,              label: 'Creative Corner',color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',            icon: Lightbulb,            label: 'Ideas',          color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',         icon: ShoppingBag,          label: 'Buy & Sell',     color: '#059669', bg: '#ecfdf5' },
+      { to: '/weekly-activities',icon: CalendarCheck,        label: 'Activities',     color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',   icon: GraduationCap,        label: 'Classes',        color: '#e11d48', bg: '#fff1f2' },
     ],
   },
   {
     label: 'Society',
     color: '#0284c7',
     items: [
-      { to: '/resident/announcements',icon: Megaphone,            label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/visitors',     icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/resident/watchman',     icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/resident/directory',    icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-      { to: '/resident/org-chart',    icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
-      { to: '/resident/workers',      icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/announcements', icon: Megaphone,  label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/visitors',      icon: Users,      label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/watchman',      icon: Shield,     label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
+      { to: '/resident/directory',     icon: Building2,  label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/org-chart',     icon: Network,    label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
+      { to: '/resident/workers',       icon: Users2,     label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
     ],
   },
 ]
@@ -168,8 +185,8 @@ export default function HomeScreen() {
 
   const now  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const hour = now.getHours()
-  const greeting  = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'
-  const greetEmoji= hour < 12 ? '🌅' : hour < 17 ? '☀️' : hour < 21 ? '🌆' : '🌙'
+  const greeting   = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'
+  const greetEmoji = hour < 12 ? '🌅' : hour < 17 ? '☀️' : hour < 21 ? '🌆' : '🌙'
 
   const categories =
     user?.role === 'admin' ? ADMIN_CATEGORIES :

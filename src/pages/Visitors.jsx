@@ -91,12 +91,10 @@ const formatTime = (dateStr) => {
     <div className="flex flex-col h-full overflow-hidden" style={{ background:'var(--surface-2)' }}>
       <Topbar title="Visitor Log" subtitle="Track all visitor entries and exits"
         actions={
-          user?.role === 'admin'
-            ? <button onClick={() => setShowAdd(true)} className="btn-primary">
-                <PlusCircle size={14}/><span className="hidden sm:inline"> Log Entry</span>
-              </button>
-            : null
-        }
+  <button onClick={() => setShowAdd(true)} className="btn-primary">
+    <PlusCircle size={14}/><span className="hidden sm:inline"> Log Entry</span>
+  </button>
+}
       />
       <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-3">
 

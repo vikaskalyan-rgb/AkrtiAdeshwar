@@ -24,10 +24,15 @@ import LostFound          from './pages/LostFound'
 import DeliveryTracker    from './pages/DeliveryTracker'
 import AmenityBooking     from './pages/AmenityBooking'
 import StepsPage          from './pages/StepsPage'
+import CommunityBoard     from './pages/CommunityBoard'
+import IdeasSuggestions   from './pages/IdeasSuggestions'
+import BuySell            from './pages/BuySell'
+import WeeklyActivities   from './pages/WeeklyActivities'
+import ClassesEvents      from './pages/ClassesEvents'
 
-import ResidentDashboard  from './pages/resident/ResidentDashboard'
+import ResidentDashboard   from './pages/resident/ResidentDashboard'
 import ResidentMaintenance from './pages/resident/ResidentMaintenance'
-import ResidentComplaints from './pages/resident/ResidentComplaints'
+import ResidentComplaints  from './pages/resident/ResidentComplaints'
 import {
   ResidentAnnouncements,
   ResidentVisitors,
@@ -71,23 +76,28 @@ function AppShell() {
 
             {/* ── Admin pages ── */}
             {isAdmin && <>
-              <Route path="/dashboard"      element={<Dashboard />} />
-              <Route path="/maintenance"    element={<Maintenance />} />
-              <Route path="/expenses"       element={<Expenses />} />
-              <Route path="/complaints"     element={<Complaints />} />
-              <Route path="/announcements"  element={<Announcements />} />
-              <Route path="/visitors"       element={<Visitors />} />
-              <Route path="/watchman"       element={<WatchmanLog />} />
-              <Route path="/nearby"         element={<NearbyPlaces />} />
-              <Route path="/org-chart"      element={<OrgChart />} />
-              <Route path="/flats"          element={<FlatDirectory />} />
-              <Route path="/flat-management" element={<FlatManagement />} />
-              <Route path="/workers"        element={<Workers />} />
-              <Route path="/reports"        element={<Reports />} />
-              <Route path="/lost-found"     element={<LostFound />} />
-              <Route path="/deliveries"     element={<DeliveryTracker />} />
-              <Route path="/amenities"      element={<AmenityBooking />} />
-              <Route path="/steps"          element={<StepsPage />} />
+              <Route path="/dashboard"         element={<Dashboard />} />
+              <Route path="/maintenance"       element={<Maintenance />} />
+              <Route path="/expenses"          element={<Expenses />} />
+              <Route path="/complaints"        element={<Complaints />} />
+              <Route path="/announcements"     element={<Announcements />} />
+              <Route path="/visitors"          element={<Visitors />} />
+              <Route path="/watchman"          element={<WatchmanLog />} />
+              <Route path="/nearby"            element={<NearbyPlaces />} />
+              <Route path="/org-chart"         element={<OrgChart />} />
+              <Route path="/flats"             element={<FlatDirectory />} />
+              <Route path="/flat-management"   element={<FlatManagement />} />
+              <Route path="/workers"           element={<Workers />} />
+              <Route path="/reports"           element={<Reports />} />
+              <Route path="/lost-found"        element={<LostFound />} />
+              <Route path="/deliveries"        element={<DeliveryTracker />} />
+              <Route path="/amenities"         element={<AmenityBooking />} />
+              <Route path="/steps"             element={<StepsPage />} />
+              <Route path="/community-board"   element={<CommunityBoard />} />
+              <Route path="/ideas"             element={<IdeasSuggestions />} />
+              <Route path="/buy-sell"          element={<BuySell />} />
+              <Route path="/weekly-activities" element={<WeeklyActivities />} />
+              <Route path="/classes-events"    element={<ClassesEvents />} />
             </>}
 
             {/* ── Resident pages (owner + tenant) ── */}
@@ -106,6 +116,11 @@ function AppShell() {
               <Route path="/deliveries"             element={<DeliveryTracker />} />
               <Route path="/amenities"              element={<AmenityBooking />} />
               <Route path="/steps"                  element={<StepsPage />} />
+              <Route path="/community-board"        element={<CommunityBoard />} />
+              <Route path="/ideas"                  element={<IdeasSuggestions />} />
+              <Route path="/buy-sell"               element={<BuySell />} />
+              <Route path="/weekly-activities"      element={<WeeklyActivities />} />
+              <Route path="/classes-events"         element={<ClassesEvents />} />
 
               {/* Owner only */}
               <Route path="/resident/expenses" element={
