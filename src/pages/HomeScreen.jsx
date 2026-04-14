@@ -10,135 +10,194 @@ import {
   CalendarCheck, GraduationCap
 } from 'lucide-react'
 
-// ── Role-based categories ─────────────────────────────────
-
+// ─────────────────────────────────────────────────────────
+// ADMIN — 6 sections
+// ─────────────────────────────────────────────────────────
 const ADMIN_CATEGORIES = [
   {
     label: 'My Home',
     color: '#5b52f0',
+    emoji: '🏠',
     items: [
-      { to: '/dashboard',        icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/maintenance',      icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
-      { to: '/expenses',         icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
-      { to: '/reports',          icon: BarChart3,            label: 'Reports',        color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/dashboard',       icon: LayoutDashboard, label: 'Dashboard',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/maintenance',     icon: CreditCard,      label: 'Maintenance', color: '#059669', bg: '#ecfdf5' },
+      { to: '/expenses',        icon: Receipt,         label: 'Expenses',    color: '#d97706', bg: '#fffbeb' },
+      { to: '/reports',         icon: BarChart3,       label: 'Reports',     color: '#7c3aed', bg: '#f3f0ff' },
     ],
   },
   {
-    label: 'Community',
-    color: '#d97706',
+    label: 'Community Life',
+    color: '#7c3aed',
+    emoji: '✨',
     items: [
-      { to: '/steps',            icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/nearby',           icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-      { to: '/lost-found',       icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',       icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',        icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/community-board',  icon: Feather,              label: 'Creative Corner',color: '#7c3aed', bg: '#f3f0ff' },
-      { to: '/ideas',            icon: Lightbulb,            label: 'Ideas',          color: '#d97706', bg: '#fffbeb' },
-      { to: '/buy-sell',         icon: ShoppingBag,          label: 'Buy & Sell',     color: '#059669', bg: '#ecfdf5' },
-      { to: '/weekly-activities',icon: CalendarCheck,        label: 'Activities',     color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/classes-events',   icon: GraduationCap,        label: 'Classes',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      color: '#059669', bg: '#ecfdf5' },
     ],
   },
   {
-    label: 'Residents',
+    label: 'Events & Activities',
     color: '#0284c7',
+    emoji: '🎉',
     items: [
-      { to: '/complaints',       icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
-      { to: '/announcements',    icon: Megaphone,            label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/visitors',         icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/flats',            icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-      { to: '/flat-management',  icon: ClipboardList,        label: 'Flat Mgmt',      color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', color: '#5b52f0', bg: '#eeeeff' },
     ],
   },
   {
-    label: 'Society',
-    color: '#059669',
+    label: 'Safety & Services',
+    color: '#e11d48',
+    emoji: '🔒',
     items: [
-      { to: '/workers',          icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/watchman',         icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/org-chart',        icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
+      { to: '/visitors',   icon: Users,        label: 'Visitors',    color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries', icon: Package,      label: 'Deliveries',  color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found', icon: PackageSearch,label: 'Lost & Found',color: '#e11d48', bg: '#fff1f2' },
+      { to: '/watchman',   icon: Shield,       label: 'Night Patrol',color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  {
+    label: 'Information',
+    color: '#059669',
+    emoji: 'ℹ️',
+    items: [
+      { to: '/nearby',       icon: MapPin,   label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
+      { to: '/flats',        icon: Building2,label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
+      { to: '/announcements',icon: Megaphone,label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/workers',      icon: Users2,   label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/org-chart',    icon: Network,  label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
+    ],
+  },
+  {
+    label: 'Management',
+    color: '#475569',
+    emoji: '⚙️',
+    items: [
+      { to: '/complaints',      icon: MessageSquareWarning, label: 'Complaints', color: '#e11d48', bg: '#fff1f2' },
+      { to: '/flat-management', icon: ClipboardList,        label: 'Flat Mgmt',  color: '#7c3aed', bg: '#f3f0ff' },
     ],
   },
 ]
 
+// ─────────────────────────────────────────────────────────
+// OWNER — 5 sections
+// ─────────────────────────────────────────────────────────
 const OWNER_CATEGORIES = [
   {
     label: 'My Home',
-    color: '#059669',
+    color: '#5b52f0',
+    emoji: '🏠',
     items: [
-      { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
-      { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
-      { to: '/resident/expenses',    icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
-      { to: '/resident/reports',     icon: FileBarChart2,        label: 'Reports',        color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',  color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/expenses',    icon: Receipt,              label: 'Expenses',    color: '#d97706', bg: '#fffbeb' },
+      { to: '/resident/reports',     icon: FileBarChart2,        label: 'Reports',     color: '#7c3aed', bg: '#f3f0ff' },
     ],
   },
   {
-    label: 'Community',
-    color: '#d97706',
+    label: 'Community Life',
+    color: '#7c3aed',
+    emoji: '✨',
     items: [
-      { to: '/steps',            icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/nearby',  icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-      { to: '/lost-found',       icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',       icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',        icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/community-board',  icon: Feather,              label: 'Creative Corner',color: '#7c3aed', bg: '#f3f0ff' },
-      { to: '/ideas',            icon: Lightbulb,            label: 'Ideas',          color: '#d97706', bg: '#fffbeb' },
-      { to: '/buy-sell',         icon: ShoppingBag,          label: 'Buy & Sell',     color: '#059669', bg: '#ecfdf5' },
-      { to: '/weekly-activities',icon: CalendarCheck,        label: 'Activities',     color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/classes-events',   icon: GraduationCap,        label: 'Classes',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      color: '#059669', bg: '#ecfdf5' },
     ],
   },
   {
-    label: 'Society',
+    label: 'Events & Activities',
     color: '#0284c7',
+    emoji: '🎉',
     items: [
-      { to: '/resident/announcements', icon: Megaphone,  label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/visitors',      icon: Users,      label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/resident/watchman',      icon: Shield,     label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/resident/directory',     icon: Building2,  label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-      { to: '/resident/org-chart',     icon: Network,    label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
-      { to: '/resident/workers',       icon: Users2,     label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  {
+    label: 'Safety & Services',
+    color: '#e11d48',
+    emoji: '🔒',
+    items: [
+      { to: '/resident/visitors', icon: Users,        label: 'Visitors',    color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries',        icon: Package,      label: 'Deliveries',  color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  {
+    label: 'Information',
+    color: '#059669',
+    emoji: 'ℹ️',
+    items: [
+      { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/workers',       icon: Users2,   label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
     ],
   },
 ]
 
+// ─────────────────────────────────────────────────────────
+// TENANT — 5 sections
+// ─────────────────────────────────────────────────────────
 const TENANT_CATEGORIES = [
   {
     label: 'My Home',
-    color: '#059669',
+    color: '#5b52f0',
+    emoji: '🏠',
     items: [
-      { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
-      { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',   color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',  color: '#e11d48', bg: '#fff1f2' },
     ],
   },
   {
-    label: 'Community',
-    color: '#d97706',
+    label: 'Community Life',
+    color: '#7c3aed',
+    emoji: '✨',
     items: [
-      { to: '/steps',            icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/nearby',  icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-      { to: '/lost-found',       icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-      { to: '/deliveries',       icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-      { to: '/amenities',        icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/community-board',  icon: Feather,              label: 'Creative Corner',color: '#7c3aed', bg: '#f3f0ff' },
-      { to: '/ideas',            icon: Lightbulb,            label: 'Ideas',          color: '#d97706', bg: '#fffbeb' },
-      { to: '/buy-sell',         icon: ShoppingBag,          label: 'Buy & Sell',     color: '#059669', bg: '#ecfdf5' },
-      { to: '/weekly-activities',icon: CalendarCheck,        label: 'Activities',     color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/classes-events',   icon: GraduationCap,        label: 'Classes',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      color: '#059669', bg: '#ecfdf5' },
     ],
   },
   {
-    label: 'Society',
+    label: 'Events & Activities',
     color: '#0284c7',
+    emoji: '🎉',
     items: [
-      { to: '/resident/announcements', icon: Megaphone,  label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-      { to: '/resident/visitors',      icon: Users,      label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
-      { to: '/resident/watchman',      icon: Shield,     label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-      { to: '/resident/directory',     icon: Building2,  label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-      { to: '/resident/org-chart',     icon: Network,    label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
-      { to: '/resident/workers',       icon: Users2,     label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  {
+    label: 'Safety & Services',
+    color: '#e11d48',
+    emoji: '🔒',
+    items: [
+      { to: '/resident/visitors', icon: Users,        label: 'Visitors',    color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries',        icon: Package,      label: 'Deliveries',  color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  {
+    label: 'Information',
+    color: '#059669',
+    emoji: 'ℹ️',
+    items: [
+      { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/workers',       icon: Users2,   label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
     ],
   },
 ]
@@ -206,6 +265,7 @@ export default function HomeScreen() {
   const initials  = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
   const roleLabel = user?.role === 'admin' ? 'Admin' : user?.role === 'owner' ? 'Owner' : 'Tenant'
   const roleColor = user?.role === 'admin' ? '#5b52f0' : user?.role === 'owner' ? '#059669' : '#0284c7'
+  const totalFeatures = categories.reduce((sum, cat) => sum + cat.items.length, 0)
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
@@ -234,6 +294,9 @@ export default function HomeScreen() {
                   Flat {user.flatNo}
                 </span>
               )}
+              <span className="text-[10px]" style={{ color: 'var(--ink-4)' }}>
+                · {totalFeatures} features
+              </span>
             </div>
           </div>
 
@@ -289,9 +352,13 @@ export default function HomeScreen() {
                 style={{ background: cat.color }} />
               <span className="text-[11px] font-bold uppercase tracking-widest"
                 style={{ color: cat.color }}>
-                {cat.label}
+                {cat.emoji} {cat.label}
               </span>
               <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                style={{ background: `${cat.color}15`, color: cat.color }}>
+                {cat.items.length}
+              </span>
             </div>
 
             {/* Icons */}
