@@ -17,7 +17,7 @@ const ADMIN_CATEGORIES = [
   {
     label: 'My Home',
     color: '#5b52f0',
-    emoji: '🏠',
+    
     items: [
       { to: '/dashboard',       icon: LayoutDashboard, label: 'Dashboard',   color: '#5b52f0', bg: '#eeeeff' },
       { to: '/maintenance',     icon: CreditCard,      label: 'Maintenance', color: '#059669', bg: '#ecfdf5' },
@@ -28,7 +28,7 @@ const ADMIN_CATEGORIES = [
   {
     label: 'Community Life',
     color: '#7c3aed',
-    emoji: '✨',
+    
     items: [
       { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  color: '#5b52f0', bg: '#eeeeff' },
       { to: '/community-board', icon: Feather,     label: 'Creative Corner', color: '#7c3aed', bg: '#f3f0ff' },
@@ -39,7 +39,7 @@ const ADMIN_CATEGORIES = [
   {
     label: 'Events & Activities',
     color: '#0284c7',
-    emoji: '🎉',
+   
     items: [
       { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   color: '#0284c7', bg: '#f0f9ff' },
       { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      color: '#e11d48', bg: '#fff1f2' },
@@ -49,7 +49,7 @@ const ADMIN_CATEGORIES = [
   {
     label: 'Safety & Services',
     color: '#e11d48',
-    emoji: '🔒',
+  
     items: [
       { to: '/visitors',   icon: Users,        label: 'Visitors',    color: '#0284c7', bg: '#f0f9ff' },
       { to: '/deliveries', icon: Package,      label: 'Deliveries',  color: '#d97706', bg: '#fffbeb' },
@@ -60,7 +60,7 @@ const ADMIN_CATEGORIES = [
   {
     label: 'Information',
     color: '#059669',
-    emoji: 'ℹ️',
+ 
     items: [
       { to: '/nearby',       icon: MapPin,   label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/flats',        icon: Building2,label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
@@ -72,7 +72,7 @@ const ADMIN_CATEGORIES = [
   {
     label: 'Management',
     color: '#475569',
-    emoji: '⚙️',
+  
     items: [
       { to: '/complaints',      icon: MessageSquareWarning, label: 'Complaints', color: '#e11d48', bg: '#fff1f2' },
       { to: '/flat-management', icon: ClipboardList,        label: 'Flat Mgmt',  color: '#7c3aed', bg: '#f3f0ff' },
@@ -87,7 +87,7 @@ const OWNER_CATEGORIES = [
   {
     label: 'My Home',
     color: '#5b52f0',
-    emoji: '🏠',
+   
     items: [
       { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',   color: '#5b52f0', bg: '#eeeeff' },
       { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance', color: '#059669', bg: '#ecfdf5' },
@@ -99,7 +99,7 @@ const OWNER_CATEGORIES = [
   {
     label: 'Community Life',
     color: '#7c3aed',
-    emoji: '✨',
+    
     items: [
       { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  color: '#5b52f0', bg: '#eeeeff' },
       { to: '/community-board', icon: Feather,     label: 'Creative Corner', color: '#7c3aed', bg: '#f3f0ff' },
@@ -110,7 +110,7 @@ const OWNER_CATEGORIES = [
   {
     label: 'Events & Activities',
     color: '#0284c7',
-    emoji: '🎉',
+    
     items: [
       { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   color: '#0284c7', bg: '#f0f9ff' },
       { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      color: '#e11d48', bg: '#fff1f2' },
@@ -120,7 +120,7 @@ const OWNER_CATEGORIES = [
   {
     label: 'Safety & Services',
     color: '#e11d48',
-    emoji: '🔒',
+   
     items: [
       { to: '/resident/visitors', icon: Users,        label: 'Visitors',    color: '#0284c7', bg: '#f0f9ff' },
       { to: '/deliveries',        icon: Package,      label: 'Deliveries',  color: '#d97706', bg: '#fffbeb' },
@@ -131,7 +131,7 @@ const OWNER_CATEGORIES = [
   {
     label: 'Information',
     color: '#059669',
-    emoji: 'ℹ️',
+   
     items: [
       { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
@@ -149,7 +149,6 @@ const TENANT_CATEGORIES = [
   {
     label: 'My Home',
     color: '#5b52f0',
-    emoji: '🏠',
     items: [
       { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',   color: '#5b52f0', bg: '#eeeeff' },
       { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance', color: '#059669', bg: '#ecfdf5' },
@@ -159,7 +158,6 @@ const TENANT_CATEGORIES = [
   {
     label: 'Community Life',
     color: '#7c3aed',
-    emoji: '✨',
     items: [
       { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  color: '#5b52f0', bg: '#eeeeff' },
       { to: '/community-board', icon: Feather,     label: 'Creative Corner', color: '#7c3aed', bg: '#f3f0ff' },
@@ -170,7 +168,6 @@ const TENANT_CATEGORIES = [
   {
     label: 'Events & Activities',
     color: '#0284c7',
-    emoji: '🎉',
     items: [
       { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   color: '#0284c7', bg: '#f0f9ff' },
       { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      color: '#e11d48', bg: '#fff1f2' },
@@ -180,7 +177,6 @@ const TENANT_CATEGORIES = [
   {
     label: 'Safety & Services',
     color: '#e11d48',
-    emoji: '🔒',
     items: [
       { to: '/resident/visitors', icon: Users,        label: 'Visitors',    color: '#0284c7', bg: '#f0f9ff' },
       { to: '/deliveries',        icon: Package,      label: 'Deliveries',  color: '#d97706', bg: '#fffbeb' },
@@ -191,7 +187,6 @@ const TENANT_CATEGORIES = [
   {
     label: 'Information',
     color: '#059669',
-    emoji: 'ℹ️',
     items: [
       { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
       { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
