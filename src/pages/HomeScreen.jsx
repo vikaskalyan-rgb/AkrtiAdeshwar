@@ -289,9 +289,6 @@ export default function HomeScreen() {
                   Flat {user.flatNo}
                 </span>
               )}
-              <span className="text-[10px]" style={{ color: 'var(--ink-4)' }}>
-                · {totalFeatures} features
-              </span>
             </div>
           </div>
 
