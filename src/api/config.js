@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-export const API_BASE_URL = 'https://akrti-backend.onrender.com'
+export const API_BASE_URL = 'https://akrti-backend-i6e1.onrender.com'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
