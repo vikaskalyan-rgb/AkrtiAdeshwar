@@ -3,7 +3,7 @@ import { StatusBadge, Modal } from '../components/ui'
 import Topbar from '../components/layout/Topbar'
 import {
   CheckCircle2, Search, Info, Mail, Copy, Check,
-  AlertTriangle, CreditCard
+  AlertTriangle, IndianRupee
 } from 'lucide-react'
 import api from '../api/config'
 import { useAuth } from '../context/AuthContext'
@@ -11,11 +11,10 @@ import { useAuth } from '../context/AuthContext'
 const UPI_ID     = 'ppr.05219.21092023.00196023@cnrb'
 const PAYEE_NAME = 'Akrti Aadeshwar Owners Association'
 const PAYMENT_MODES = ['UPI', 'Cash', 'Bank Transfer', 'Cheque']
-
 const PAY_STEP = { CHOOSE: 'choose', CONFIRM: 'confirm' }
 
 function fmt(n) {
-  if (n >= 1000) return `₹${(n/1000).toFixed(1)}K`
+  if (n >= 1000) return `₹${(n / 1000).toFixed(1)}K`
   return `₹${n}`
 }
 function fmtTile(n) {
@@ -29,7 +28,7 @@ function getLast6Months() {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     months.push({
       month: d.getMonth() + 1,
-      year:  d.getFullYear(),
+      year: d.getFullYear(),
       label: d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' }),
     })
   }
@@ -37,7 +36,6 @@ function getLast6Months() {
 }
 const MONTHS = getLast6Months()
 
-// ── Copy UPI button ───────────────────────────────────────
 function CopyUPI({ upiId }) {
   const [copied, setCopied] = useState(false)
   const handleCopy = () => {
@@ -66,27 +64,229 @@ const statusStyle = {
   UNPAID:  { bg: '#ffe4e6', color: '#9f1239', border: '#fca5a5', label: 'Unpaid' },
 }
 
+// ── SUP Simple Modal ──────────────────────────────────────
+function SupModal({ payment, monthLabel, onClose, onRefresh, MONTHLY_AMOUNT }) {
+  const [amountInput, setAmountInput] = useState('')
+  const [saving,      setSaving]      = useState(false)
+  const [amountErr,   setAmountErr]   = useState('')
+  const [confirmUndo, setConfirmUndo] = useState(false)
+  const [success,     setSuccess]     = useState(false)
+
+  if (!payment) return null
+
+  const due = payment.status === 'PARTIAL'
+    ? (payment.amount || MONTHLY_AMOUNT) - (payment.paidAmount || 0)
+    : (payment.amount || MONTHLY_AMOUNT)
+
+  const entered     = parseInt(amountInput) || 0
+  const isPartial   = entered > 0 && entered < due
+  const isExact     = entered === due
+  const isOver      = entered > due
+
+  const handlePay = async () => {
+    if (!amountInput || isNaN(parseInt(amountInput)) || parseInt(amountInput) <= 0) {
+      setAmountErr('Enter amount paid')
+      return
+    }
+    setSaving(true)
+    try {
+      await api.post(
+        `/api/maintenance/flat/${payment.flatNo}/pay?month=${payment.month}&year=${payment.year}`,
+        { paymentMode: 'UPI', transactionRef: '', paidAmount: parseInt(amountInput) }
+      )
+      setSuccess(true)
+      await onRefresh()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to mark payment')
+    } finally { setSaving(false) }
+  }
+
+  const handleUndo = async () => {
+    setSaving(true)
+    try {
+      await api.post(`/api/maintenance/flat/${payment.flatNo}/unpay?month=${payment.month}&year=${payment.year}`)
+      await onRefresh()
+      onClose()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to undo')
+    } finally { setSaving(false) }
+  }
+
+  const ss = statusStyle[payment.status] || statusStyle.UNPAID
+
+  // Success screen
+  if (success) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-4 text-center">
+        <CheckCircle2 size={44} style={{ color: 'var(--emerald)' }} />
+        <p className="text-[15px] font-bold" style={{ color: 'var(--emerald)' }}>
+          {isPartial ? 'Partial payment recorded!' : 'Marked as Paid!'}
+        </p>
+        <p className="text-[12px]" style={{ color: 'var(--ink-3)' }}>
+          Flat {payment.flatNo} · {monthLabel}
+        </p>
+        <button onClick={onClose} className="btn-primary px-8 mt-1">Done</button>
+      </div>
+    )
+  }
+
+  // Confirm undo screen
+  if (confirmUndo) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col items-center gap-2 py-2 text-center">
+          <AlertTriangle size={36} style={{ color: '#d97706' }} />
+          <p className="text-[14px] font-bold" style={{ color: 'var(--ink)' }}>
+            Mark Flat {payment.flatNo} as Unpaid?
+          </p>
+          <p className="text-[12px]" style={{ color: 'var(--ink-3)' }}>
+            This will revert the payment record for {monthLabel}.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={handleUndo} disabled={saving}
+            className="flex-1 py-3 rounded-xl text-[13px] font-bold"
+            style={{ background: 'var(--rose)', color: 'white' }}>
+            {saving ? 'Reverting...' : 'Yes, Mark Unpaid'}
+          </button>
+          <button onClick={() => setConfirmUndo(false)} className="btn-ghost flex-1 justify-center">
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // PAID — just show undo option
+  if (payment.status === 'PAID') {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 px-3 py-3 rounded-xl"
+          style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
+          <CheckCircle2 size={16} style={{ color: 'var(--emerald)' }} />
+          <div>
+            <p className="text-[13px] font-bold" style={{ color: '#065f46' }}>Already Paid</p>
+            <p className="text-[11px]" style={{ color: '#065f46' }}>
+              ₹{(payment.paidAmount || payment.amount || MONTHLY_AMOUNT).toLocaleString()} · {payment.paidOn || ''}
+            </p>
+          </div>
+        </div>
+        <button onClick={() => setConfirmUndo(true)}
+          className="w-full py-3 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-2"
+          style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fca5a5' }}>
+          ↩ Undo — Mark as Unpaid
+        </button>
+      </div>
+    )
+  }
+
+  // UNPAID or PARTIAL — simple amount input
+  return (
+    <div className="space-y-4">
+      {/* Amount due */}
+      <div className="rounded-xl p-3 text-center"
+        style={{ background: 'var(--indigo-lt)', border: '1px solid var(--indigo-md)' }}>
+        <p className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
+          {payment.status === 'PARTIAL' ? 'Balance Remaining' : 'Amount Due'}
+        </p>
+        <p className="text-[28px] font-bold" style={{ color: 'var(--indigo)', letterSpacing: '-0.03em' }}>
+          ₹{due.toLocaleString()}
+        </p>
+        {payment.status === 'PARTIAL' && (
+          <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>
+            Already paid ₹{(payment.paidAmount || 0).toLocaleString()} of ₹{(payment.amount || MONTHLY_AMOUNT).toLocaleString()}
+          </p>
+        )}
+      </div>
+
+      {/* Amount input */}
+      <div>
+        <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: 'var(--ink-2)' }}>
+          How much was paid? <span style={{ color: 'var(--rose)' }}>*</span>
+        </label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] font-semibold"
+            style={{ color: 'var(--ink-3)' }}>₹</span>
+          <input
+            className="input pl-7 text-[16px] font-bold"
+            type="number"
+            min="1"
+            placeholder={`e.g. ${due}`}
+            value={amountInput}
+            autoFocus
+            onChange={e => { setAmountInput(e.target.value); setAmountErr('') }}
+          />
+        </div>
+        {amountErr && (
+          <p className="text-[11px] mt-1 font-medium" style={{ color: 'var(--rose)' }}>{amountErr}</p>
+        )}
+        {entered > 0 && (
+          <div className="mt-2 px-3 py-2 rounded-xl text-[11px] font-semibold flex items-center gap-2"
+            style={{
+              background: isPartial ? '#fffbeb' : '#ecfdf5',
+              border: `1px solid ${isPartial ? '#fde68a' : '#6ee7b7'}`,
+              color: isPartial ? '#92400e' : '#065f46',
+            }}>
+            {isPartial
+              ? <><AlertTriangle size={12} /> Partial — ₹{(due - entered).toLocaleString()} balance will be tracked</>
+              : <><CheckCircle2 size={12} /> {isOver ? `Overpaid by ₹${(entered - due).toLocaleString()}` : 'Full payment!'}</>
+            }
+          </div>
+        )}
+      </div>
+
+      {/* Quick fill buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => { setAmountInput(String(due)); setAmountErr('') }}
+          className="flex-1 py-2 rounded-xl text-[12px] font-semibold"
+          style={{ background: 'var(--surface-3)', color: 'var(--ink-2)', border: '1px solid var(--border)' }}>
+          Full ₹{due.toLocaleString()}
+        </button>
+      </div>
+
+      {/* Confirm button */}
+      <button onClick={handlePay} disabled={saving}
+        className="btn-primary w-full justify-center py-3 text-[14px]">
+        <CheckCircle2 size={15} />
+        {saving ? 'Saving...' : isPartial ? 'Record Partial Payment' : 'Mark as Paid'}
+      </button>
+
+      {/* Undo if partial */}
+      {payment.status === 'PARTIAL' && (
+        <button onClick={() => setConfirmUndo(true)}
+          className="w-full py-2.5 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-2"
+          style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fca5a5' }}>
+          ↩ Undo Partial — Mark as Unpaid
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Main ─────────────────────────────────────────────────
 export default function Maintenance() {
   const { user } = useAuth()
+  const isSup = user?.identifier === 'SUP'
 
-  const [selectedMonth, setSelectedMonth]     = useState(MONTHS[0])
-  const [payments,      setPayments]          = useState([])
-  const [summary,       setSummary]           = useState({})
-  const [loading,       setLoading]           = useState(true)
-  const [search,        setSearch]            = useState('')
-  const [filterStatus,  setFilterStatus]      = useState('all')
-  const [selectedPayment, setSelectedPayment] = useState(null)
-  const [view,          setView]              = useState('wing')
-  const [sendingReminders, setSendingReminders] = useState(false)
-  const [markingPaid,   setMarkingPaid]       = useState(false)
-  const [payStep,       setPayStep]           = useState(PAY_STEP.CHOOSE)
-  const [payMode,       setPayMode]           = useState('UPI')
-  const [payRef,        setPayRef]            = useState('')
-  const [paidAmount,    setPaidAmount]        = useState('')
-  const [amountErr,     setAmountErr]         = useState('')
-  const [paySuccess,    setPaySuccess]        = useState(false)
-  const [reminderResult, setReminderResult]   = useState(null)
-  const [waivinig,      setWaiving]           = useState(false)
+  const [selectedMonth,     setSelectedMonth]     = useState(MONTHS[0])
+  const [payments,          setPayments]          = useState([])
+  const [summary,           setSummary]           = useState({})
+  const [loading,           setLoading]           = useState(true)
+  const [search,            setSearch]            = useState('')
+  const [filterStatus,      setFilterStatus]      = useState('all')
+  const [selectedPayment,   setSelectedPayment]   = useState(null)
+  const [view,              setView]              = useState('wing')
+  const [sendingReminders,  setSendingReminders]  = useState(false)
+  const [markingPaid,       setMarkingPaid]       = useState(false)
+  const [payStep,           setPayStep]           = useState(PAY_STEP.CHOOSE)
+  const [payMode,           setPayMode]           = useState('UPI')
+  const [payRef,            setPayRef]            = useState('')
+  const [paidAmount,        setPaidAmount]        = useState('')
+  const [amountErr,         setAmountErr]         = useState('')
+  const [paySuccess,        setPaySuccess]        = useState(false)
+  const [reminderResult,    setReminderResult]    = useState(null)
+  const [waivinig,          setWaiving]           = useState(false)
 
   useEffect(() => { fetchPayments() }, [selectedMonth])
 
@@ -158,7 +358,7 @@ export default function Maintenance() {
   }
 
   const handleWaiveBalance = async (payment) => {
-    if (!confirm(`Waive balance of ₹${payment.getBalance ? payment.getBalance() : ((payment.amount||4200)-(payment.paidAmount||0))} for Flat ${payment.flatNo}? This marks it as fully PAID.`)) return
+    if (!confirm(`Waive balance for Flat ${payment.flatNo}? This marks it as fully PAID.`)) return
     setWaiving(true)
     try {
       await api.post(`/api/maintenance/flat/${payment.flatNo}/waive?month=${payment.month}&year=${payment.year}`)
@@ -230,7 +430,6 @@ export default function Maintenance() {
     return matchSearch && matchStatus
   }
 
-  // Own flat pay form
   const due = selectedPayment
     ? selectedPayment.status === 'PARTIAL'
       ? (selectedPayment.amount || MONTHLY_AMOUNT) - (selectedPayment.paidAmount || 0)
@@ -240,12 +439,23 @@ export default function Maintenance() {
   const isPartial     = enteredAmount > 0 && enteredAmount < due
   const isOver        = enteredAmount > due
 
+  // Tile click handler — SUP opens sup modal, others open normal modal
+  const handleTileClick = (pay) => {
+    if (!pay) return
+    if (isSup) {
+      setSelectedPayment(pay)
+    } else {
+      setSelectedPayment(pay)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
       <Topbar title="Maintenance" subtitle="Monthly payment tracking"
         actions={
           <div className="flex items-center gap-2">
-            {user?.flatNo && (() => {
+            {/* Own flat pay button — not for SUP */}
+            {!isSup && user?.flatNo && (() => {
               const myPay = payments.find(p => p.flatNo === user.flatNo)
               return myPay?.status !== 'PAID' ? (
                 <button onClick={() => openOwnFlatPay(myPay)}
@@ -279,13 +489,24 @@ export default function Maintenance() {
           </div>
         )}
 
-        <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
-          style={{ background: 'var(--indigo-lt)', border: '1px solid var(--indigo-md)' }}>
-          <Info size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--indigo)' }} />
-          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--indigo)' }}>
-            Admin view is read-only. Residents mark their own payments. Admins can pay their own flat above.
-          </p>
-        </div>
+        {/* SUP info banner */}
+        {isSup ? (
+          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+            style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
+            <Info size={14} className="flex-shrink-0 mt-0.5" style={{ color: '#d97706' }} />
+            <p className="text-[11px] leading-relaxed" style={{ color: '#78350f' }}>
+              Supervisor mode — tap any flat to mark payment. Check bank statement and record accordingly.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+            style={{ background: 'var(--indigo-lt)', border: '1px solid var(--indigo-md)' }}>
+            <Info size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--indigo)' }} />
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--indigo)' }}>
+              Admin view is read-only. Residents mark their own payments. Admins can pay their own flat above.
+            </p>
+          </div>
+        )}
 
         {/* Month tabs */}
         <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
@@ -310,7 +531,7 @@ export default function Maintenance() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           {[
             { label: 'Collected', value: fmt(summary.collected || 0), color: '#059669', bg: '#ecfdf5', sub: `${summary.paid || 0} paid` },
-            { label: 'Pending',   value: fmt(summary.pending   || 0), color: '#e11d48', bg: '#fff1f2', sub: `${(summary.unpaid||0) + (summary.partial||0)} pending` },
+            { label: 'Pending',   value: fmt(summary.pending   || 0), color: '#e11d48', bg: '#fff1f2', sub: `${(summary.unpaid || 0) + (summary.partial || 0)} pending` },
             { label: 'Partial',   value: summary.partial || 0,        color: '#d97706', bg: '#fffbeb', sub: 'short paid' },
             { label: 'Rate',      value: `${pct}%`,                   color: '#5b52f0', bg: '#eeeeff', sub: 'collection' },
           ].map(s => (
@@ -406,15 +627,21 @@ export default function Maintenance() {
                                 const st  = pay?.status || 'UNPAID'
                                 const ss  = statusStyle[st] || statusStyle.UNPAID
                                 const isMe = isAdminFlat(flatNo)
+                                const canTap = isSup || isMe
                                 return (
                                   <div key={flatNo}
-                                    onClick={() => pay && setSelectedPayment(pay)}
-                                    className="rounded-xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+                                    onClick={() => pay && canTap && handleTileClick(pay)}
+                                    className="rounded-xl flex flex-col items-center justify-center transition-transform"
                                     style={{
                                       background: ss.bg,
                                       border: isMe ? '2px solid var(--indigo)' : `1px solid ${ss.border}`,
                                       width: '64px', height: '64px',
-                                    }}>
+                                      cursor: canTap ? 'pointer' : 'default',
+                                      transform: canTap ? undefined : 'none',
+                                    }}
+                                    onMouseEnter={e => { if (canTap) e.currentTarget.style.transform = 'scale(1.05)' }}
+                                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+                                  >
                                     <span className="text-[11px] font-bold font-mono" style={{ color: ss.color }}>{flatNo}</span>
                                     <span className="text-[8px] font-semibold mt-0.5" style={{ color: ss.color }}>
                                       {st === 'PAID' ? '✓ Paid' : st === 'PARTIAL' ? '⚠ Part' : '✗ Due'}
@@ -444,11 +671,21 @@ export default function Maintenance() {
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(100dvh - 400px)' }}>
               {filteredPayments.map(p => {
-                const ss = statusStyle[p.status] || statusStyle.UNPAID
+                const ss     = statusStyle[p.status] || statusStyle.UNPAID
+                const canTap = isSup || isAdminFlat(p.flatNo)
                 return (
-                  <div key={p.id} onClick={() => setSelectedPayment(p)}
-                    className="cursor-pointer hover:bg-[var(--surface-2)] transition-colors"
-                    style={{ borderBottom: '1px solid var(--border)', background: p.status === 'PARTIAL' ? '#fffbeb' : isAdminFlat(p.flatNo) ? 'var(--indigo-lt)' : undefined }}>
+                  <div key={p.id}
+                    onClick={() => canTap && setSelectedPayment(p)}
+                    className="transition-colors"
+                    style={{
+                      borderBottom: '1px solid var(--border)',
+                      background: p.status === 'PARTIAL' ? '#fffbeb' : isAdminFlat(p.flatNo) ? 'var(--indigo-lt)' : undefined,
+                      cursor: canTap ? 'pointer' : 'default',
+                    }}
+                    onMouseEnter={e => { if (canTap) e.currentTarget.style.background = 'var(--surface-2)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = p.status === 'PARTIAL' ? '#fffbeb' : isAdminFlat(p.flatNo) ? 'var(--indigo-lt)' : '' }}
+                  >
+                    {/* Mobile row */}
                     <div className="flex items-center gap-3 px-4 py-3 md:hidden">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold flex-shrink-0"
                         style={{ background: ss.bg, color: ss.color }}>{p.flatNo}</div>
@@ -456,31 +693,32 @@ export default function Maintenance() {
                         <div className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{p.payerName}</div>
                         <div className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
                           {p.status === 'PARTIAL'
-                            ? `Paid ₹${(p.paidAmount||0).toLocaleString()} · Bal ₹${((p.amount||MONTHLY_AMOUNT)-(p.paidAmount||0)).toLocaleString()}`
+                            ? `Paid ₹${(p.paidAmount || 0).toLocaleString()} · Bal ₹${((p.amount || MONTHLY_AMOUNT) - (p.paidAmount || 0)).toLocaleString()}`
                             : p.ownerType}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-[12px] font-bold" style={{ color: ss.color }}>
-                          ₹{(p.amount||MONTHLY_AMOUNT).toLocaleString()}
+                          ₹{(p.amount || MONTHLY_AMOUNT).toLocaleString()}
                         </div>
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                           style={{ background: ss.bg, color: ss.color }}>{ss.label}</span>
                       </div>
                     </div>
+                    {/* Desktop row */}
                     <div className="hidden md:grid items-center px-5 py-3"
                       style={{ gridTemplateColumns: '70px 100px 1fr 90px 100px 100px 90px' }}>
                       <span className="text-[12px] font-bold font-mono" style={{ color: 'var(--indigo)' }}>{p.flatNo}</span>
                       <span><span className="badge text-[9px]" style={
-                        p.ownerType === 'RENTED' ? { background:'#fef9c3', color:'#78350f' } :
-                        p.ownerType === 'VACANT' ? { background:'#ffe4e6', color:'#9f1239' } :
-                                                   { background:'#eeeeff', color:'var(--indigo)' }
+                        p.ownerType === 'RENTED' ? { background: '#fef9c3', color: '#78350f' } :
+                        p.ownerType === 'VACANT' ? { background: '#ffe4e6', color: '#9f1239' } :
+                                                   { background: '#eeeeff', color: 'var(--indigo)' }
                       }>{p.ownerType}</span></span>
                       <div className="min-w-0 pr-3">
                         <div className="text-[12px] font-medium truncate" style={{ color: 'var(--ink)' }}>{p.payerName}</div>
                         {p.status === 'PARTIAL' && (
                           <div className="text-[10px]" style={{ color: '#d97706' }}>
-                            Paid ₹{(p.paidAmount||0).toLocaleString()} · Bal ₹{((p.amount||MONTHLY_AMOUNT)-(p.paidAmount||0)).toLocaleString()}
+                            Paid ₹{(p.paidAmount || 0).toLocaleString()} · Bal ₹{((p.amount || MONTHLY_AMOUNT) - (p.paidAmount || 0)).toLocaleString()}
                           </div>
                         )}
                       </div>
@@ -488,7 +726,7 @@ export default function Maintenance() {
                         {['A','B','C','D','E','F'].includes(p.flatNo?.slice(-1)) ? 'North' : 'South'}
                       </span>
                       <span className="text-[12px] font-semibold" style={{ color: 'var(--ink-2)' }}>
-                        ₹{(p.amount||MONTHLY_AMOUNT).toLocaleString()}
+                        ₹{(p.amount || MONTHLY_AMOUNT).toLocaleString()}
                       </span>
                       <span className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
                         {p.paidAmount ? `₹${p.paidAmount.toLocaleString()}` : '—'}
@@ -507,184 +745,196 @@ export default function Maintenance() {
         )}
       </div>
 
-      {/* ── Detail Modal ── */}
-      <Modal open={!!selectedPayment} onClose={closeModal}
-        title={`Flat ${selectedPayment?.flatNo} — ${selectedMonth.label}`}>
-        {selectedPayment && (() => {
-          const isOwn = isAdminFlat(selectedPayment.flatNo)
-          const ss    = statusStyle[selectedPayment.status] || statusStyle.UNPAID
-          const balance = (selectedPayment.amount || MONTHLY_AMOUNT) - (selectedPayment.paidAmount || 0)
+      {/* ── SUP Modal ── */}
+      {isSup && (
+        <Modal
+          open={!!selectedPayment}
+          onClose={closeModal}
+          title={`Flat ${selectedPayment?.flatNo} — ${selectedMonth.label}`}>
+          <SupModal
+            payment={selectedPayment}
+            monthLabel={selectedMonth.label}
+            onClose={closeModal}
+            onRefresh={fetchPayments}
+            MONTHLY_AMOUNT={MONTHLY_AMOUNT}
+          />
+        </Modal>
+      )}
 
-          return (
-            <div className="space-y-3">
-              {/* Details grid */}
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  ['Flat',         selectedPayment.flatNo],
-                  ['Status',       <span className="text-[12px] font-bold px-2 py-0.5 rounded-full" style={{ background: ss.bg, color: ss.color }}>{ss.label}</span>],
-                  ['Payer',        selectedPayment.payerName],
-                  ['Amount Due',   `₹${(selectedPayment.amount||MONTHLY_AMOUNT).toLocaleString()}`],
-                  ['Paid Amount',  selectedPayment.paidAmount ? `₹${selectedPayment.paidAmount.toLocaleString()}` : '—'],
-                  ['Balance',      selectedPayment.status === 'PARTIAL' ? `₹${balance.toLocaleString()}` : '—'],
-                  ['Paid On',      selectedPayment.paidOn || '—'],
-                  ['Mode',         selectedPayment.paymentMode || '—'],
-                ].map(([k, v]) => (
-                  <div key={k} className="rounded-xl p-3"
-                    style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
-                    <div className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--ink-3)' }}>{k}</div>
-                    <div className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{v}</div>
-                  </div>
-                ))}
-              </div>
+      {/* ── Admin / Resident Modal ── */}
+      {!isSup && (
+        <Modal open={!!selectedPayment} onClose={closeModal}
+          title={`Flat ${selectedPayment?.flatNo} — ${selectedMonth.label}`}>
+          {selectedPayment && (() => {
+            const isOwn = isAdminFlat(selectedPayment.flatNo)
+            const ss    = statusStyle[selectedPayment.status] || statusStyle.UNPAID
+            const balance = (selectedPayment.amount || MONTHLY_AMOUNT) - (selectedPayment.paidAmount || 0)
 
-              {/* PARTIAL — admin can waive balance */}
-              {selectedPayment.status === 'PARTIAL' && (
-                <div className="rounded-xl p-3 space-y-2"
-                  style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle size={14} style={{ color: '#d97706' }} />
-                    <span className="text-[12px] font-semibold" style={{ color: '#78350f' }}>
-                      Partial payment — ₹{balance.toLocaleString()} balance remaining
-                    </span>
-                  </div>
-                  <button onClick={() => handleWaiveBalance(selectedPayment)} disabled={waivinig}
-                    className="w-full py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-2"
-                    style={{ background: 'var(--emerald)', color: 'white' }}>
-                    <CheckCircle2 size={14} />
-                    {waivinig ? 'Processing...' : `Waive ₹${balance.toLocaleString()} Balance → Mark as Fully Paid`}
-                  </button>
+            return (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    ['Flat',        selectedPayment.flatNo],
+                    ['Status',      <span className="text-[12px] font-bold px-2 py-0.5 rounded-full" style={{ background: ss.bg, color: ss.color }}>{ss.label}</span>],
+                    ['Payer',       selectedPayment.payerName],
+                    ['Amount Due',  `₹${(selectedPayment.amount || MONTHLY_AMOUNT).toLocaleString()}`],
+                    ['Paid Amount', selectedPayment.paidAmount ? `₹${selectedPayment.paidAmount.toLocaleString()}` : '—'],
+                    ['Balance',     selectedPayment.status === 'PARTIAL' ? `₹${balance.toLocaleString()}` : '—'],
+                    ['Paid On',     selectedPayment.paidOn || '—'],
+                    ['Mode',        selectedPayment.paymentMode || '—'],
+                  ].map(([k, v]) => (
+                    <div key={k} className="rounded-xl p-3"
+                      style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+                      <div className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--ink-3)' }}>{k}</div>
+                      <div className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{v}</div>
+                    </div>
+                  ))}
                 </div>
-              )}
 
-              {/* Admin own flat — pay */}
-              {selectedPayment.status !== 'PAID' && isOwn && (
-                <>
-                  <div className="rounded-xl p-3 text-center"
-                    style={{ background:'var(--indigo-lt)', border:'1px solid var(--indigo-md)' }}>
-                    <div className="text-[11px]" style={{ color:'var(--ink-3)' }}>
-                      {selectedPayment.status === 'PARTIAL' ? 'Balance Due' : 'Amount Due'}
-                    </div>
-                    <div className="text-[28px] font-bold" style={{ color:'var(--indigo)', letterSpacing:'-0.03em' }}>
-                      ₹{due.toLocaleString()}
-                    </div>
-                  </div>
-
-                  {paySuccess ? (
-                    <div className="flex flex-col items-center gap-2 py-3">
-                      <CheckCircle2 size={36} style={{ color:'var(--emerald)' }} />
-                      <p className="text-[14px] font-bold" style={{ color:'var(--emerald)' }}>Recorded!</p>
-                      <button onClick={closeModal} className="btn-primary px-6">Done</button>
-                    </div>
-                  ) : payStep === PAY_STEP.CHOOSE ? (
-                    <div className="space-y-3">
-                      {/* UPI section */}
-                      <div className="rounded-xl p-3 space-y-2" style={{ background:'var(--surface-3)', border:'1px solid var(--border)' }}>
-                        <div className="text-[10px] font-bold uppercase tracking-wide" style={{ color:'var(--ink-3)' }}>Pay via UPI</div>
-                        <div className="rounded-lg p-2.5" style={{ background:'white', border:'1px solid var(--border)' }}>
-                          <div className="text-[10px]" style={{ color:'var(--ink-4)' }}>UPI ID</div>
-                          <div className="text-[12px] font-bold break-all" style={{ color:'var(--ink)' }}>{UPI_ID}</div>
-                        </div>
-                        <CopyUPI upiId={UPI_ID} />
-                        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
-                          style={{ background:'#f0f9ff', border:'1px solid #bae6fd' }}>
-                          <Info size={11} style={{ color:'#0284c7', flexShrink:0 }} />
-                          <span className="text-[10px]" style={{ color:'#0369a1' }}>
-                            Open GPay → New Payment → Paste UPI ID → Pay ₹{due.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                      <button onClick={() => setPayStep(PAY_STEP.CONFIRM)} className="btn-primary w-full justify-center">
-                        <CheckCircle2 size={14} /> I've Paid — Record
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-[12px] font-semibold text-center" style={{ color:'var(--ink-2)' }}>
-                        How much did you pay?
-                      </p>
-                      <div>
-                        <input className="input text-[16px] font-bold text-center w-full"
-                          type="number" placeholder={`e.g. ${due}`}
-                          value={paidAmount}
-                          onChange={e => { setPaidAmount(e.target.value); setAmountErr('') }} />
-                        {amountErr && <p className="text-[11px] mt-1" style={{ color:'var(--rose)' }}>{amountErr}</p>}
-                        {enteredAmount > 0 && (
-                          <div className="mt-2 px-3 py-2 rounded-xl text-[11px] font-semibold flex items-center gap-2"
-                            style={{
-                              background: isPartial ? '#fffbeb' : '#ecfdf5',
-                              border: `1px solid ${isPartial ? '#fde68a' : '#6ee7b7'}`,
-                              color: isPartial ? '#92400e' : '#065f46',
-                            }}>
-                            {isPartial
-                              ? <><AlertTriangle size={12}/> Partial — ₹{(due-enteredAmount).toLocaleString()} balance tracked</>
-                              : <><CheckCircle2 size={12}/> {isOver ? `Overpaid by ₹${(enteredAmount-due).toLocaleString()}` : 'Exact amount!'}</>
-                            }
-                          </div>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {PAYMENT_MODES.map(m => (
-                          <button key={m} onClick={() => setPayMode(m)}
-                            className="py-2 rounded-xl text-[12px] font-semibold transition-all"
-                            style={payMode === m
-                              ? { background:'var(--indigo)', color:'white', border:'1px solid var(--indigo)' }
-                              : { background:'var(--surface-3)', color:'var(--ink-2)', border:'1px solid var(--border)' }}>
-                            {m}
-                          </button>
-                        ))}
-                      </div>
-                      <input className="input" placeholder="Reference (optional)"
-                        value={payRef} onChange={e => setPayRef(e.target.value)} />
-                      <div className="flex gap-2">
-                        <button onClick={handleMarkOwnFlat} disabled={markingPaid} className="btn-primary flex-1 justify-center">
-                          <CheckCircle2 size={14} />
-                          {markingPaid ? 'Recording...' : isPartial ? 'Record Partial' : 'Confirm Payment'}
-                        </button>
-                        <button onClick={() => setPayStep(PAY_STEP.CHOOSE)} className="btn-ghost">Back</button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Other flats — reminder + undo */}
-              {selectedPayment.status === 'UNPAID' && !isOwn && (
-                <>
-                  <div className="rounded-xl p-3 flex items-center gap-2"
+                {selectedPayment.status === 'PARTIAL' && (
+                  <div className="rounded-xl p-3 space-y-2"
                     style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
-                    <Info size={14} style={{ color: 'var(--amber)' }} />
-                    <span className="text-[12px]" style={{ color: '#78350f' }}>
-                      Only the resident can mark this paid from their portal.
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle size={14} style={{ color: '#d97706' }} />
+                      <span className="text-[12px] font-semibold" style={{ color: '#78350f' }}>
+                        Partial payment — ₹{balance.toLocaleString()} balance remaining
+                      </span>
+                    </div>
+                    <button onClick={() => handleWaiveBalance(selectedPayment)} disabled={waivinig}
+                      className="w-full py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-2"
+                      style={{ background: 'var(--emerald)', color: 'white' }}>
+                      <CheckCircle2 size={14} />
+                      {waivinig ? 'Processing...' : `Waive ₹${balance.toLocaleString()} → Mark Fully Paid`}
+                    </button>
                   </div>
-                  <button onClick={() => handleSendSingleReminder(selectedPayment)}
-                    className="btn-primary w-full justify-center">
-                    <Mail size={13} /> Send Reminder to Flat {selectedPayment.flatNo}
-                  </button>
-                </>
-              )}
+                )}
 
-              {/* Paid — undo */}
-              {selectedPayment.status === 'PAID' && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-                    style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
-                    <CheckCircle2 size={14} style={{ color: 'var(--emerald)' }} />
-                    <span className="text-[12px] font-medium" style={{ color: '#065f46' }}>
-                      Paid ₹{(selectedPayment.paidAmount||selectedPayment.amount||MONTHLY_AMOUNT).toLocaleString()} on {selectedPayment.paidOn}
-                    </span>
+                {selectedPayment.status !== 'PAID' && isOwn && (
+                  <>
+                    <div className="rounded-xl p-3 text-center"
+                      style={{ background: 'var(--indigo-lt)', border: '1px solid var(--indigo-md)' }}>
+                      <div className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
+                        {selectedPayment.status === 'PARTIAL' ? 'Balance Due' : 'Amount Due'}
+                      </div>
+                      <div className="text-[28px] font-bold" style={{ color: 'var(--indigo)', letterSpacing: '-0.03em' }}>
+                        ₹{due.toLocaleString()}
+                      </div>
+                    </div>
+
+                    {paySuccess ? (
+                      <div className="flex flex-col items-center gap-2 py-3">
+                        <CheckCircle2 size={36} style={{ color: 'var(--emerald)' }} />
+                        <p className="text-[14px] font-bold" style={{ color: 'var(--emerald)' }}>Recorded!</p>
+                        <button onClick={closeModal} className="btn-primary px-6">Done</button>
+                      </div>
+                    ) : payStep === PAY_STEP.CHOOSE ? (
+                      <div className="space-y-3">
+                        <div className="rounded-xl p-3 space-y-2" style={{ background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
+                          <div className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Pay via UPI</div>
+                          <div className="rounded-lg p-2.5" style={{ background: 'white', border: '1px solid var(--border)' }}>
+                            <div className="text-[10px]" style={{ color: 'var(--ink-4)' }}>UPI ID</div>
+                            <div className="text-[12px] font-bold break-all" style={{ color: 'var(--ink)' }}>{UPI_ID}</div>
+                          </div>
+                          <CopyUPI upiId={UPI_ID} />
+                          <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
+                            style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                            <Info size={11} style={{ color: '#0284c7', flexShrink: 0 }} />
+                            <span className="text-[10px]" style={{ color: '#0369a1' }}>
+                              Open GPay → New Payment → Paste UPI ID → Pay ₹{due.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                        <button onClick={() => setPayStep(PAY_STEP.CONFIRM)} className="btn-primary w-full justify-center">
+                          <CheckCircle2 size={14} /> I've Paid — Record
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-[12px] font-semibold text-center" style={{ color: 'var(--ink-2)' }}>
+                          How much did you pay?
+                        </p>
+                        <div>
+                          <input className="input text-[16px] font-bold text-center w-full"
+                            type="number" placeholder={`e.g. ${due}`}
+                            value={paidAmount}
+                            onChange={e => { setPaidAmount(e.target.value); setAmountErr('') }} />
+                          {amountErr && <p className="text-[11px] mt-1" style={{ color: 'var(--rose)' }}>{amountErr}</p>}
+                          {enteredAmount > 0 && (
+                            <div className="mt-2 px-3 py-2 rounded-xl text-[11px] font-semibold flex items-center gap-2"
+                              style={{
+                                background: isPartial ? '#fffbeb' : '#ecfdf5',
+                                border: `1px solid ${isPartial ? '#fde68a' : '#6ee7b7'}`,
+                                color: isPartial ? '#92400e' : '#065f46',
+                              }}>
+                              {isPartial
+                                ? <><AlertTriangle size={12} /> Partial — ₹{(due - enteredAmount).toLocaleString()} balance tracked</>
+                                : <><CheckCircle2 size={12} /> {isOver ? `Overpaid by ₹${(enteredAmount - due).toLocaleString()}` : 'Exact amount!'}</>
+                              }
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {PAYMENT_MODES.map(m => (
+                            <button key={m} onClick={() => setPayMode(m)}
+                              className="py-2 rounded-xl text-[12px] font-semibold transition-all"
+                              style={payMode === m
+                                ? { background: 'var(--indigo)', color: 'white', border: '1px solid var(--indigo)' }
+                                : { background: 'var(--surface-3)', color: 'var(--ink-2)', border: '1px solid var(--border)' }}>
+                              {m}
+                            </button>
+                          ))}
+                        </div>
+                        <input className="input" placeholder="Reference (optional)"
+                          value={payRef} onChange={e => setPayRef(e.target.value)} />
+                        <div className="flex gap-2">
+                          <button onClick={handleMarkOwnFlat} disabled={markingPaid} className="btn-primary flex-1 justify-center">
+                            <CheckCircle2 size={14} />
+                            {markingPaid ? 'Recording...' : isPartial ? 'Record Partial' : 'Confirm Payment'}
+                          </button>
+                          <button onClick={() => setPayStep(PAY_STEP.CHOOSE)} className="btn-ghost">Back</button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {selectedPayment.status === 'UNPAID' && !isOwn && (
+                  <>
+                    <div className="rounded-xl p-3 flex items-center gap-2"
+                      style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
+                      <Info size={14} style={{ color: 'var(--amber)' }} />
+                      <span className="text-[12px]" style={{ color: '#78350f' }}>
+                        Only the resident can mark this paid from their portal.
+                      </span>
+                    </div>
+                    <button onClick={() => handleSendSingleReminder(selectedPayment)}
+                      className="btn-primary w-full justify-center">
+                      <Mail size={13} /> Send Reminder to Flat {selectedPayment.flatNo}
+                    </button>
+                  </>
+                )}
+
+                {selectedPayment.status === 'PAID' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                      style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
+                      <CheckCircle2 size={14} style={{ color: 'var(--emerald)' }} />
+                      <span className="text-[12px] font-medium" style={{ color: '#065f46' }}>
+                        Paid ₹{(selectedPayment.paidAmount || selectedPayment.amount || MONTHLY_AMOUNT).toLocaleString()} on {selectedPayment.paidOn}
+                      </span>
+                    </div>
+                    <button onClick={() => handleUndoPay(selectedPayment)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-semibold"
+                      style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fca5a5' }}>
+                      ↩ Undo — Mark as Unpaid
+                    </button>
                   </div>
-                  <button onClick={() => handleUndoPay(selectedPayment)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-semibold"
-                    style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fca5a5' }}>
-                    ↩ Undo — Mark as Unpaid
-                  </button>
-                </div>
-              )}
-            </div>
-          )
-        })()}
-      </Modal>
+                )}
+              </div>
+            )
+          })()}
+        </Modal>
+      )}
     </div>
   )
 }
