@@ -589,8 +589,8 @@ export default function Maintenance() {
         ) : view === 'wing' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { name: 'North Wing', units: ['A','B','C','D','E','F'], color: 'var(--sky)',    lightBg: '#f0f9ff', border: '#bae6fd' },
-              { name: 'South Wing', units: ['G','H','J','K'],         color: 'var(--indigo)', lightBg: '#eeeeff', border: 'var(--indigo-md)' },
+              { name: 'South Wing', units: ['A','B','C','D','E','F'], color: 'var(--sky)',    lightBg: '#f0f9ff', border: '#bae6fd' },
+              { name: 'North Wing', units: ['G','H','J','K'],         color: 'var(--indigo)', lightBg: '#eeeeff', border: 'var(--indigo-md)' },
             ].map(wing => {
               const wingPaid    = payments.filter(p => wing.units.includes(p.flatNo?.slice(-1)) && p.status === 'PAID').length
               const wingPartial = payments.filter(p => wing.units.includes(p.flatNo?.slice(-1)) && p.status === 'PARTIAL').length
