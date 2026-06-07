@@ -119,7 +119,7 @@ export default function Login() {
           </div>
           <h1 className="text-[26px] font-bold"
             style={{ color: 'var(--ink)', letterSpacing: '-0.03em' }}>
-            Akriti Adeshwar
+            Priya
           </h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--ink-3)' }}>
             Society Management Portal
