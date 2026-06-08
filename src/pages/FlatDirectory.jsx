@@ -101,8 +101,9 @@ export default function FlatDirectory() {
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { name:'South Wing', units:NORTH_UNITS, color:'var(--sky)',    lightBg:'#f0f9ff', border:'#bae6fd' },
-              { name:'North Wing', units:SOUTH_UNITS, color:'var(--indigo)', lightBg:'#eeeeff', border:'var(--indigo-md)' },
+              
+              { name:'North Wing', units:NORTH_UNITS, color:'var(--indigo)', lightBg:'#eeeeff', border:'var(--indigo-md)' },
+              { name:'South Wing', units:SOUTH_UNITS, color:'var(--sky)',    lightBg:'#f0f9ff', border:'#bae6fd' },
             ].map(w => (
               <div key={w.name} className="card overflow-hidden">
                 <div className="px-4 py-3" style={{ background:w.lightBg, borderBottom:`1px solid ${w.border}` }}>
