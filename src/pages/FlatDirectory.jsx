@@ -4,8 +4,9 @@ import { Modal, WhatsAppIcon } from '../components/ui'
 import { Search, Phone } from 'lucide-react'
 import api from '../api/config'
 
-const NORTH_UNITS = ['A','B','C','D','E','F']
-const SOUTH_UNITS = ['G','H','J','K']
+
+const NORTH_UNITS = ['G','H','J','K']
+const SOUTH_UNITS = ['A','B','C','D','E','F']
 
 export default function FlatDirectory() {
   const [flats, setFlats] = useState([])
@@ -100,8 +101,9 @@ export default function FlatDirectory() {
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { name:'South Wing', units:NORTH_UNITS, color:'var(--sky)',    lightBg:'#f0f9ff', border:'#bae6fd' },
-              { name:'North Wing', units:SOUTH_UNITS, color:'var(--indigo)', lightBg:'#eeeeff', border:'var(--indigo-md)' },
+              
+              { name:'North Wing', units:NORTH_UNITS, color:'var(--indigo)', lightBg:'#eeeeff', border:'var(--indigo-md)' },
+              { name:'South Wing', units:SOUTH_UNITS, color:'var(--sky)',    lightBg:'#f0f9ff', border:'#bae6fd' },
             ].map(w => (
               <div key={w.name} className="card overflow-hidden">
                 <div className="px-4 py-3" style={{ background:w.lightBg, borderBottom:`1px solid ${w.border}` }}>
