@@ -4,8 +4,9 @@ import { Modal, WhatsAppIcon } from '../components/ui'
 import { Search, Phone } from 'lucide-react'
 import api from '../api/config'
 
-const NORTH_UNITS = ['A','B','C','D','E','F']
-const SOUTH_UNITS = ['G','H','J','K']
+
+const NORTH_UNITS = ['G','H','J','K']
+const SOUTH_UNITS = ['A','B','C','D','E','F']
 
 export default function FlatDirectory() {
   const [flats, setFlats] = useState([])
