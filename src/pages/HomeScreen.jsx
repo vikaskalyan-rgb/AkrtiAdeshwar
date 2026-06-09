@@ -309,9 +309,8 @@ function AdminHome({ user, navigate }) {
       setComplaints(complaintsRes.data)
       setVisitors(visitorsRes.data)
       setAnnouncements(annRes.data)
-      // deliveries optional
-      api.get('/api/deliveries?status=WAITING')
-  .then(r => setDeliveries(r.data))
+     api.get('/api/deliveries')
+  .then(r => setDeliveries(r.data.filter(d => d.status === 'PENDING')))
   .catch(() => setDeliveries([]))
     } catch (err) { console.error('AdminHome error:', err) }
     finally { setLoading(false) }
