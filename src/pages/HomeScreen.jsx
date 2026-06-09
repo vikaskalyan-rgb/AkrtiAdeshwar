@@ -1,28 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import api from '../api/config'
 import {
-  LayoutDashboard, CreditCard, MessageSquareWarning,
-  Megaphone, Users, Building2, Receipt, LogOut,
-  Shield, MapPin, Package, CalendarDays,
+  CreditCard, MessageSquareWarning, Megaphone, Users, Building2,
+  Receipt, LogOut, Shield, MapPin, Package, CalendarDays,
   Users2, Network, PackageSearch, BarChart3, ClipboardList,
   FileBarChart2, Footprints, Feather, Lightbulb, ShoppingBag,
-  CalendarCheck, GraduationCap, Grid3X3, X, Search,
-  AlertCircle, CheckCircle2, ChevronRight,
-  Truck, Volume2, Mail
+  CalendarCheck, GraduationCap, X, Search, ChevronRight,
+  Truck, Volume2, Mail, Grid3X3, MoreHorizontal
 } from 'lucide-react'
 
+// ── Helpers ───────────────────────────────────────────────
 function fmt(n) {
   if (!n) return '₹0'
   if (n >= 100000) return `₹${(n / 100000).toFixed(1)}L`
   if (n >= 1000)   return `₹${(n / 1000).toFixed(1)}K`
   return `₹${n}`
 }
-
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-
 function getLastNMonths(n) {
   const result = []
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
@@ -33,110 +30,184 @@ function getLastNMonths(n) {
   return result
 }
 
-const ADMIN_CATEGORIES = [
-  { label: 'My Home', color: '#5b52f0', emoji: '🏠', items: [
-    { to: '/dashboard',        icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/maintenance',      icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
-    { to: '/expenses',         icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
-    { to: '/reports',          icon: BarChart3,            label: 'Reports',        color: '#7c3aed', bg: '#f3f0ff' },
-  ]},
-  { label: 'Community Life', color: '#7c3aed', emoji: '✨', items: [
-    { to: '/steps',            icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/community-board',  icon: Feather,              label: 'Creative Corner',color: '#7c3aed', bg: '#f3f0ff' },
-    { to: '/ideas',            icon: Lightbulb,            label: 'Ideas',          color: '#d97706', bg: '#fffbeb' },
-    { to: '/buy-sell',         icon: ShoppingBag,          label: 'Buy & Sell',     color: '#059669', bg: '#ecfdf5' },
-  ]},
-  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉', items: [
-    { to: '/weekly-activities',icon: CalendarCheck,        label: 'Activities',     color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/classes-events',   icon: GraduationCap,        label: 'Classes',        color: '#e11d48', bg: '#fff1f2' },
-    { to: '/amenities',        icon: CalendarDays,         label: 'Hall Booking',   color: '#5b52f0', bg: '#eeeeff' },
-  ]},
-  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒', items: [
-    { to: '/visitors',         icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/deliveries',       icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
-    { to: '/lost-found',       icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
-    { to: '/watchman',         icon: Shield,               label: 'Night Patrol',   color: '#1a1a2e', bg: '#f1f1f9' },
-  ]},
-  { label: 'Information', color: '#059669', emoji: 'ℹ️', items: [
-    { to: '/nearby',           icon: MapPin,               label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-    { to: '/flats',            icon: Building2,            label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-    { to: '/announcements',    icon: Megaphone,            label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/workers',          icon: Users2,               label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/org-chart',        icon: Network,              label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
-  ]},
-  { label: 'Management', color: '#475569', emoji: '⚙️', items: [
-    { to: '/complaints',       icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
-    { to: '/flat-management',  icon: ClipboardList,        label: 'Flat Mgmt',      color: '#7c3aed', bg: '#f3f0ff' },
-  ]},
+// ── Feature sections for overlay (list style) ────────────
+const ADMIN_SECTIONS = [
+  {
+    label: 'Community Life', color: '#7c3aed', emoji: '✨',
+    desc: 'Connect with your neighbours',
+    items: [
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
+    ],
+  },
+  {
+    label: 'Events & Activities', color: '#0284c7', emoji: '🎉',
+    desc: 'Stay active and engaged',
+    items: [
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  {
+    label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
+    desc: 'Security and household services',
+    items: [
+      { to: '/visitors',   icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries', icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found', icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/watchman',   icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs and schedules',          color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  {
+    label: 'Information', color: '#059669', emoji: 'ℹ️',
+    desc: 'Useful apartment information',
+    items: [
+      { to: '/nearby',       icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
+      { to: '/flats',        icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
+      { to: '/announcements',icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/workers',      icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/org-chart',    icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
+    ],
+  },
+  {
+    label: 'Management', color: '#475569', emoji: '⚙️',
+    desc: 'Admin tools',
+    items: [
+      { to: '/expenses',        icon: Receipt,              label: 'Expenses',   desc: 'Track and manage society expenses',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/reports',         icon: BarChart3,            label: 'Reports',    desc: 'Financial reports and collection summaries',       color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/complaints',      icon: MessageSquareWarning, label: 'Complaints', desc: 'Manage and resolve resident complaints',           color: '#e11d48', bg: '#fff1f2' },
+      { to: '/flat-management', icon: ClipboardList,        label: 'Flat Mgmt',  desc: 'Update resident and owner details',                color: '#7c3aed', bg: '#f3f0ff' },
+    ],
+  },
 ]
 
-const OWNER_CATEGORIES = [
-  { label: 'My Home', color: '#5b52f0', emoji: '🏠', items: [
-    { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
-    { to: '/resident/expenses',    icon: Receipt,              label: 'Expenses',       color: '#d97706', bg: '#fffbeb' },
-    { to: '/resident/reports',     icon: FileBarChart2,        label: 'Reports',        color: '#7c3aed', bg: '#f3f0ff' },
-  ]},
-  { label: 'Community Life', color: '#7c3aed', emoji: '✨', items: [
-    { to: '/steps',            icon: Footprints,  label: 'Step Challenge',  color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/community-board',  icon: Feather,     label: 'Creative Corner', color: '#7c3aed', bg: '#f3f0ff' },
-    { to: '/ideas',            icon: Lightbulb,   label: 'Ideas',           color: '#d97706', bg: '#fffbeb' },
-    { to: '/buy-sell',         icon: ShoppingBag, label: 'Buy & Sell',      color: '#059669', bg: '#ecfdf5' },
-  ]},
-  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉', items: [
-    { to: '/weekly-activities',icon: CalendarCheck, label: 'Activities',   color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/classes-events',   icon: GraduationCap, label: 'Classes',      color: '#e11d48', bg: '#fff1f2' },
-    { to: '/amenities',        icon: CalendarDays,  label: 'Hall Booking', color: '#5b52f0', bg: '#eeeeff' },
-  ]},
-  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒', items: [
-    { to: '/resident/visitors',icon: Users,        label: 'Visitors',    color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/deliveries',       icon: Package,      label: 'Deliveries',  color: '#d97706', bg: '#fffbeb' },
-    { to: '/lost-found',       icon: PackageSearch,label: 'Lost & Found',color: '#e11d48', bg: '#fff1f2' },
-    { to: '/resident/watchman',icon: Shield,       label: 'Night Patrol',color: '#1a1a2e', bg: '#f1f1f9' },
-  ]},
-  { label: 'Information', color: '#059669', emoji: 'ℹ️', items: [
-    { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/resident/workers',       icon: Users2,   label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
-  ]},
+const OWNER_SECTIONS = [
+  {
+    label: 'Community Life', color: '#7c3aed', emoji: '✨',
+    desc: 'Connect with your neighbours',
+    items: [
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
+    ],
+  },
+  {
+    label: 'Events & Activities', color: '#0284c7', emoji: '🎉',
+    desc: 'Stay active and engaged',
+    items: [
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  {
+    label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
+    desc: 'Security and household services',
+    items: [
+      { to: '/resident/visitors', icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries',        icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs',                        color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  {
+    label: 'Information', color: '#059669', emoji: 'ℹ️',
+    desc: 'Useful apartment information',
+    items: [
+      { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/workers',       icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
+    ],
+  },
+  {
+    label: 'My Account', color: '#475569', emoji: '👤',
+    desc: 'Your personal section',
+    items: [
+      { to: '/resident/expenses', icon: Receipt,      label: 'Expenses',   desc: 'View society expenses and financial reports',      color: '#d97706', bg: '#fffbeb' },
+      { to: '/resident/reports',  icon: FileBarChart2,label: 'Reports',    desc: 'Your payment history and reports',                 color: '#7c3aed', bg: '#f3f0ff' },
+    ],
+  },
 ]
 
-const TENANT_CATEGORIES = [
-  { label: 'My Home', color: '#5b52f0', emoji: '🏠', items: [
-    { to: '/resident',             icon: LayoutDashboard,      label: 'Dashboard',   color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance', color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',  color: '#e11d48', bg: '#fff1f2' },
-  ]},
-  { label: 'Community Life', color: '#7c3aed', emoji: '✨', items: [
-    { to: '/steps',            icon: Footprints,  label: 'Step Challenge',  color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/community-board',  icon: Feather,     label: 'Creative Corner', color: '#7c3aed', bg: '#f3f0ff' },
-    { to: '/ideas',            icon: Lightbulb,   label: 'Ideas',           color: '#d97706', bg: '#fffbeb' },
-    { to: '/buy-sell',         icon: ShoppingBag, label: 'Buy & Sell',      color: '#059669', bg: '#ecfdf5' },
-  ]},
-  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉', items: [
-    { to: '/weekly-activities',icon: CalendarCheck, label: 'Activities',   color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/classes-events',   icon: GraduationCap, label: 'Classes',      color: '#e11d48', bg: '#fff1f2' },
-    { to: '/amenities',        icon: CalendarDays,  label: 'Hall Booking', color: '#5b52f0', bg: '#eeeeff' },
-  ]},
-  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒', items: [
-    { to: '/resident/visitors', icon: Users,        label: 'Visitors',    color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/deliveries',        icon: Package,      label: 'Deliveries',  color: '#d97706', bg: '#fffbeb' },
-    { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',color: '#e11d48', bg: '#fff1f2' },
-    { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',color: '#1a1a2e', bg: '#f1f1f9' },
-  ]},
-  { label: 'Information', color: '#059669', emoji: 'ℹ️', items: [
-    { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/resident/workers',       icon: Users2,   label: 'Workers',        color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      color: '#d97706', bg: '#fffbeb' },
-  ]},
+const TENANT_SECTIONS = [
+  {
+    label: 'Community Life', color: '#7c3aed', emoji: '✨',
+    desc: 'Connect with your neighbours',
+    items: [
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
+    ],
+  },
+  {
+    label: 'Events & Activities', color: '#0284c7', emoji: '🎉',
+    desc: 'Stay active and engaged',
+    items: [
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  {
+    label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
+    desc: 'Security and household services',
+    items: [
+      { to: '/resident/visitors', icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries',        icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs',                        color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  {
+    label: 'Information', color: '#059669', emoji: 'ℹ️',
+    desc: 'Useful apartment information',
+    items: [
+      { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/workers',       icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
+    ],
+  },
 ]
 
-function AppIcon({ item, onPress }) {
+// ── Quick links per role ──────────────────────────────────
+const ADMIN_QUICK = [
+  { to: '/maintenance', icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
+  { to: '/steps',       icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+  { to: '/complaints',  icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
+  { to: '/visitors',    icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
+  { to: '/deliveries',  icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+  { to: '/announcements',icon: Megaphone,           label: 'Announcements',  color: '#7c3aed', bg: '#f3f0ff' },
+]
+
+const OWNER_QUICK = [
+  { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
+  { to: '/steps',                icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+  { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
+  { to: '/resident/announcements',icon: Megaphone,           label: 'Announcements',  color: '#7c3aed', bg: '#f3f0ff' },
+  { to: '/deliveries',           icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+  { to: '/resident/visitors',    icon: Users,                label: 'Visitors',       color: '#0284c7', bg: '#f0f9ff' },
+]
+
+const TENANT_QUICK = [
+  { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance',    color: '#059669', bg: '#ecfdf5' },
+  { to: '/steps',                icon: Footprints,           label: 'Step Challenge', color: '#5b52f0', bg: '#eeeeff' },
+  { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',     color: '#e11d48', bg: '#fff1f2' },
+  { to: '/resident/announcements',icon: Megaphone,           label: 'Announcements',  color: '#7c3aed', bg: '#f3f0ff' },
+  { to: '/deliveries',           icon: Package,              label: 'Deliveries',     color: '#d97706', bg: '#fffbeb' },
+  { to: '/lost-found',           icon: PackageSearch,        label: 'Lost & Found',   color: '#e11d48', bg: '#fff1f2' },
+]
+
+// ── Quick Link Icon ───────────────────────────────────────
+function QuickIcon({ item, onPress }) {
   const Icon = item.icon
   const [pressed, setPressed] = useState(false)
   return (
@@ -160,92 +231,143 @@ function AppIcon({ item, onPress }) {
         <Icon size={22} style={{ color: item.color }} strokeWidth={1.75} />
       </div>
       <span className="text-[10px] font-semibold text-center leading-tight"
-        style={{ color: 'var(--ink-2)', width: '60px' }}>
+        style={{ color: 'var(--ink-2)', width: '58px' }}>
         {item.label}
       </span>
     </button>
   )
 }
 
-function BottomSheet({ open, onClose, categories, onNavigate, search, setSearch }) {
+// ── More Bottom Sheet (list style) ────────────────────────
+function MoreSheet({ open, onClose, sections, onNavigate }) {
+  const [search, setSearch] = useState('')
+
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = ''
+    else { document.body.style.overflow = ''; setSearch('') }
     return () => { document.body.style.overflow = '' }
   }, [open])
 
   const filtered = search.trim() === ''
-    ? categories
-    : categories.map(cat => ({
-        ...cat,
-        items: cat.items.filter(i => i.label.toLowerCase().includes(search.toLowerCase())),
-      })).filter(cat => cat.items.length > 0)
+    ? sections
+    : sections.map(sec => ({
+        ...sec,
+        items: sec.items.filter(i =>
+          i.label.toLowerCase().includes(search.toLowerCase()) ||
+          i.desc.toLowerCase().includes(search.toLowerCase())
+        ),
+      })).filter(sec => sec.items.length > 0)
 
-  const totalFeatures = categories.reduce((s, c) => s + c.items.length, 0)
+  const totalCount = sections.reduce((s, sec) => s + sec.items.length, 0)
 
   return (
     <>
+      {/* Backdrop */}
       <div onClick={onClose} style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
         zIndex: 40, opacity: open ? 1 : 0,
         pointerEvents: open ? 'auto' : 'none',
         transition: 'opacity 0.3s ease',
       }} />
+
+      {/* Sheet */}
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50,
         background: 'white', borderRadius: '20px 20px 0 0',
-        maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+        maxHeight: '92vh', display: 'flex', flexDirection: 'column',
         transform: open ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
-        boxShadow: '0 -4px 40px rgba(0,0,0,0.15)',
+        boxShadow: '0 -4px 40px rgba(0,0,0,0.18)',
       }}>
+        {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
           <div style={{ width: 40, height: 4, borderRadius: 99, background: '#e2e8f0' }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 10px' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 12px' }}>
           <div>
-            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>All Features</span>
-            <span style={{ fontSize: 11, color: 'var(--ink-4)', marginLeft: 8 }}>{totalFeatures} features</span>
+            <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)' }}>More Features</span>
+            <span style={{ fontSize: 11, color: 'var(--ink-4)', marginLeft: 8 }}>{totalCount} total</span>
           </div>
           <button onClick={onClose} style={{
             width: 32, height: 32, borderRadius: 99,
             background: 'var(--surface-3)', border: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           }}>
             <X size={15} style={{ color: 'var(--ink-3)' }} />
           </button>
         </div>
+
+        {/* Search */}
         <div style={{ padding: '0 16px 12px', position: 'relative' }}>
           <Search size={13} style={{
             position: 'absolute', left: 28, top: '50%',
-            transform: 'translateY(-50%)', color: 'var(--ink-4)', pointerEvents: 'none'
+            transform: 'translateY(-50%)', color: 'var(--ink-4)', pointerEvents: 'none',
           }} />
-          <input className="input" style={{ paddingLeft: 36, width: '100%', boxSizing: 'border-box' }}
-            placeholder="Search features…" value={search}
-            onChange={e => setSearch(e.target.value)} />
+          <input
+            className="input"
+            style={{ paddingLeft: 36, width: '100%', boxSizing: 'border-box' }}
+            placeholder="Search features…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 40px' }}>
+
+        {/* List */}
+        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 40 }}>
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-4)', fontSize: 13 }}>
               No results for "{search}"
             </div>
-          ) : filtered.map(cat => (
-            <div key={cat.label} style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 3, height: 14, borderRadius: 99, background: cat.color, flexShrink: 0 }} />
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: cat.color }}>
-                  {cat.emoji} {cat.label}
-                </span>
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 99, background: `${cat.color}15`, color: cat.color }}>
-                  {cat.items.length}
-                </span>
+          ) : filtered.map(sec => (
+            <div key={sec.label}>
+              {/* Section header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '14px 16px 8px',
+                borderTop: '1px solid var(--border)',
+              }}>
+                <div style={{ width: 3, height: 16, borderRadius: 99, background: sec.color, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: sec.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    {sec.emoji} {sec.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 1 }}>{sec.desc}</div>
+                </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 8px' }}>
-                {cat.items.map(item => (
-                  <AppIcon key={item.to} item={item} onPress={(to) => { onClose(); onNavigate(to) }} />
-                ))}
-              </div>
+
+              {/* Items */}
+              {sec.items.map((item, idx) => {
+                const Icon = item.icon
+                return (
+                  <button
+                    key={item.to}
+                    onClick={() => { onClose(); onNavigate(item.to) }}
+                    className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--surface-2)] text-left"
+                    style={{ borderBottom: idx < sec.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    {/* Icon */}
+                    <div style={{
+                      width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+                      background: item.bg,
+                      border: `1px solid ${item.color}20`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon size={19} style={{ color: item.color }} strokeWidth={1.75} />
+                    </div>
+                    {/* Text */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>
+                        {item.label}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--ink-4)', lineHeight: 1.4 }}>
+                        {item.desc}
+                      </div>
+                    </div>
+                    <ChevronRight size={15} style={{ color: 'var(--ink-4)', flexShrink: 0 }} />
+                  </button>
+                )
+              })}
             </div>
           ))}
         </div>
@@ -254,24 +376,13 @@ function BottomSheet({ open, onClose, categories, onNavigate, search, setSearch 
   )
 }
 
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-xl px-3 py-2 text-[12px] shadow-lg"
-      style={{ background: 'white', border: '1px solid var(--border)', color: 'var(--ink)' }}>
-      <div className="font-semibold mb-0.5">{label}</div>
-      <div style={{ color: 'var(--indigo)' }}>{fmt(payload[0]?.value)}</div>
-    </div>
-  )
-}
-
-// ── Community Pulse widget — shared by admin and resident ──
+// ── Community Pulse ───────────────────────────────────────
 function CommunityPulse({ openComplaints, parcelsWaiting, visitorsIn, announcementsCount }) {
   const items = [
-    { label: 'Open Complaints', value: openComplaints,      color: '#e11d48', icon: MessageSquareWarning },
-    { label: 'Parcels Waiting', value: parcelsWaiting,      color: '#d97706', icon: Truck },
-    { label: 'Visitors In',     value: visitorsIn,          color: '#059669', icon: Users },
-    { label: 'Announcements',   value: announcementsCount,  color: '#5b52f0', icon: Volume2 },
+    { label: 'Open Complaints', value: openComplaints,     color: '#e11d48', icon: MessageSquareWarning },
+    { label: 'Parcels Waiting', value: parcelsWaiting,     color: '#d97706', icon: Truck },
+    { label: 'Visitors In',     value: visitorsIn,         color: '#059669', icon: Users },
+    { label: 'Announcements',   value: announcementsCount, color: '#5b52f0', icon: Volume2 },
   ]
   return (
     <div className="card p-3">
@@ -293,8 +404,19 @@ function CommunityPulse({ openComplaints, parcelsWaiting, visitorsIn, announceme
   )
 }
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl px-3 py-2 text-[12px] shadow-lg"
+      style={{ background: 'white', border: '1px solid var(--border)', color: 'var(--ink)' }}>
+      <div className="font-semibold mb-0.5">{label}</div>
+      <div style={{ color: 'var(--indigo)' }}>{fmt(payload[0]?.value)}</div>
+    </div>
+  )
+}
+
 // ── Admin Home ────────────────────────────────────────────
-function AdminHome({ user, navigate }) {
+function AdminHome({ user, navigate, onMore }) {
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const [selMonth,      setSelMonth]      = useState({ month: now.getMonth() + 1, year: now.getFullYear() })
   const [dashboard,     setDashboard]     = useState(null)
@@ -329,7 +451,6 @@ function AdminHome({ user, navigate }) {
       setComplaints(complaintsRes.data)
       setVisitors(visitorsRes.data)
       setAnnouncements(annRes.data)
-      // ✅ Filter PENDING only on frontend
       setDeliveries((deliveriesRes.data || []).filter(d => d.status === 'PENDING'))
     } catch (err) { console.error('AdminHome error:', err) }
     finally { setLoading(false) }
@@ -366,6 +487,7 @@ function AdminHome({ user, navigate }) {
 
   return (
     <div className="space-y-3">
+
       {/* Month tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {getLastNMonths(6).map(m => {
@@ -453,32 +575,6 @@ function AdminHome({ user, navigate }) {
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-2">
-        <button onClick={() => navigate('/maintenance')}
-          className="card p-3 flex items-center gap-3 text-left transition-colors hover:bg-[var(--indigo-lt)]">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#ecfdf5' }}>
-            <CreditCard size={16} style={{ color: '#059669' }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-bold" style={{ color: 'var(--ink)' }}>Maintenance</div>
-            <div className="text-[10px]" style={{ color: '#e11d48' }}>{defaulters.length} pending</div>
-          </div>
-          <ChevronRight size={13} style={{ color: 'var(--ink-4)' }} />
-        </button>
-        <button onClick={() => navigate('/complaints')}
-          className="card p-3 flex items-center gap-3 text-left transition-colors hover:bg-[var(--indigo-lt)]">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#fff1f2' }}>
-            <MessageSquareWarning size={16} style={{ color: '#e11d48' }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-bold" style={{ color: 'var(--ink)' }}>Complaints</div>
-            <div className="text-[10px]" style={{ color: '#e11d48' }}>{openComplaints.length} open</div>
-          </div>
-          <ChevronRight size={13} style={{ color: 'var(--ink-4)' }} />
-        </button>
-      </div>
-
       {/* Defaulters */}
       {defaulters.length > 0 && (
         <div className="card">
@@ -517,14 +613,14 @@ function AdminHome({ user, navigate }) {
         </div>
       )}
 
-      {/* Announcements */}
+      {/* Announcements preview */}
       {announcements.length > 0 && (
         <div className="card">
           <div className="card-header">
             <span className="card-title">Announcements</span>
             <button onClick={() => navigate('/announcements')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>Post +</button>
           </div>
-          {announcements.slice(0, 3).map(a => (
+          {announcements.slice(0, 2).map(a => (
             <div key={a.id} className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
               <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{a.title}</div>
               <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>
@@ -539,7 +635,7 @@ function AdminHome({ user, navigate }) {
 }
 
 // ── Resident Home ─────────────────────────────────────────
-function ResidentHome({ user, navigate }) {
+function ResidentHome({ user, navigate, onMore }) {
   const now     = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const isOwner = user?.role === 'owner'
 
@@ -561,18 +657,16 @@ function ResidentHome({ user, navigate }) {
     setLoading(true)
     try {
       const requests = [
-        api.get(`/api/maintenance/flat/${user.flatNo}`),                                          // 0
-        api.get(`/api/complaints/flat/${user.flatNo}`),                                           // 1
-        api.get('/api/announcements'),                                                             // 2
-        api.get(`/api/visitors?flatNo=${user.flatNo}&todayOnly=true`),                            // 3
-        api.get(`/api/dashboard?month=${selMonth.month}&year=${selMonth.year}`),                  // 4
-        api.get('/api/flats'),                                                                     // 5
-        api.get(`/api/maintenance?month=${selMonth.month}&year=${selMonth.year}`),                // 6
-        api.get('/api/deliveries').catch(() => ({ data: [] })),                                   // 7 — always fetched
+        api.get(`/api/maintenance/flat/${user.flatNo}`),
+        api.get(`/api/complaints/flat/${user.flatNo}`),
+        api.get('/api/announcements'),
+        api.get(`/api/visitors?flatNo=${user.flatNo}&todayOnly=true`),
+        api.get(`/api/dashboard?month=${selMonth.month}&year=${selMonth.year}`),
+        api.get('/api/flats'),
+        api.get(`/api/maintenance?month=${selMonth.month}&year=${selMonth.year}`),
+        api.get('/api/deliveries').catch(() => ({ data: [] })),
       ]
-      if (isOwner) {
-        requests.push(api.get(`/api/expenses?month=${selMonth.month}&year=${selMonth.year}`))     // 8
-      }
+      if (isOwner) requests.push(api.get(`/api/expenses?month=${selMonth.month}&year=${selMonth.year}`))
       const results = await Promise.all(requests)
       setMyPayments(results[0].data)
       setMyComplaints(results[1].data)
@@ -581,7 +675,6 @@ function ResidentHome({ user, navigate }) {
       setDashboard(results[4].data)
       setAllFlats(results[5].data.filter(f => f.floor > 0 && f.wing !== 'Ground'))
       setAllPayments(results[6].data)
-      // ✅ Filter PENDING only on frontend
       setDeliveries((results[7].data || []).filter(d => d.status === 'PENDING'))
       if (isOwner && results[8]) setExpenses(results[8].data)
     } catch (err) { console.error('ResidentHome error:', err) }
@@ -603,11 +696,7 @@ function ResidentHome({ user, navigate }) {
   const payHistory = [...myPayments]
     .sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month)
     .slice(-6)
-    .map(p => ({
-      name:   MONTH_NAMES[p.month - 1],
-      paid:   p.status === 'PAID' ? (p.amount || MONTHLY_AMOUNT) : 0,
-      status: p.status,
-    }))
+    .map(p => ({ name: MONTH_NAMES[p.month - 1], paid: p.status === 'PAID' ? (p.amount || MONTHLY_AMOUNT) : 0, status: p.status }))
 
   const flatGrid = allFlats.map(f => {
     const pay = allPayments.find(p => p.flatNo === f.flatNo)
@@ -622,6 +711,7 @@ function ResidentHome({ user, navigate }) {
 
   return (
     <div className="space-y-3">
+
       {/* Month tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {getLastNMonths(6).map(m => {
@@ -640,7 +730,7 @@ function ResidentHome({ user, navigate }) {
         })}
       </div>
 
-      {/* My payment hero card */}
+      {/* My payment hero */}
       <div className="card p-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1"
           style={{ background: currentMonthPay?.status === 'PAID' ? '#059669' : '#e11d48' }} />
@@ -725,7 +815,7 @@ function ResidentHome({ user, navigate }) {
         )}
       </div>
 
-      {/* ✅ Community Pulse for resident */}
+      {/* Community Pulse */}
       <CommunityPulse
         openComplaints={openComplaints.length}
         parcelsWaiting={deliveries.length}
@@ -733,7 +823,7 @@ function ResidentHome({ user, navigate }) {
         announcementsCount={announcements.length}
       />
 
-      {/* Payment history chart + flat grid */}
+      {/* Payment history + flat grid */}
       <div className="card">
         <div className="card-header">
           <span className="card-title">My Payment History</span>
@@ -761,7 +851,7 @@ function ResidentHome({ user, navigate }) {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Society Status — {monthLabel}</span>
                 <div className="flex gap-2">
-                  {[['#d1fae5', 'Paid'], ['#ffe4e6', 'Unpaid']].map(([bg, l]) => (
+                  {[['#d1fae5','Paid'],['#ffe4e6','Unpaid']].map(([bg,l]) => (
                     <div key={l} className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-sm" style={{ background: bg }} />
                       <span className="text-[10px]" style={{ color: 'var(--ink-3)' }}>{l}</span>
@@ -792,32 +882,6 @@ function ResidentHome({ user, navigate }) {
         </div>
       </div>
 
-      {/* Visitors */}
-      {myVisitors.length > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">My Visitors Today</span>
-            <button onClick={() => navigate('/resident/visitors')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>All →</button>
-          </div>
-          {myVisitors.slice(0, 3).map(v => (
-            <div key={v.id} className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-[var(--surface-2)] transition-colors"
-              style={{ borderBottom: '1px solid var(--border)' }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                style={{ background: 'var(--indigo)' }}>
-                {v.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{v.name}</div>
-                <div className="text-[10px]" style={{ color: 'var(--ink-3)' }}>{v.purpose}</div>
-              </div>
-              <span className="badge" style={v.status === 'IN' ? { background: '#ecfdf5', color: '#059669' } : { background: 'var(--surface-3)', color: 'var(--ink-3)' }}>
-                {v.status === 'IN' ? 'In' : 'Out'}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Announcements */}
       {announcements.length > 0 && (
         <div className="card">
@@ -842,9 +906,8 @@ function ResidentHome({ user, navigate }) {
 // ── Main HomeScreen ───────────────────────────────────────
 export default function HomeScreen() {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const [sheetOpen,   setSheetOpen]   = useState(false)
-  const [sheetSearch, setSheetSearch] = useState('')
+  const navigate   = useNavigate()
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   const now        = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const hour       = now.getHours()
@@ -855,18 +918,16 @@ export default function HomeScreen() {
   const isOwner = user?.role === 'owner'
   const isSup   = user?.identifier === 'SUP'
 
-  const roleLabel = isSup ? 'Supervisor' : isAdmin ? 'Admin' : isOwner ? 'Owner' : 'Tenant'
-  const roleColor = isAdmin ? '#5b52f0' : isOwner ? '#059669' : '#0284c7'
-  const initials  = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
-  const categories    = isAdmin ? ADMIN_CATEGORIES : isOwner ? OWNER_CATEGORIES : TENANT_CATEGORIES
-  const totalFeatures = categories.reduce((s, c) => s + c.items.length, 0)
-
-  const handleSheetClose = () => { setSheetOpen(false); setSheetSearch('') }
+  const roleLabel  = isSup ? 'Supervisor' : isAdmin ? 'Admin' : isOwner ? 'Owner' : 'Tenant'
+  const roleColor  = isAdmin ? '#5b52f0' : isOwner ? '#059669' : '#0284c7'
+  const initials   = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
+  const quickLinks = isAdmin ? ADMIN_QUICK : isOwner ? OWNER_QUICK : TENANT_QUICK
+  const sections   = isAdmin ? ADMIN_SECTIONS : isOwner ? OWNER_SECTIONS : TENANT_SECTIONS
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="flex-shrink-0 px-4 pt-5 pb-3"
         style={{ background: 'white', borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between">
@@ -887,6 +948,18 @@ export default function HomeScreen() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* More button */}
+            <button
+              onClick={() => setSheetOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
+              style={{
+                background: 'var(--surface-2)',
+                color: 'var(--ink-2)',
+                border: '1px solid var(--border)',
+              }}>
+              <Grid3X3 size={14} style={{ color: 'var(--indigo)' }} />
+              More
+            </button>
             <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0"
               style={{ background: roleColor }}>
               {initials}
@@ -898,57 +971,30 @@ export default function HomeScreen() {
             </button>
           </div>
         </div>
+
+        {/* ── Quick links row ── */}
+        <div className="flex gap-3 overflow-x-auto pt-4 pb-1" style={{ scrollbarWidth: 'none' }}>
+          {quickLinks.map(item => (
+            <QuickIcon key={item.to} item={item} onPress={navigate} />
+          ))}
+        </div>
       </div>
 
-      {/* Scrollable content */}
+      {/* ── Scrollable content ── */}
       <div className="flex-1 overflow-y-auto p-3 md:p-5">
         {isAdmin
-          ? <AdminHome user={user} navigate={navigate} />
-          : <ResidentHome user={user} navigate={navigate} />
+          ? <AdminHome user={user} navigate={navigate} onMore={() => setSheetOpen(true)} />
+          : <ResidentHome user={user} navigate={navigate} onMore={() => setSheetOpen(true)} />
         }
-        <div className="h-24" />
+        <div className="h-6" />
       </div>
 
-      {/* ✅ All Features FAB — fixed, no duplicate style prop */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '12px 16px 24px',
-        background: 'linear-gradient(to top, var(--surface-2) 60%, transparent)',
-        pointerEvents: 'none',
-      }}>
-        <button
-          onClick={() => setSheetOpen(true)}
-          style={{
-            pointerEvents: 'auto',
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 12,
-            padding: '16px 24px',
-            borderRadius: 16,
-            background: 'var(--indigo)',
-            color: 'white',
-            fontWeight: 700,
-            fontSize: 15,
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(91,82,240,0.4)',
-          }}>
-          <Grid3X3 size={20} />
-          All Features
-          <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, marginLeft: 4 }}>({totalFeatures})</span>
-        </button>
-      </div>
-
-      {/* Bottom Sheet */}
-      <BottomSheet
+      {/* ── More Sheet ── */}
+      <MoreSheet
         open={sheetOpen}
-        onClose={handleSheetClose}
-        categories={categories}
+        onClose={() => setSheetOpen(false)}
+        sections={sections}
         onNavigate={navigate}
-        search={sheetSearch}
-        setSearch={setSheetSearch}
       />
     </div>
   )
