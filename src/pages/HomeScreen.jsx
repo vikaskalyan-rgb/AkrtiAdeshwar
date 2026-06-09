@@ -10,11 +10,10 @@ import {
   Users2, Network, PackageSearch, BarChart3, ClipboardList,
   FileBarChart2, Footprints, Feather, Lightbulb, ShoppingBag,
   CalendarCheck, GraduationCap, Grid3X3, X, Search,
-  TrendingUp, AlertCircle, CheckCircle2, ChevronRight,
+  AlertCircle, CheckCircle2, ChevronRight,
   Truck, Volume2, Mail
 } from 'lucide-react'
 
-// ── Helpers ───────────────────────────────────────────────
 function fmt(n) {
   if (!n) return '₹0'
   if (n >= 100000) return `₹${(n / 100000).toFixed(1)}L`
@@ -34,7 +33,6 @@ function getLastNMonths(n) {
   return result
 }
 
-// ── Feature categories ────────────────────────────────────
 const ADMIN_CATEGORIES = [
   { label: 'My Home', color: '#5b52f0', emoji: '🏠', items: [
     { to: '/dashboard',        icon: LayoutDashboard,      label: 'Dashboard',      color: '#5b52f0', bg: '#eeeeff' },
@@ -138,7 +136,6 @@ const TENANT_CATEGORIES = [
   ]},
 ]
 
-// ── App Icon ──────────────────────────────────────────────
 function AppIcon({ item, onPress }) {
   const Icon = item.icon
   const [pressed, setPressed] = useState(false)
@@ -170,7 +167,6 @@ function AppIcon({ item, onPress }) {
   )
 }
 
-// ── Bottom Sheet ──────────────────────────────────────────
 function BottomSheet({ open, onClose, categories, onNavigate, search, setSearch }) {
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
@@ -203,11 +199,9 @@ function BottomSheet({ open, onClose, categories, onNavigate, search, setSearch 
         transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
         boxShadow: '0 -4px 40px rgba(0,0,0,0.15)',
       }}>
-        {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
           <div style={{ width: 40, height: 4, borderRadius: 99, background: '#e2e8f0' }} />
         </div>
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 10px' }}>
           <div>
             <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>All Features</span>
@@ -221,7 +215,6 @@ function BottomSheet({ open, onClose, categories, onNavigate, search, setSearch 
             <X size={15} style={{ color: 'var(--ink-3)' }} />
           </button>
         </div>
-        {/* Search */}
         <div style={{ padding: '0 16px 12px', position: 'relative' }}>
           <Search size={13} style={{
             position: 'absolute', left: 28, top: '50%',
@@ -229,9 +222,8 @@ function BottomSheet({ open, onClose, categories, onNavigate, search, setSearch 
           }} />
           <input className="input" style={{ paddingLeft: 36, width: '100%', boxSizing: 'border-box' }}
             placeholder="Search features…" value={search}
-            onChange={e => setSearch(e.target.value)} autoFocus={false} />
+            onChange={e => setSearch(e.target.value)} />
         </div>
-        {/* Grid */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 40px' }}>
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-4)', fontSize: 13 }}>
@@ -262,7 +254,6 @@ function BottomSheet({ open, onClose, categories, onNavigate, search, setSearch 
   )
 }
 
-// ── Custom Tooltip ────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
@@ -270,6 +261,34 @@ const CustomTooltip = ({ active, payload, label }) => {
       style={{ background: 'white', border: '1px solid var(--border)', color: 'var(--ink)' }}>
       <div className="font-semibold mb-0.5">{label}</div>
       <div style={{ color: 'var(--indigo)' }}>{fmt(payload[0]?.value)}</div>
+    </div>
+  )
+}
+
+// ── Community Pulse widget — shared by admin and resident ──
+function CommunityPulse({ openComplaints, parcelsWaiting, visitorsIn, announcementsCount }) {
+  const items = [
+    { label: 'Open Complaints', value: openComplaints,      color: '#e11d48', icon: MessageSquareWarning },
+    { label: 'Parcels Waiting', value: parcelsWaiting,      color: '#d97706', icon: Truck },
+    { label: 'Visitors In',     value: visitorsIn,          color: '#059669', icon: Users },
+    { label: 'Announcements',   value: announcementsCount,  color: '#5b52f0', icon: Volume2 },
+  ]
+  return (
+    <div className="card p-3">
+      <div className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--ink-3)' }}>Community Pulse</div>
+      <div className="grid grid-cols-4 gap-2">
+        {items.map(p => {
+          const Icon = p.icon
+          return (
+            <div key={p.label} className="flex flex-col items-center text-center gap-1 p-2 rounded-xl"
+              style={{ background: 'var(--surface-2)' }}>
+              <Icon size={15} style={{ color: p.color }} strokeWidth={1.75} />
+              <div className="text-[16px] font-bold" style={{ color: p.color }}>{p.value}</div>
+              <div className="text-[9px] font-semibold leading-tight" style={{ color: 'var(--ink-4)' }}>{p.label}</div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -294,7 +313,7 @@ function AdminHome({ user, navigate }) {
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [dashRes, trendRes, paymentsRes, complaintsRes, visitorsRes, annRes] =
+      const [dashRes, trendRes, paymentsRes, complaintsRes, visitorsRes, annRes, deliveriesRes] =
         await Promise.all([
           api.get(`/api/dashboard?month=${selMonth.month}&year=${selMonth.year}`),
           api.get('/api/dashboard/trend?months=6'),
@@ -302,6 +321,7 @@ function AdminHome({ user, navigate }) {
           api.get('/api/complaints'),
           api.get('/api/visitors?todayOnly=true'),
           api.get('/api/announcements'),
+          api.get('/api/deliveries').catch(() => ({ data: [] })),
         ])
       setDashboard(dashRes.data)
       setTrend(trendRes.data)
@@ -309,9 +329,8 @@ function AdminHome({ user, navigate }) {
       setComplaints(complaintsRes.data)
       setVisitors(visitorsRes.data)
       setAnnouncements(annRes.data)
-     api.get('/api/deliveries')
-  .then(r => setDeliveries(r.data.filter(d => d.status === 'PENDING')))
-  .catch(() => setDeliveries([]))
+      // ✅ Filter PENDING only on frontend
+      setDeliveries((deliveriesRes.data || []).filter(d => d.status === 'PENDING'))
     } catch (err) { console.error('AdminHome error:', err) }
     finally { setLoading(false) }
   }
@@ -332,16 +351,12 @@ function AdminHome({ user, navigate }) {
   const MONTHLY_AMOUNT = maintenance.monthlyAmount || 4200
   const defaulters     = payments.filter(p => p.status === 'UNPAID')
   const openComplaints = complaints.filter(c => c.status !== 'RESOLVED')
-  const visitorsIn     = visitors.filter(v => v.status === 'IN')
+  const visitorsIn     = visitors.filter(v => v.status === 'IN').length
   const pct = maintenance.total
     ? Math.round((maintenance.collected || 0) / (maintenance.total * MONTHLY_AMOUNT) * 100)
     : 0
   const monthLabel = `${MONTH_NAMES[selMonth.month - 1]} ${selMonth.year}`
-
-  const chartData = trend.map(t => ({
-    name:      MONTH_NAMES[t.month - 1],
-    collected: t.collected || 0,
-  }))
+  const chartData  = trend.map(t => ({ name: MONTH_NAMES[t.month - 1], collected: t.collected || 0 }))
 
   if (loading) return (
     <div className="flex-1 flex items-center justify-center py-20">
@@ -351,7 +366,6 @@ function AdminHome({ user, navigate }) {
 
   return (
     <div className="space-y-3">
-
       {/* Month tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {getLastNMonths(6).map(m => {
@@ -373,10 +387,10 @@ function AdminHome({ user, navigate }) {
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-2">
         {[
-          { label: 'Collected',  value: fmt(maintenance.collected || 0), sub: `${maintenance.paid || 0}/${maintenance.total || 0} paid`,   color: '#059669', bg: '#ecfdf5' },
-          { label: 'Pending',    value: fmt(maintenance.pending   || 0), sub: `${defaulters.length} flats`,                               color: '#e11d48', bg: '#fff1f2' },
-          { label: 'Expenses',   value: fmt(expensesTotal),              sub: 'this month',                                               color: '#d97706', bg: '#fffbeb' },
-          { label: 'Corpus',     value: fmt(societyFund.currentBalance || 0), sub: 'society fund',                                        color: '#5b52f0', bg: '#eeeeff' },
+          { label: 'Collected', value: fmt(maintenance.collected || 0), sub: `${maintenance.paid || 0}/${maintenance.total || 0} paid`, color: '#059669' },
+          { label: 'Pending',   value: fmt(maintenance.pending   || 0), sub: `${defaulters.length} flats`,                            color: '#e11d48' },
+          { label: 'Expenses',  value: fmt(expensesTotal),              sub: 'this month',                                            color: '#d97706' },
+          { label: 'Corpus',    value: fmt(societyFund.currentBalance || 0), sub: 'society fund',                                     color: '#5b52f0' },
         ].map(k => (
           <div key={k.label} className="card p-3 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl" style={{ background: k.color }} />
@@ -387,38 +401,19 @@ function AdminHome({ user, navigate }) {
         ))}
       </div>
 
-      {/* Community pulse */}
-      <div className="card p-3">
-        <div className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--ink-3)' }}>Community Pulse</div>
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { label: 'Open Complaints', value: openComplaints.length, color: '#e11d48', icon: MessageSquareWarning },
-            { label: 'Parcels Waiting', value: deliveries.length,     color: '#d97706', icon: Truck },
-            { label: 'Visitors In',     value: visitorsIn.length,      color: '#059669', icon: Users },
-            { label: 'Announcements',   value: announcements.length,   color: '#5b52f0', icon: Volume2 },
-          ].map(p => {
-            const Icon = p.icon
-            return (
-              <div key={p.label} className="flex flex-col items-center text-center gap-1 p-2 rounded-xl"
-                style={{ background: 'var(--surface-2)' }}>
-                <Icon size={15} style={{ color: p.color }} strokeWidth={1.75} />
-                <div className="text-[16px] font-bold" style={{ color: p.color }}>{p.value}</div>
-                <div className="text-[9px] font-semibold leading-tight" style={{ color: 'var(--ink-4)' }}>{p.label}</div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {/* Community Pulse */}
+      <CommunityPulse
+        openComplaints={openComplaints.length}
+        parcelsWaiting={deliveries.length}
+        visitorsIn={visitorsIn}
+        announcementsCount={announcements.length}
+      />
 
       {/* Collection progress */}
       <div className="card p-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[12px] font-semibold" style={{ color: 'var(--ink-2)' }}>
-            Collection · {monthLabel}
-          </span>
-          <span className="text-[12px] font-bold" style={{ color: pct >= 70 ? '#059669' : pct >= 40 ? '#d97706' : '#e11d48' }}>
-            {pct}%
-          </span>
+          <span className="text-[12px] font-semibold" style={{ color: 'var(--ink-2)' }}>Collection · {monthLabel}</span>
+          <span className="text-[12px] font-bold" style={{ color: pct >= 70 ? '#059669' : pct >= 40 ? '#d97706' : '#e11d48' }}>{pct}%</span>
         </div>
         <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-3)' }}>
           <div className="h-full rounded-full transition-all duration-700" style={{
@@ -436,9 +431,7 @@ function AdminHome({ user, navigate }) {
       <div className="card">
         <div className="card-header">
           <span className="card-title">Monthly Collection</span>
-          <button onClick={() => navigate('/reports')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>
-            Report →
-          </button>
+          <button onClick={() => navigate('/reports')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>Report →</button>
         </div>
         <div className="p-3">
           {chartData.length > 0 ? (
@@ -455,14 +448,12 @@ function AdminHome({ user, navigate }) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[90px] flex items-center justify-center text-[12px]" style={{ color: 'var(--ink-4)' }}>
-              No data yet
-            </div>
+            <div className="h-[90px] flex items-center justify-center text-[12px]" style={{ color: 'var(--ink-4)' }}>No data yet</div>
           )}
         </div>
       </div>
 
-      {/* Quick actions row */}
+      {/* Quick actions */}
       <div className="grid grid-cols-2 gap-2">
         <button onClick={() => navigate('/maintenance')}
           className="card p-3 flex items-center gap-3 text-left transition-colors hover:bg-[var(--indigo-lt)]">
@@ -488,13 +479,12 @@ function AdminHome({ user, navigate }) {
         </button>
       </div>
 
-      {/* Defaulters with reminder */}
+      {/* Defaulters */}
       {defaulters.length > 0 && (
         <div className="card">
           <div className="card-header">
             <span className="card-title">Defaulters · {monthLabel}</span>
-            <button onClick={handleSendAllReminders} disabled={sendingAll}
-              className="btn-primary py-1 px-2 text-[10px]">
+            <button onClick={handleSendAllReminders} disabled={sendingAll} className="btn-primary py-1 px-2 text-[10px]">
               <Mail size={11} />
               {sendingAll ? '...' : 'Email All'}
             </button>
@@ -510,22 +500,16 @@ function AdminHome({ user, navigate }) {
               <div key={d.id} className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-[var(--surface-2)] transition-colors"
                 style={{ borderBottom: '1px solid var(--border)' }}>
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                  style={{ background: '#ffe4e6', color: '#9f1239' }}>
-                  {d.flatNo}
-                </div>
+                  style={{ background: '#ffe4e6', color: '#9f1239' }}>{d.flatNo}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{d.payerName}</div>
                   <div className="text-[10px]" style={{ color: 'var(--ink-3)' }}>Unpaid</div>
                 </div>
-                <div className="text-[11px] font-bold" style={{ color: 'var(--rose)' }}>
-                  {fmt(d.amount || MONTHLY_AMOUNT)}
-                </div>
+                <div className="text-[11px] font-bold" style={{ color: 'var(--rose)' }}>{fmt(d.amount || MONTHLY_AMOUNT)}</div>
               </div>
             ))}
             {defaulters.length > 8 && (
-              <button onClick={() => navigate('/maintenance')}
-                className="w-full py-2.5 text-[11px] font-semibold text-center"
-                style={{ color: 'var(--indigo)' }}>
+              <button onClick={() => navigate('/maintenance')} className="w-full py-2.5 text-[11px] font-semibold text-center" style={{ color: 'var(--indigo)' }}>
                 View all {defaulters.length} →
               </button>
             )}
@@ -538,9 +522,7 @@ function AdminHome({ user, navigate }) {
         <div className="card">
           <div className="card-header">
             <span className="card-title">Announcements</span>
-            <button onClick={() => navigate('/announcements')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>
-              Post +
-            </button>
+            <button onClick={() => navigate('/announcements')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>Post +</button>
           </div>
           {announcements.slice(0, 3).map(a => (
             <div key={a.id} className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -570,6 +552,7 @@ function ResidentHome({ user, navigate }) {
   const [expenses,      setExpenses]      = useState([])
   const [allFlats,      setAllFlats]      = useState([])
   const [allPayments,   setAllPayments]   = useState([])
+  const [deliveries,    setDeliveries]    = useState([])
   const [loading,       setLoading]       = useState(true)
 
   useEffect(() => { if (user?.flatNo) fetchAll() }, [user, selMonth])
@@ -578,16 +561,17 @@ function ResidentHome({ user, navigate }) {
     setLoading(true)
     try {
       const requests = [
-        api.get(`/api/maintenance/flat/${user.flatNo}`),
-        api.get(`/api/complaints/flat/${user.flatNo}`),
-        api.get('/api/announcements'),
-        api.get(`/api/visitors?flatNo=${user.flatNo}&todayOnly=true`),
-        api.get(`/api/dashboard?month=${selMonth.month}&year=${selMonth.year}`),
-        api.get('/api/flats'),
-        api.get(`/api/maintenance?month=${selMonth.month}&year=${selMonth.year}`),
+        api.get(`/api/maintenance/flat/${user.flatNo}`),                                          // 0
+        api.get(`/api/complaints/flat/${user.flatNo}`),                                           // 1
+        api.get('/api/announcements'),                                                             // 2
+        api.get(`/api/visitors?flatNo=${user.flatNo}&todayOnly=true`),                            // 3
+        api.get(`/api/dashboard?month=${selMonth.month}&year=${selMonth.year}`),                  // 4
+        api.get('/api/flats'),                                                                     // 5
+        api.get(`/api/maintenance?month=${selMonth.month}&year=${selMonth.year}`),                // 6
+        api.get('/api/deliveries').catch(() => ({ data: [] })),                                   // 7 — always fetched
       ]
       if (isOwner) {
-        requests.push(api.get(`/api/expenses?month=${selMonth.month}&year=${selMonth.year}`))
+        requests.push(api.get(`/api/expenses?month=${selMonth.month}&year=${selMonth.year}`))     // 8
       }
       const results = await Promise.all(requests)
       setMyPayments(results[0].data)
@@ -597,7 +581,9 @@ function ResidentHome({ user, navigate }) {
       setDashboard(results[4].data)
       setAllFlats(results[5].data.filter(f => f.floor > 0 && f.wing !== 'Ground'))
       setAllPayments(results[6].data)
-      if (isOwner && results[7]) setExpenses(results[7].data)
+      // ✅ Filter PENDING only on frontend
+      setDeliveries((results[7].data || []).filter(d => d.status === 'PENDING'))
+      if (isOwner && results[8]) setExpenses(results[8].data)
     } catch (err) { console.error('ResidentHome error:', err) }
     finally { setLoading(false) }
   }
@@ -614,7 +600,6 @@ function ResidentHome({ user, navigate }) {
   const expTotal   = expenses.reduce((s, e) => s + e.amount, 0)
   const daysLeft   = new Date(selMonth.year, selMonth.month, 0).getDate() - now.getDate()
 
-  // Payment history for chart — last 6 months sorted oldest first
   const payHistory = [...myPayments]
     .sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month)
     .slice(-6)
@@ -624,7 +609,6 @@ function ResidentHome({ user, navigate }) {
       status: p.status,
     }))
 
-  // Flat grid
   const flatGrid = allFlats.map(f => {
     const pay = allPayments.find(p => p.flatNo === f.flatNo)
     return { ...f, payStatus: pay?.status || 'UNPAID' }
@@ -638,7 +622,6 @@ function ResidentHome({ user, navigate }) {
 
   return (
     <div className="space-y-3">
-
       {/* Month tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {getLastNMonths(6).map(m => {
@@ -700,9 +683,7 @@ function ResidentHome({ user, navigate }) {
           <div className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--ink-3)' }}>My Complaints</div>
           <div className="text-[20px] font-bold" style={{ color: '#e11d48', letterSpacing: '-0.02em' }}>{openComplaints.length}</div>
           <div className="text-[10px]" style={{ color: 'var(--ink-4)' }}>open · {myComplaints.length} total</div>
-          <button onClick={() => navigate('/resident/complaints')} className="text-[10px] font-semibold mt-1" style={{ color: 'var(--indigo)' }}>
-            View →
-          </button>
+          <button onClick={() => navigate('/resident/complaints')} className="text-[10px] font-semibold mt-1" style={{ color: 'var(--indigo)' }}>View →</button>
         </div>
         <div className="card p-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: '#059669' }} />
@@ -710,16 +691,14 @@ function ResidentHome({ user, navigate }) {
           <div className="text-[20px] font-bold" style={{ color: '#059669', letterSpacing: '-0.02em' }}>{societyPct}%</div>
           <div className="text-[10px]" style={{ color: 'var(--ink-4)' }}>{maintenance.paid || 0}/{maintenance.total || 0} paid</div>
         </div>
-        {isOwner && (
+        {isOwner ? (
           <>
             <div className="card p-3 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: '#d97706' }} />
               <div className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--ink-3)' }}>Expenses</div>
               <div className="text-[20px] font-bold" style={{ color: '#d97706', letterSpacing: '-0.02em' }}>{fmt(expTotal)}</div>
               <div className="text-[10px]" style={{ color: 'var(--ink-4)' }}>{expenses.length} entries</div>
-              <button onClick={() => navigate('/resident/expenses')} className="text-[10px] font-semibold mt-1" style={{ color: 'var(--indigo)' }}>
-                View →
-              </button>
+              <button onClick={() => navigate('/resident/expenses')} className="text-[10px] font-semibold mt-1" style={{ color: 'var(--indigo)' }}>View →</button>
             </div>
             <div className="card p-3 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: '#5b52f0' }} />
@@ -728,8 +707,7 @@ function ResidentHome({ user, navigate }) {
               <div className="text-[10px]" style={{ color: 'var(--ink-4)' }}>corpus balance</div>
             </div>
           </>
-        )}
-        {!isOwner && (
+        ) : (
           <>
             <div className="card p-3 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: '#0284c7' }} />
@@ -747,13 +725,19 @@ function ResidentHome({ user, navigate }) {
         )}
       </div>
 
+      {/* ✅ Community Pulse for resident */}
+      <CommunityPulse
+        openComplaints={openComplaints.length}
+        parcelsWaiting={deliveries.length}
+        visitorsIn={myVisitors.filter(v => v.status === 'IN').length}
+        announcementsCount={announcements.length}
+      />
+
       {/* Payment history chart + flat grid */}
       <div className="card">
         <div className="card-header">
           <span className="card-title">My Payment History</span>
-          <button onClick={() => navigate('/resident/maintenance')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>
-            All →
-          </button>
+          <button onClick={() => navigate('/resident/maintenance')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>All →</button>
         </div>
         <div className="p-3">
           {payHistory.length > 0 ? (
@@ -770,18 +754,12 @@ function ResidentHome({ user, navigate }) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[85px] flex items-center justify-center text-[12px]" style={{ color: 'var(--ink-4)' }}>
-              No payment history yet
-            </div>
+            <div className="h-[85px] flex items-center justify-center text-[12px]" style={{ color: 'var(--ink-4)' }}>No payment history yet</div>
           )}
-
-          {/* Society flat grid */}
           {flatGrid.length > 0 && (
             <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>
-                  Society Status — {monthLabel}
-                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>Society Status — {monthLabel}</span>
                 <div className="flex gap-2">
                   {[['#d1fae5', 'Paid'], ['#ffe4e6', 'Unpaid']].map(([bg, l]) => (
                     <div key={l} className="flex items-center gap-1">
@@ -873,14 +851,14 @@ export default function HomeScreen() {
   const greeting   = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'
   const greetEmoji = hour < 12 ? '🌅' : hour < 17 ? '☀️' : hour < 21 ? '🌆' : '🌙'
 
-  const isAdmin  = user?.role === 'admin'
-  const isOwner  = user?.role === 'owner'
-  const isSup    = user?.identifier === 'SUP'
+  const isAdmin = user?.role === 'admin'
+  const isOwner = user?.role === 'owner'
+  const isSup   = user?.identifier === 'SUP'
 
   const roleLabel = isSup ? 'Supervisor' : isAdmin ? 'Admin' : isOwner ? 'Owner' : 'Tenant'
   const roleColor = isAdmin ? '#5b52f0' : isOwner ? '#059669' : '#0284c7'
   const initials  = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
-  const categories = isAdmin ? ADMIN_CATEGORIES : isOwner ? OWNER_CATEGORIES : TENANT_CATEGORIES
+  const categories    = isAdmin ? ADMIN_CATEGORIES : isOwner ? OWNER_CATEGORIES : TENANT_CATEGORIES
   const totalFeatures = categories.reduce((s, c) => s + c.items.length, 0)
 
   const handleSheetClose = () => { setSheetOpen(false); setSheetSearch('') }
@@ -915,8 +893,7 @@ export default function HomeScreen() {
             </div>
             <button onClick={logout}
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: '#fff1f2', color: '#e11d48' }}
-              title="Logout">
+              style={{ background: '#fff1f2', color: '#e11d48' }}>
               <LogOut size={15} />
             </button>
           </div>
@@ -929,31 +906,38 @@ export default function HomeScreen() {
           ? <AdminHome user={user} navigate={navigate} />
           : <ResidentHome user={user} navigate={navigate} />
         }
-
-        {/* Bottom spacing for the FAB */}
         <div className="h-24" />
       </div>
 
-      {/* ── All Features FAB — big, impossible to miss ── */}
-      <div className="flex-shrink-0 px-4 pb-6 pt-3"
-        style={{
-          background: 'linear-gradient(to top, var(--surface-2) 70%, transparent)',
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          pointerEvents: 'none',
-        }}>
+      {/* ✅ All Features FAB — fixed, no duplicate style prop */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        padding: '12px 16px 24px',
+        background: 'linear-gradient(to top, var(--surface-2) 60%, transparent)',
+        pointerEvents: 'none',
+      }}>
         <button
           onClick={() => setSheetOpen(true)}
-          style={{ pointerEvents: 'auto' }}
-          className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-[15px] transition-all active:scale-95"
           style={{
+            pointerEvents: 'auto',
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            padding: '16px 24px',
+            borderRadius: 16,
             background: 'var(--indigo)',
             color: 'white',
+            fontWeight: 700,
+            fontSize: 15,
+            border: 'none',
+            cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(91,82,240,0.4)',
-            pointerEvents: 'auto',
           }}>
           <Grid3X3 size={20} />
           All Features
-          <span className="text-[12px] font-semibold opacity-70 ml-1">({totalFeatures})</span>
+          <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, marginLeft: 4 }}>({totalFeatures})</span>
         </button>
       </div>
 
