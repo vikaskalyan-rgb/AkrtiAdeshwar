@@ -29,143 +29,159 @@ function getLastNMonths(n) {
   return result
 }
 
-// ── All feature sections ───────────────────────────────────
+// ── All sections per role ─────────────────────────────────
 const ADMIN_SECTIONS = [
-  { label: 'Community Life', color: '#7c3aed', emoji: '✨', desc: 'Connect with your neighbours', items: [
-    { to: '/steps',            icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/community-board',  icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
-    { to: '/ideas',            icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
-    { to: '/buy-sell',         icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
-  ]},
-  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉', desc: 'Stay active and engaged', items: [
-    { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
-    { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
-  ]},
-  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒', desc: 'Security and household services', items: [
-    { to: '/visitors',   icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/deliveries', icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
-    { to: '/lost-found', icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
-    { to: '/watchman',   icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs and schedules',          color: '#1a1a2e', bg: '#f1f1f9' },
-  ]},
-  { label: 'Information', color: '#059669', emoji: 'ℹ️', desc: 'Useful apartment information', items: [
-    { to: '/nearby',        icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
-    { to: '/flats',         icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
-    { to: '/announcements', icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/workers',       icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/org-chart',     icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
-  ]},
-  { label: 'Management', color: '#475569', emoji: '⚙️', desc: 'Admin tools', items: [
-    { to: '/expenses',        icon: Receipt,              label: 'Expenses',   desc: 'Track and manage society expenses',                color: '#d97706', bg: '#fffbeb' },
-    { to: '/reports',         icon: BarChart3,            label: 'Reports',    desc: 'Financial reports and collection summaries',       color: '#7c3aed', bg: '#f3f0ff' },
-    { to: '/complaints',      icon: MessageSquareWarning, label: 'Complaints', desc: 'Manage and resolve resident complaints',           color: '#e11d48', bg: '#fff1f2' },
-    { to: '/flat-management', icon: ClipboardList,        label: 'Flat Mgmt',  desc: 'Update resident and owner details',                color: '#7c3aed', bg: '#f3f0ff' },
-  ]},
+  { label: 'Maintenance', color: '#059669', emoji: '💳',
+    desc: 'Payments, expenses, reports, flat management',
+    items: [
+      { to: '/maintenance',     icon: CreditCard,           label: 'Maintenance',  desc: 'Track and collect monthly maintenance payments',    color: '#059669', bg: '#ecfdf5' },
+      { to: '/expenses',        icon: Receipt,              label: 'Expenses',     desc: 'Track and manage society expenses',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/reports',         icon: BarChart3,            label: 'Reports',      desc: 'Financial reports and collection summaries',       color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/complaints',      icon: MessageSquareWarning, label: 'Complaints',   desc: 'Manage and resolve resident complaints',           color: '#e11d48', bg: '#fff1f2' },
+      { to: '/flat-management', icon: ClipboardList,        label: 'Flat Mgmt',    desc: 'Update resident and owner details',                color: '#7c3aed', bg: '#f3f0ff' },
+    ],
+  },
+  { label: 'Community Life', color: '#7c3aed', emoji: '✨',
+    desc: 'Step challenge, creative corner, ideas, buy & sell',
+    items: [
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
+    ],
+  },
+  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉',
+    desc: 'Activities, classes, hall booking',
+    items: [
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
+    desc: 'Visitors, deliveries, lost & found, night patrol',
+    items: [
+      { to: '/visitors',   icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries', icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found', icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/watchman',   icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs and schedules',          color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  { label: 'Information', color: '#059669', emoji: 'ℹ️',
+    desc: 'Nearby places, flat directory, announcements, workers, committee',
+    items: [
+      { to: '/nearby',        icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
+      { to: '/flats',         icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
+      { to: '/announcements', icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/workers',       icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/org-chart',     icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
+    ],
+  },
 ]
 
 const OWNER_SECTIONS = [
-  { label: 'Community Life', color: '#7c3aed', emoji: '✨', desc: 'Connect with your neighbours', items: [
-    { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/community-board', icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
-    { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
-    { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
-  ]},
-  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉', desc: 'Stay active and engaged', items: [
-    { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
-    { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
-  ]},
-  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒', desc: 'Security and household services', items: [
-    { to: '/resident/visitors', icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/deliveries',        icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
-    { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
-    { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs',                        color: '#1a1a2e', bg: '#f1f1f9' },
-  ]},
-  { label: 'Information', color: '#059669', emoji: 'ℹ️', desc: 'Useful apartment information', items: [
-    { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/resident/workers',       icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
-  ]},
-  { label: 'My Account', color: '#475569', emoji: '👤', desc: 'Your personal section', items: [
-    { to: '/resident/expenses', icon: Receipt,      label: 'Expenses',desc: 'View society expenses and financial reports', color: '#d97706', bg: '#fffbeb' },
-    { to: '/resident/reports',  icon: FileBarChart2,label: 'Reports', desc: 'Your payment history and reports',            color: '#7c3aed', bg: '#f3f0ff' },
-  ]},
+  { label: 'Maintenance', color: '#059669', emoji: '💳',
+    desc: 'Monthly payments, complaints, expenses, reports',
+    items: [
+      { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance', desc: 'Pay and track your monthly maintenance',              color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',  desc: 'Raise and track your complaints',                     color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/expenses',    icon: Receipt,              label: 'Expenses',    desc: 'View society expenses and financial reports',          color: '#d97706', bg: '#fffbeb' },
+      { to: '/resident/reports',     icon: FileBarChart2,        label: 'Reports',     desc: 'Your payment history and reports',                    color: '#7c3aed', bg: '#f3f0ff' },
+    ],
+  },
+  { label: 'Community Life', color: '#7c3aed', emoji: '✨',
+    desc: 'Step challenge, creative corner, ideas, buy & sell',
+    items: [
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
+    ],
+  },
+  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉',
+    desc: 'Activities, classes, hall booking',
+    items: [
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
+    desc: 'Visitors, deliveries, lost & found, night patrol',
+    items: [
+      { to: '/resident/visitors', icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries',        icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs',                        color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  { label: 'Information', color: '#059669', emoji: 'ℹ️',
+    desc: 'Nearby places, flat directory, announcements, workers, committee',
+    items: [
+      { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/workers',       icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
+    ],
+  },
 ]
 
 const TENANT_SECTIONS = [
-  { label: 'Community Life', color: '#7c3aed', emoji: '✨', desc: 'Connect with your neighbours', items: [
-    { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/community-board', icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
-    { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
-    { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
-  ]},
-  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉', desc: 'Stay active and engaged', items: [
-    { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
-    { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
-  ]},
-  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒', desc: 'Security and household services', items: [
-    { to: '/resident/visitors', icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/deliveries',        icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
-    { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
-    { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs',                        color: '#1a1a2e', bg: '#f1f1f9' },
-  ]},
-  { label: 'Information', color: '#059669', emoji: 'ℹ️', desc: 'Useful apartment information', items: [
-    { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
-    { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
-    { to: '/resident/workers',       icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
-    { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
-  ]},
+  { label: 'Maintenance', color: '#059669', emoji: '💳',
+    desc: 'Monthly payments and complaints',
+    items: [
+      { to: '/resident/maintenance', icon: CreditCard,           label: 'Maintenance', desc: 'Pay and track your monthly maintenance',   color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/complaints',  icon: MessageSquareWarning, label: 'Complaints',  desc: 'Raise and track your complaints',          color: '#e11d48', bg: '#fff1f2' },
+    ],
+  },
+  { label: 'Community Life', color: '#7c3aed', emoji: '✨',
+    desc: 'Step challenge, creative corner, ideas, buy & sell',
+    items: [
+      { to: '/steps',           icon: Footprints,  label: 'Step Challenge',  desc: 'Log your walks and compete on the leaderboard',     color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/community-board', icon: Feather,     label: 'Creative Corner', desc: 'Share poems, stories and creative content',         color: '#7c3aed', bg: '#f3f0ff' },
+      { to: '/ideas',           icon: Lightbulb,   label: 'Ideas',           desc: 'Suggest improvements for the apartment',            color: '#d97706', bg: '#fffbeb' },
+      { to: '/buy-sell',        icon: ShoppingBag, label: 'Buy & Sell',      desc: 'Buy or sell items within the apartment',            color: '#059669', bg: '#ecfdf5' },
+    ],
+  },
+  { label: 'Events & Activities', color: '#0284c7', emoji: '🎉',
+    desc: 'Activities, classes, hall booking',
+    items: [
+      { to: '/weekly-activities', icon: CalendarCheck, label: 'Activities',   desc: 'Weekly activities and RSVP for events',            color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/classes-events',    icon: GraduationCap, label: 'Classes',      desc: 'Yoga, fitness classes and learning sessions',       color: '#e11d48', bg: '#fff1f2' },
+      { to: '/amenities',         icon: CalendarDays,  label: 'Hall Booking', desc: 'Book the community hall for events',                color: '#5b52f0', bg: '#eeeeff' },
+    ],
+  },
+  { label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
+    desc: 'Visitors, deliveries, lost & found, night patrol',
+    items: [
+      { to: '/resident/visitors', icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/deliveries',        icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
+      { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs',                        color: '#1a1a2e', bg: '#f1f1f9' },
+    ],
+  },
+  { label: 'Information', color: '#059669', emoji: 'ℹ️',
+    desc: 'Nearby places, flat directory, announcements, workers, committee',
+    items: [
+      { to: '/resident/nearby',        icon: MapPin,   label: 'Nearby Places',  desc: 'Restaurants, hospitals, schools near the apartment', color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/directory',     icon: Building2,label: 'Flat Directory', desc: 'Contact details of all residents',                  color: '#059669', bg: '#ecfdf5' },
+      { to: '/resident/announcements', icon: Megaphone,label: 'Announcements',  desc: 'Important notices from the committee',              color: '#5b52f0', bg: '#eeeeff' },
+      { to: '/resident/workers',       icon: Users2,   label: 'Workers',        desc: 'Plumbers, electricians and maintenance staff',      color: '#0284c7', bg: '#f0f9ff' },
+      { to: '/resident/org-chart',     icon: Network,  label: 'Committee',      desc: 'Apartment committee members and contacts',          color: '#d97706', bg: '#fffbeb' },
+    ],
+  },
 ]
 
-// ── Feature List Item ─────────────────────────────────────
-function FeatureItem({ item, onPress }) {
-  const Icon = item.icon
-  return (
-    <button
-      onClick={() => onPress(item.to)}
-      className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--surface-2)] text-left"
-      style={{ borderBottom: '1px solid var(--border)' }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: 11, flexShrink: 0,
-        background: item.bg, border: `1px solid ${item.color}20`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <Icon size={18} style={{ color: item.color }} strokeWidth={1.75} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 1 }}>{item.label}</div>
-        <div style={{ fontSize: 11, color: 'var(--ink-4)', lineHeight: 1.4 }}>{item.desc}</div>
-      </div>
-      <ChevronRight size={14} style={{ color: 'var(--ink-4)', flexShrink: 0 }} />
-    </button>
-  )
-}
-
-// ── More Bottom Sheet ─────────────────────────────────────
-function MoreSheet({ open, onClose, sections, onNavigate }) {
-  const [search, setSearch] = useState('')
-
+// ── Section Sheet — shows items of ONE section ────────────
+function SectionSheet({ open, section, onClose, onNavigate }) {
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
-    else { document.body.style.overflow = ''; setSearch('') }
+    else document.body.style.overflow = ''
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  const filtered = search.trim() === ''
-    ? sections
-    : sections.map(sec => ({
-        ...sec,
-        items: sec.items.filter(i =>
-          i.label.toLowerCase().includes(search.toLowerCase()) ||
-          i.desc.toLowerCase().includes(search.toLowerCase())
-        ),
-      })).filter(sec => sec.items.length > 0)
-
-  const totalCount = sections.reduce((s, sec) => s + sec.items.length, 0)
+  if (!section) return null
 
   return (
     <>
@@ -178,18 +194,35 @@ function MoreSheet({ open, onClose, sections, onNavigate }) {
       <div style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50,
         background: 'white', borderRadius: '20px 20px 0 0',
-        maxHeight: '92vh', display: 'flex', flexDirection: 'column',
+        maxHeight: '85vh', display: 'flex', flexDirection: 'column',
         transform: open ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
         boxShadow: '0 -4px 40px rgba(0,0,0,0.18)',
       }}>
+        {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
           <div style={{ width: 40, height: 4, borderRadius: 99, background: '#e2e8f0' }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 12px' }}>
-          <div>
-            <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)' }}>All Features</span>
-            <span style={{ fontSize: 11, color: 'var(--ink-4)', marginLeft: 8 }}>{totalCount} features</span>
+
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '8px 16px 16px',
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 12,
+              background: `${section.color}15`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 20,
+            }}>
+              {section.emoji}
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>{section.label}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 1 }}>{section.items.length} features</div>
+            </div>
           </div>
           <button onClick={onClose} style={{
             width: 32, height: 32, borderRadius: 99,
@@ -199,63 +232,78 @@ function MoreSheet({ open, onClose, sections, onNavigate }) {
             <X size={15} style={{ color: 'var(--ink-3)' }} />
           </button>
         </div>
-        <div style={{ padding: '0 16px 12px', position: 'relative' }}>
-          <Search size={13} style={{
-            position: 'absolute', left: 28, top: '50%',
-            transform: 'translateY(-50%)', color: 'var(--ink-4)', pointerEvents: 'none',
-          }} />
-          <input className="input"
-            style={{ paddingLeft: 36, width: '100%', boxSizing: 'border-box' }}
-            placeholder="Search features…" value={search}
-            onChange={e => setSearch(e.target.value)} />
-        </div>
-        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 40 }}>
-          {filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-4)', fontSize: 13 }}>
-              No results for "{search}"
-            </div>
-          ) : filtered.map(sec => (
-            <div key={sec.label}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '14px 16px 8px',
-                borderTop: '1px solid var(--border)',
-              }}>
-                <div style={{ width: 3, height: 16, borderRadius: 99, background: sec.color, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: sec.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {sec.emoji} {sec.label}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 1 }}>{sec.desc}</div>
+
+        {/* Items */}
+        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 32 }}>
+          {section.items.map((item, idx) => {
+            const Icon = item.icon
+            return (
+              <button key={item.to}
+                onClick={() => { onClose(); onNavigate(item.to) }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--surface-2)] text-left"
+                style={{ borderBottom: idx < section.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div style={{
+                  width: 46, height: 46, borderRadius: 13, flexShrink: 0,
+                  background: item.bg, border: `1px solid ${item.color}20`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon size={20} style={{ color: item.color }} strokeWidth={1.75} />
                 </div>
-              </div>
-              {sec.items.map((item, idx) => {
-                const Icon = item.icon
-                return (
-                  <button key={item.to}
-                    onClick={() => { onClose(); onNavigate(item.to) }}
-                    className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--surface-2)] text-left"
-                    style={{ borderBottom: idx < sec.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                    <div style={{
-                      width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-                      background: item.bg, border: `1px solid ${item.color}20`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Icon size={19} style={{ color: item.color }} strokeWidth={1.75} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>{item.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--ink-4)', lineHeight: 1.4 }}>{item.desc}</div>
-                    </div>
-                    <ChevronRight size={15} style={{ color: 'var(--ink-4)', flexShrink: 0 }} />
-                  </button>
-                )
-              })}
-            </div>
-          ))}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 3 }}>{item.label}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-4)', lineHeight: 1.4 }}>{item.desc}</div>
+                </div>
+                <ChevronRight size={16} style={{ color: 'var(--ink-4)', flexShrink: 0 }} />
+              </button>
+            )
+          })}
         </div>
       </div>
     </>
+  )
+}
+
+// ── Sections Card List ────────────────────────────────────
+function SectionsCard({ sections, onSectionPress }) {
+  return (
+    <div className="card overflow-hidden">
+      <div className="card-header">
+        <span className="card-title">Features</span>
+      </div>
+      {sections.map((sec, idx) => (
+        <button
+          key={sec.label}
+          onClick={() => onSectionPress(sec)}
+          className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--surface-2)] text-left"
+          style={{ borderBottom: idx < sections.length - 1 ? '1px solid var(--border)' : 'none' }}>
+          {/* Emoji icon */}
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: `${sec.color}12`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20,
+          }}>
+            {sec.emoji}
+          </div>
+          {/* Text */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 3 }}>{sec.label}</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-4)', lineHeight: 1.4 }}>{sec.desc}</div>
+          </div>
+          {/* Count badge + chevron */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <span style={{
+              fontSize: 10, fontWeight: 700,
+              padding: '2px 7px', borderRadius: 99,
+              background: `${sec.color}15`, color: sec.color,
+            }}>
+              {sec.items.length}
+            </span>
+            <ChevronRight size={14} style={{ color: 'var(--ink-4)' }} />
+          </div>
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -297,37 +345,8 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
-// ── Inline Feature Section ────────────────────────────────
-// Shows first section inline on homescreen with "More →" at bottom
-function InlineFeatures({ sections, onNavigate, onMore }) {
-  // Show first 2 items of each of first 2 sections = 4 items preview
-  const previewItems = sections.slice(0, 2).flatMap(sec => sec.items.slice(0, 2))
-  const totalCount   = sections.reduce((s, sec) => s + sec.items.length, 0)
-
-  return (
-    <div className="card overflow-hidden">
-      <div className="card-header">
-        <span className="card-title">Features</span>
-        <button onClick={onMore} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>
-          All {totalCount} →
-        </button>
-      </div>
-      {previewItems.map(item => (
-        <FeatureItem key={item.to} item={item} onPress={onNavigate} />
-      ))}
-      <button
-        onClick={onMore}
-        className="w-full flex items-center justify-center gap-2 py-3 transition-colors hover:bg-[var(--surface-2)]"
-        style={{ borderTop: '1px solid var(--border)', color: 'var(--indigo)' }}>
-        <span className="text-[12px] font-semibold">View all features</span>
-        <ChevronRight size={14} />
-      </button>
-    </div>
-  )
-}
-
 // ── Admin Home ────────────────────────────────────────────
-function AdminHome({ user, navigate, onMore, sections }) {
+function AdminHome({ user, navigate, sections, onSectionPress }) {
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const [selMonth,      setSelMonth]      = useState({ month: now.getMonth() + 1, year: now.getFullYear() })
   const [dashboard,     setDashboard]     = useState(null)
@@ -363,7 +382,7 @@ function AdminHome({ user, navigate, onMore, sections }) {
       setVisitors(visitorsRes.data)
       setAnnouncements(annRes.data)
       setDeliveries((deliveriesRes.data || []).filter(d => d.status === 'PENDING'))
-    } catch (err) { console.error('AdminHome error:', err) }
+    } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
 
@@ -398,7 +417,6 @@ function AdminHome({ user, navigate, onMore, sections }) {
 
   return (
     <div className="space-y-3">
-
       {/* Month tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {getLastNMonths(6).map(m => {
@@ -541,14 +559,14 @@ function AdminHome({ user, navigate, onMore, sections }) {
         </div>
       )}
 
-      {/* Inline features list */}
-      <InlineFeatures sections={sections} onNavigate={navigate} onMore={onMore} />
+      {/* Sections card */}
+      <SectionsCard sections={sections} onSectionPress={onSectionPress} />
     </div>
   )
 }
 
 // ── Resident Home ─────────────────────────────────────────
-function ResidentHome({ user, navigate, onMore, sections }) {
+function ResidentHome({ user, navigate, sections, onSectionPress }) {
   const now     = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const isOwner = user?.role === 'owner'
 
@@ -590,7 +608,7 @@ function ResidentHome({ user, navigate, onMore, sections }) {
       setAllPayments(results[6].data)
       setDeliveries((results[7].data || []).filter(d => d.status === 'PENDING'))
       if (isOwner && results[8]) setExpenses(results[8].data)
-    } catch (err) { console.error('ResidentHome error:', err) }
+    } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
 
@@ -624,7 +642,6 @@ function ResidentHome({ user, navigate, onMore, sections }) {
 
   return (
     <div className="space-y-3">
-
       {/* Month tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {getLastNMonths(6).map(m => {
@@ -810,8 +827,8 @@ function ResidentHome({ user, navigate, onMore, sections }) {
         </div>
       )}
 
-      {/* Inline features list */}
-      <InlineFeatures sections={sections} onNavigate={navigate} onMore={onMore} />
+      {/* Sections card */}
+      <SectionsCard sections={sections} onSectionPress={onSectionPress} />
     </div>
   )
 }
@@ -819,8 +836,8 @@ function ResidentHome({ user, navigate, onMore, sections }) {
 // ── Main HomeScreen ───────────────────────────────────────
 export default function HomeScreen() {
   const { user, logout } = useAuth()
-  const navigate    = useNavigate()
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const navigate = useNavigate()
+  const [activeSection, setActiveSection] = useState(null)
 
   const now        = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const hour       = now.getHours()
@@ -876,17 +893,17 @@ export default function HomeScreen() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-3 md:p-5">
         {isAdmin
-          ? <AdminHome user={user} navigate={navigate} onMore={() => setSheetOpen(true)} sections={sections} />
-          : <ResidentHome user={user} navigate={navigate} onMore={() => setSheetOpen(true)} sections={sections} />
+          ? <AdminHome user={user} navigate={navigate} sections={sections} onSectionPress={setActiveSection} />
+          : <ResidentHome user={user} navigate={navigate} sections={sections} onSectionPress={setActiveSection} />
         }
         <div className="h-6" />
       </div>
 
-      {/* More Sheet */}
-      <MoreSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        sections={sections}
+      {/* Section Sheet */}
+      <SectionSheet
+        open={!!activeSection}
+        section={activeSection}
+        onClose={() => setActiveSection(null)}
         onNavigate={navigate}
       />
     </div>
