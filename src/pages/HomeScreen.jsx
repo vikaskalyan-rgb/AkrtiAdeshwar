@@ -310,9 +310,9 @@ function AdminHome({ user, navigate }) {
       setVisitors(visitorsRes.data)
       setAnnouncements(annRes.data)
       // deliveries optional
-      api.get('/api/deliveries?status=PENDING')
-        .then(r => setDeliveries(r.data))
-        .catch(() => setDeliveries([]))
+      api.get('/api/deliveries?status=WAITING')
+  .then(r => setDeliveries(r.data))
+  .catch(() => setDeliveries([]))
     } catch (err) { console.error('AdminHome error:', err) }
     finally { setLoading(false) }
   }
