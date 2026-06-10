@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
@@ -8,7 +8,7 @@ import {
   Receipt, LogOut, Shield, MapPin, Package, CalendarDays,
   Users2, Network, PackageSearch, BarChart3, ClipboardList,
   FileBarChart2, Footprints, Feather, Lightbulb, ShoppingBag,
-  CalendarCheck, GraduationCap, X, Search, ChevronRight,
+  CalendarCheck, GraduationCap, X, ChevronRight, ChevronLeft,
   Truck, Volume2, Mail
 } from 'lucide-react'
 
@@ -29,7 +29,7 @@ function getLastNMonths(n) {
   return result
 }
 
-// ── All sections per role ─────────────────────────────────
+// ── Sections data ─────────────────────────────────────────
 const ADMIN_SECTIONS = [
   { label: 'Maintenance', color: '#059669', emoji: '💳',
     desc: 'Payments, expenses, reports, flat management',
@@ -173,7 +173,100 @@ const TENANT_SECTIONS = [
   },
 ]
 
-// ── Section Sheet — shows items of ONE section ────────────
+// ── Announcements Sheet ───────────────────────────────────
+function AnnouncementsSheet({ open, onClose, announcements, onNavigate, isAdmin }) {
+  useEffect(() => {
+    if (open) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
+    return () => { document.body.style.overflow = '' }
+  }, [open])
+
+  const announcementsRoute = isAdmin ? '/announcements' : '/resident/announcements'
+
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+        zIndex: 40, opacity: open ? 1 : 0,
+        pointerEvents: open ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease',
+      }} />
+      <div style={{
+        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50,
+        background: 'white', borderRadius: '20px 20px 0 0',
+        maxHeight: '75vh', display: 'flex', flexDirection: 'column',
+        transform: open ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
+        boxShadow: '0 -4px 40px rgba(0,0,0,0.18)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+          <div style={{ width: 40, height: 4, borderRadius: 99, background: '#e2e8f0' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 12px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eeeeff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Megaphone size={17} style={{ color: '#5b52f0' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>Announcements</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 1 }}>{announcements.length} total</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {isAdmin && (
+              <button
+                onClick={() => { onClose(); onNavigate(announcementsRoute) }}
+                className="btn-primary text-[11px] px-3 py-1.5">
+                Post +
+              </button>
+            )}
+            <button onClick={onClose} style={{
+              width: 32, height: 32, borderRadius: 99,
+              background: 'var(--surface-3)', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}>
+              <X size={15} style={{ color: 'var(--ink-3)' }} />
+            </button>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 32 }}>
+          {announcements.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-4)', fontSize: 13 }}>No announcements yet</div>
+          ) : announcements.map((a, idx) => (
+            <div key={a.id} style={{ padding: '14px 16px', borderBottom: idx < announcements.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: 99, flexShrink: 0, marginTop: 5,
+                  background: a.type === 'URGENT' ? '#e11d48' : a.type === 'EVENT' ? '#0284c7' : '#5b52f0',
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {a.type && (
+                    <span style={{
+                      fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                      padding: '1px 6px', borderRadius: 99,
+                      background: a.type === 'URGENT' ? '#fff1f2' : a.type === 'EVENT' ? '#f0f9ff' : '#eeeeff',
+                      color: a.type === 'URGENT' ? '#e11d48' : a.type === 'EVENT' ? '#0284c7' : '#5b52f0',
+                      marginBottom: 4, display: 'inline-block',
+                    }}>{a.type}</span>
+                  )}
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 3 }}>{a.title}</div>
+                  {a.content && (
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 4 }}>{a.content}</div>
+                  )}
+                  <div style={{ fontSize: 11, color: 'var(--ink-4)' }}>
+                    {a.postedAt ? new Date(a.postedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ── Section Sheet ─────────────────────────────────────────
 function SectionSheet({ open, section, onClose, onNavigate }) {
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
@@ -199,23 +292,18 @@ function SectionSheet({ open, section, onClose, onNavigate }) {
         transition: 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
         boxShadow: '0 -4px 40px rgba(0,0,0,0.18)',
       }}>
-        {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
           <div style={{ width: 40, height: 4, borderRadius: 99, background: '#e2e8f0' }} />
         </div>
-
-        {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '8px 16px 16px',
-          borderBottom: '1px solid var(--border)',
+          padding: '8px 16px 16px', borderBottom: '1px solid var(--border)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 40, height: 40, borderRadius: 12,
               background: `${section.color}15`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 20,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
             }}>
               {section.emoji}
             </div>
@@ -232,8 +320,6 @@ function SectionSheet({ open, section, onClose, onNavigate }) {
             <X size={15} style={{ color: 'var(--ink-3)' }} />
           </button>
         </div>
-
-        {/* Items */}
         <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 32 }}>
           {section.items.map((item, idx) => {
             const Icon = item.icon
@@ -263,7 +349,7 @@ function SectionSheet({ open, section, onClose, onNavigate }) {
   )
 }
 
-// ── Sections Card List ────────────────────────────────────
+// ── Sections Card ─────────────────────────────────────────
 function SectionsCard({ sections, onSectionPress }) {
   return (
     <div className="card overflow-hidden">
@@ -271,34 +357,25 @@ function SectionsCard({ sections, onSectionPress }) {
         <span className="card-title">Features</span>
       </div>
       {sections.map((sec, idx) => (
-        <button
-          key={sec.label}
-          onClick={() => onSectionPress(sec)}
+        <button key={sec.label} onClick={() => onSectionPress(sec)}
           className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--surface-2)] text-left"
           style={{ borderBottom: idx < sections.length - 1 ? '1px solid var(--border)' : 'none' }}>
-          {/* Emoji icon */}
           <div style={{
             width: 44, height: 44, borderRadius: 12, flexShrink: 0,
             background: `${sec.color}12`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
           }}>
             {sec.emoji}
           </div>
-          {/* Text */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 3 }}>{sec.label}</div>
             <div style={{ fontSize: 11, color: 'var(--ink-4)', lineHeight: 1.4 }}>{sec.desc}</div>
           </div>
-          {/* Count badge + chevron */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <span style={{
-              fontSize: 10, fontWeight: 700,
-              padding: '2px 7px', borderRadius: 99,
+              fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
               background: `${sec.color}15`, color: sec.color,
-            }}>
-              {sec.items.length}
-            </span>
+            }}>{sec.items.length}</span>
             <ChevronRight size={14} style={{ color: 'var(--ink-4)' }} />
           </div>
         </button>
@@ -345,43 +422,65 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
+// ── Greeting Block ────────────────────────────────────────
+function GreetingBlock({ user, roleLabel, roleColor }) {
+  const now        = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+  const hour       = now.getHours()
+  const greeting   = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'
+  const greetEmoji = hour < 12 ? '🌅' : hour < 17 ? '☀️' : hour < 21 ? '🌆' : '🌙'
+  return (
+    <div className="mb-1">
+      <p style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>{greeting} {greetEmoji}</p>
+      <p style={{ fontSize: 20, fontWeight: 700, color: '#1a1a2e', letterSpacing: '-0.02em', marginBottom: 4 }}>
+        {user?.name?.split(' ')[0]}
+      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: `${roleColor}18`, color: roleColor }}>
+          {roleLabel}
+        </span>
+        {user?.flatNo && <span style={{ fontSize: 10, color: '#94a3b8' }}>Flat {user.flatNo}</span>}
+      </div>
+    </div>
+  )
+}
+
 // ── Admin Home ────────────────────────────────────────────
-function AdminHome({ user, navigate, sections, onSectionPress }) {
+function AdminHome({ user, navigate, sections, onSectionPress, announcements }) {
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-  const [selMonth,      setSelMonth]      = useState({ month: now.getMonth() + 1, year: now.getFullYear() })
-  const [dashboard,     setDashboard]     = useState(null)
-  const [trend,         setTrend]         = useState([])
-  const [payments,      setPayments]      = useState([])
-  const [complaints,    setComplaints]    = useState([])
-  const [deliveries,    setDeliveries]    = useState([])
-  const [visitors,      setVisitors]      = useState([])
-  const [announcements, setAnnouncements] = useState([])
-  const [loading,       setLoading]       = useState(true)
-  const [sendingAll,    setSendingAll]    = useState(false)
-  const [reminderMsg,   setReminderMsg]   = useState(null)
+  const [selMonth,      setSelMonth]   = useState({ month: now.getMonth() + 1, year: now.getFullYear() })
+  const [dashboard,     setDashboard]  = useState(null)
+  const [trend,         setTrend]      = useState([])
+  const [payments,      setPayments]   = useState([])
+  const [complaints,    setComplaints] = useState([])
+  const [deliveries,    setDeliveries] = useState([])
+  const [visitors,      setVisitors]   = useState([])
+  const [flats,         setFlats]      = useState([])
+  const [loading,       setLoading]    = useState(true)
+  const [sendingAll,    setSendingAll] = useState(false)
+  const [reminderMsg,   setReminderMsg]= useState(null)
 
   useEffect(() => { fetchAll() }, [selMonth])
 
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [dashRes, trendRes, paymentsRes, complaintsRes, visitorsRes, annRes, deliveriesRes] =
+      const [dashRes, trendRes, paymentsRes, complaintsRes, visitorsRes, deliveriesRes, flatsRes] =
         await Promise.all([
           api.get(`/api/dashboard?month=${selMonth.month}&year=${selMonth.year}`),
           api.get('/api/dashboard/trend?months=6'),
           api.get(`/api/maintenance?month=${selMonth.month}&year=${selMonth.year}`),
           api.get('/api/complaints'),
           api.get('/api/visitors?todayOnly=true'),
-          api.get('/api/announcements'),
           api.get('/api/deliveries').catch(() => ({ data: [] })),
+          api.get('/api/flats').catch(() => ({ data: [] })),
         ])
       setDashboard(dashRes.data)
       setTrend(trendRes.data)
       setPayments(paymentsRes.data)
       setComplaints(complaintsRes.data)
       setVisitors(visitorsRes.data)
-      setAnnouncements(annRes.data)
       setDeliveries((deliveriesRes.data || []).filter(d => d.status === 'PENDING'))
+      setFlats((flatsRes.data || []).filter(f => f.floor > 0 && f.wing !== 'Ground'))
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -478,7 +577,7 @@ function AdminHome({ user, navigate, sections, onSectionPress }) {
         </div>
       </div>
 
-      {/* Monthly Collection chart */}
+      {/* Chart */}
       <div className="card">
         <div className="card-header">
           <span className="card-title">Monthly Collection</span>
@@ -503,6 +602,49 @@ function AdminHome({ user, navigate, sections, onSectionPress }) {
           )}
         </div>
       </div>
+
+      {/* Flat grid */}
+      {flats.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Flat Status · {monthLabel}</span>
+            <button onClick={() => navigate('/maintenance')}
+              className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>
+              View All →
+            </button>
+          </div>
+          <div className="p-3">
+            <div className="flex items-center gap-3 mb-2">
+              {[['#d1fae5','#065f46','Paid'],['#ffe4e6','#9f1239','Unpaid'],['#fef9c3','#78350f','Partial']].map(([bg,color,l]) => (
+                <div key={l} className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-sm" style={{ background: bg }} />
+                  <span className="text-[10px]" style={{ color: 'var(--ink-3)' }}>{l}</span>
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))' }}>
+              {flats.map(f => {
+                const pay = payments.find(p => p.flatNo === f.flatNo)
+                const st  = pay?.status || 'UNPAID'
+                const isMe = f.flatNo === user?.flatNo
+                return (
+                  <div key={f.flatNo} title={f.flatNo}
+                    onClick={() => navigate('/maintenance')}
+                    className="aspect-square rounded-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
+                    style={{
+                      background: isMe ? 'var(--indigo)' : st === 'PAID' ? '#d1fae5' : st === 'PARTIAL' ? '#fef9c3' : '#ffe4e6',
+                      color:      isMe ? 'white' : st === 'PAID' ? '#065f46' : st === 'PARTIAL' ? '#78350f' : '#9f1239',
+                      fontSize: '7px', fontWeight: 700,
+                      outline: isMe ? '2px solid var(--indigo)' : 'none', outlineOffset: '1px',
+                    }}>
+                    {f.flatNo}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Defaulters */}
       {defaulters.length > 0 && (
@@ -541,24 +683,6 @@ function AdminHome({ user, navigate, sections, onSectionPress }) {
         </div>
       )}
 
-      {/* Announcements */}
-      {announcements.length > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Announcements</span>
-            <button onClick={() => navigate('/announcements')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>Post +</button>
-          </div>
-          {announcements.slice(0, 2).map(a => (
-            <div key={a.id} className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
-              <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{a.title}</div>
-              <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>
-                {a.postedAt ? new Date(a.postedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' }) : ''}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Sections card */}
       <SectionsCard sections={sections} onSectionPress={onSectionPress} />
     </div>
@@ -566,21 +690,20 @@ function AdminHome({ user, navigate, sections, onSectionPress }) {
 }
 
 // ── Resident Home ─────────────────────────────────────────
-function ResidentHome({ user, navigate, sections, onSectionPress }) {
+function ResidentHome({ user, navigate, sections, onSectionPress, announcements }) {
   const now     = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   const isOwner = user?.role === 'owner'
 
-  const [selMonth,      setSelMonth]      = useState({ month: now.getMonth() + 1, year: now.getFullYear() })
-  const [myPayments,    setMyPayments]    = useState([])
-  const [myComplaints,  setMyComplaints]  = useState([])
-  const [announcements, setAnnouncements] = useState([])
-  const [myVisitors,    setMyVisitors]    = useState([])
-  const [dashboard,     setDashboard]     = useState(null)
-  const [expenses,      setExpenses]      = useState([])
-  const [allFlats,      setAllFlats]      = useState([])
-  const [allPayments,   setAllPayments]   = useState([])
-  const [deliveries,    setDeliveries]    = useState([])
-  const [loading,       setLoading]       = useState(true)
+  const [selMonth,     setSelMonth]   = useState({ month: now.getMonth() + 1, year: now.getFullYear() })
+  const [myPayments,   setMyPayments] = useState([])
+  const [myComplaints, setMyComplaints]= useState([])
+  const [myVisitors,   setMyVisitors] = useState([])
+  const [dashboard,    setDashboard]  = useState(null)
+  const [expenses,     setExpenses]   = useState([])
+  const [allFlats,     setAllFlats]   = useState([])
+  const [allPayments,  setAllPayments]= useState([])
+  const [deliveries,   setDeliveries] = useState([])
+  const [loading,      setLoading]    = useState(true)
 
   useEffect(() => { if (user?.flatNo) fetchAll() }, [user, selMonth])
 
@@ -590,7 +713,6 @@ function ResidentHome({ user, navigate, sections, onSectionPress }) {
       const requests = [
         api.get(`/api/maintenance/flat/${user.flatNo}`),
         api.get(`/api/complaints/flat/${user.flatNo}`),
-        api.get('/api/announcements'),
         api.get(`/api/visitors?flatNo=${user.flatNo}&todayOnly=true`),
         api.get(`/api/dashboard?month=${selMonth.month}&year=${selMonth.year}`),
         api.get('/api/flats'),
@@ -601,13 +723,12 @@ function ResidentHome({ user, navigate, sections, onSectionPress }) {
       const results = await Promise.all(requests)
       setMyPayments(results[0].data)
       setMyComplaints(results[1].data)
-      setAnnouncements(results[2].data)
-      setMyVisitors(results[3].data)
-      setDashboard(results[4].data)
-      setAllFlats(results[5].data.filter(f => f.floor > 0 && f.wing !== 'Ground'))
-      setAllPayments(results[6].data)
-      setDeliveries((results[7].data || []).filter(d => d.status === 'PENDING'))
-      if (isOwner && results[8]) setExpenses(results[8].data)
+      setMyVisitors(results[2].data)
+      setDashboard(results[3].data)
+      setAllFlats(results[4].data.filter(f => f.floor > 0 && f.wing !== 'Ground'))
+      setAllPayments(results[5].data)
+      setDeliveries((results[6].data || []).filter(d => d.status === 'PENDING'))
+      if (isOwner && results[7]) setExpenses(results[7].data)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -670,8 +791,7 @@ function ResidentHome({ user, navigate, sections, onSectionPress }) {
               My Maintenance · {monthLabel}
             </div>
             <div className="text-[26px] font-bold" style={{
-              color: currentMonthPay?.status === 'PAID' ? '#059669' : '#e11d48',
-              letterSpacing: '-0.03em',
+              color: currentMonthPay?.status === 'PAID' ? '#059669' : '#e11d48', letterSpacing: '-0.03em',
             }}>
               {currentMonthPay?.status === 'PAID' ? 'Paid ✓'
                 : currentMonthPay?.status === 'PARTIAL'
@@ -809,24 +929,6 @@ function ResidentHome({ user, navigate, sections, onSectionPress }) {
         </div>
       </div>
 
-      {/* Announcements */}
-      {announcements.length > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Announcements</span>
-            <button onClick={() => navigate('/resident/announcements')} className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>All →</button>
-          </div>
-          {announcements.slice(0, 3).map(a => (
-            <div key={a.id} className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
-              <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{a.title}</div>
-              <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-3)' }}>
-                {a.postedAt ? new Date(a.postedAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' }) : ''}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Sections card */}
       <SectionsCard sections={sections} onSectionPress={onSectionPress} />
     </div>
@@ -837,12 +939,12 @@ function ResidentHome({ user, navigate, sections, onSectionPress }) {
 export default function HomeScreen() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [activeSection, setActiveSection] = useState(null)
 
-  const now        = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-  const hour       = now.getHours()
-  const greeting   = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'
-  const greetEmoji = hour < 12 ? '🌅' : hour < 17 ? '☀️' : hour < 21 ? '🌆' : '🌙'
+  const [activeSection,  setActiveSection]  = useState(null)
+  const [annSheetOpen,   setAnnSheetOpen]   = useState(false)
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
+  const [announcements,  setAnnouncements]  = useState([])
+  const avatarRef = useRef(null)
 
   const isAdmin = user?.role === 'admin'
   const isOwner = user?.role === 'owner'
@@ -853,53 +955,149 @@ export default function HomeScreen() {
   const initials  = user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
   const sections  = isAdmin ? ADMIN_SECTIONS : isOwner ? OWNER_SECTIONS : TENANT_SECTIONS
 
+  // Fetch announcements at top level so bell can use them
+  useEffect(() => {
+    api.get('/api/announcements')
+      .then(r => setAnnouncements(r.data))
+      .catch(() => {})
+  }, [])
+
+  // Close avatar menu on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target)) {
+        setAvatarMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const hasUnread = announcements.length > 0
+
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
 
-      {/* Header */}
-      <div className="flex-shrink-0 px-4 pt-5 pb-3"
+      {/* ── Navbar ── */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-3 flex items-center justify-between"
         style={{ background: 'white', borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[11px]" style={{ color: 'var(--ink-4)' }}>{greeting} {greetEmoji}</div>
-            <div className="text-[20px] font-bold leading-tight mt-0.5"
-              style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-              {user?.name?.split(' ')[0]}
+
+        {/* Left — Announcements icon */}
+        <button
+          onClick={() => setAnnSheetOpen(true)}
+          style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: hasUnread ? '#eeeeff' : 'var(--surface-2)',
+            border: `1px solid ${hasUnread ? 'var(--indigo-md)' : 'var(--border)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', position: 'relative',
+          }}>
+          <Megaphone size={18} style={{ color: hasUnread ? 'var(--indigo)' : 'var(--ink-3)' }} />
+          {hasUnread && (
+            <span style={{
+              position: 'absolute', top: 6, right: 6,
+              width: 7, height: 7, borderRadius: 99,
+              background: '#e11d48', border: '1.5px solid white',
+            }} />
+          )}
+        </button>
+
+        {/* App name center */}
+        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '-0.01em' }}>
+          Akriti Adeshwar
+        </span>
+
+        {/* Right — Avatar with popover */}
+        <div ref={avatarRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setAvatarMenuOpen(v => !v)}
+            style={{
+              width: 40, height: 40, borderRadius: 99,
+              background: roleColor,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 700, color: 'white',
+              cursor: 'pointer', border: 'none',
+              boxShadow: avatarMenuOpen ? `0 0 0 3px ${roleColor}30` : 'none',
+            }}>
+            {initials}
+          </button>
+
+          {/* Popover */}
+          {avatarMenuOpen && (
+            <div style={{
+              position: 'absolute', top: '110%', right: 0, zIndex: 100,
+              background: 'white', borderRadius: 14,
+              border: '1px solid var(--border)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+              minWidth: 180, padding: 8,
+              animation: 'fadeIn 0.15s ease',
+            }}>
+              {/* User info */}
+              <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--border)', marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{user?.name?.split(' ')[0]}</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 1 }}>
+                  {roleLabel}{user?.flatNo ? ` · Flat ${user.flatNo}` : ''}
+                </div>
+              </div>
+
+              {/* Go Back — closes menu */}
+              <button
+                onClick={() => setAvatarMenuOpen(false)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 12px', borderRadius: 10, border: 'none',
+                  background: 'transparent', cursor: 'pointer', color: 'var(--ink-2)',
+                  fontSize: 13, fontWeight: 500,
+                }}
+                className="hover:bg-[var(--surface-2)] transition-colors">
+                <ChevronLeft size={15} style={{ color: 'var(--ink-3)' }} />
+                Go Back
+              </button>
+
+              {/* Logout */}
+              <button
+                onClick={() => { setAvatarMenuOpen(false); logout() }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 12px', borderRadius: 10, border: 'none',
+                  background: 'transparent', cursor: 'pointer', color: '#e11d48',
+                  fontSize: 13, fontWeight: 500,
+                }}
+                className="hover:bg-[#fff1f2] transition-colors">
+                <LogOut size={15} style={{ color: '#e11d48' }} />
+                Log Out
+              </button>
             </div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: `${roleColor}18`, color: roleColor }}>
-                {roleLabel}
-              </span>
-              {user?.flatNo && (
-                <span className="text-[10px]" style={{ color: 'var(--ink-3)' }}>Flat {user.flatNo}</span>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0"
-              style={{ background: roleColor }}>
-              {initials}
-            </div>
-            <button onClick={logout}
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: '#fff1f2', color: '#e11d48' }}>
-              <LogOut size={15} />
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Content */}
+      {/* ── Scrollable content ── */}
       <div className="flex-1 overflow-y-auto p-3 md:p-5">
-        {isAdmin
-          ? <AdminHome user={user} navigate={navigate} sections={sections} onSectionPress={setActiveSection} />
-          : <ResidentHome user={user} navigate={navigate} sections={sections} onSectionPress={setActiveSection} />
-        }
+
+        {/* Greeting in content area */}
+        <GreetingBlock user={user} roleLabel={roleLabel} roleColor={roleColor} />
+
+        <div className="mt-3">
+          {isAdmin
+            ? <AdminHome user={user} navigate={navigate} sections={sections} onSectionPress={setActiveSection} announcements={announcements} />
+            : <ResidentHome user={user} navigate={navigate} sections={sections} onSectionPress={setActiveSection} announcements={announcements} />
+          }
+        </div>
+
         <div className="h-6" />
       </div>
 
-      {/* Section Sheet */}
+      {/* ── Announcements Sheet ── */}
+      <AnnouncementsSheet
+        open={annSheetOpen}
+        onClose={() => setAnnSheetOpen(false)}
+        announcements={announcements}
+        onNavigate={navigate}
+        isAdmin={isAdmin}
+      />
+
+      {/* ── Section Sheet ── */}
       <SectionSheet
         open={!!activeSection}
         section={activeSection}
