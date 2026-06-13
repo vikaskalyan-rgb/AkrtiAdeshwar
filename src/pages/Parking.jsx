@@ -50,10 +50,10 @@ const SH = { w: 90, h: 54 }   // horizontal slot
 const SM = { w: 46, h: 54 }   // small/bike slot
 
 const SLOTS = [
-  // ── TOP STRIP ─────────────────────────────────────────────
-  { id: '39', x: 436, y: 24, ...SV },
-  { id: '40', x: 498, y: 24, ...SV },
-  { id: '38', x: 676, y: 24, ...SV },
+  // ── TOP STRIP — 39,40,38 all top-right near transformer ──
+  { id: '39', x: 588, y: 24, ...SV },
+  { id: '40', x: 648, y: 24, ...SV },
+  { id: '38', x: 710, y: 24, ...SV },
 
   // ── UPPER CENTRE ROW 1 (facing down) ─────────────────────
   { id: '25', x: 236, y: 140, ...SV },
@@ -70,12 +70,13 @@ const SLOTS = [
   { id: '10a',x: 520, y: 242, ...SV },
 
   // ── RIGHT COLUMN (horizontal, facing left) ────────────────
-  { id: '19', x: 740, y: 148, ...SH },
-  { id: '18', x: 740, y: 214, ...SH },
-  { id: '17', x: 740, y: 280, ...SH },
-  { id: '16', x: 740, y: 346, ...SH },
-  { id: '15', x: 740, y: 412, ...SH },
-  { id: '15a',x: 632, y: 412, ...SH },
+  { id: '19', x: 742, y: 148, ...SH },
+  { id: '18', x: 742, y: 214, ...SH },
+  { id: '17', x: 742, y: 280, ...SH },
+  { id: '16', x: 742, y: 346, ...SH },
+  { id: '15', x: 742, y: 412, ...SH },
+  // 15a is LEFT of 15, same y
+  { id: '15a', x: 638, y: 412, ...SH },
 
   // ── LEFT COLUMN (horizontal, facing right) ────────────────
   { id: '30',  x: 22, y: 148, ...SH },
@@ -92,31 +93,29 @@ const SLOTS = [
   { id: '36', x: 22, y: 690, ...SH },
   { id: '37', x: 22, y: 764, ...SH },
 
-  // ── CENTRE RIGHT — 14a, 14, 13 ───────────────────────────
-  { id: '13',  x: 740, y: 478, ...SH },
-  { id: '14a', x: 548, y: 630, ...SV },
-  { id: '14',  x: 614, y: 630, ...SV },
+  // ── CENTRE RIGHT — 13 below ramp, 14a/14 lower ──────────
+  { id: '13',  x: 742, y: 596, ...SH },
+  { id: '14a', x: 548, y: 660, ...SV },
+  { id: '14',  x: 614, y: 660, ...SV },
 
   // ── RIGHT BOTTOM COLUMN ───────────────────────────────────
-  { id: '12', x: 740, y: 640, ...SH },
-  { id: '11', x: 740, y: 714, ...SH },
-  { id: '10', x: 740, y: 788, ...SH },
+  { id: '12', x: 742, y: 666, ...SH },
+  { id: '11', x: 742, y: 736, ...SH },
+  { id: '10', x: 742, y: 806, ...SH },
 
-  // ── BOTTOM UPPER SUB-ROW (small, facing down) ─────────────
-  { id: '4a', x: 226, y: 640, ...SV },
-  { id: '5a', x: 292, y: 640, ...SV },
-  { id: '6a', x: 376, y: 640, ...SV },
+  // ── BOTTOM UPPER SUB-ROW (4a,5a,6a above main rows) ──────
+  { id: '4a', x: 226, y: 660, ...SV },
+  { id: '5a', x: 292, y: 660, ...SV },
+  { id: '6a', x: 376, y: 660, ...SV },
 
   // ── BOTTOM MAIN ROWS ─────────────────────────────────────
-  // Left group: 1,2,3,4
-  { id: '1', x: 130, y: 764, ...SV },
-  { id: '2', x: 196, y: 764, ...SV },
-  { id: '3', x: 262, y: 764, ...SV },
-  { id: '4', x: 328, y: 764, ...SV },
-  // Right group: 5,6,7,8,9
-  { id: '5', x: 394, y: 764, ...SV },
-  { id: '6', x: 460, y: 764, ...SV },
-  { id: '7', x: 526, y: 764, ...SV },
+  { id: '1', x: 130, y: 784, ...SV },
+  { id: '2', x: 196, y: 784, ...SV },
+  { id: '3', x: 262, y: 784, ...SV },
+  { id: '4', x: 328, y: 784, ...SV },
+  { id: '5', x: 394, y: 784, ...SV },
+  { id: '6', x: 460, y: 784, ...SV },
+  { id: '7', x: 526, y: 784, ...SV },
   { id: '8', x: 592, y: 764, ...SV },
   { id: '9', x: 658, y: 764, ...SV },
 ]
@@ -289,51 +288,51 @@ export default function Parking() {
                   <rect x="850" y="484" width="10" height="56" rx="3" fill="#e11d48"/>
                   <text x="848" y="480" textAnchor="middle" fontSize="8" fill="#e11d48" fontWeight="700">GATE</text>
 
-                  {/* W.TOI box */}
-                  <rect x="540", y="264" width="68" height="40" rx="5"
+                  {/* W.TOI box — right of 10a */}
+                  <rect x="608" y="250" width="68" height="40" rx="5"
                     fill="#f0f9ff" stroke="#bae6fd" strokeWidth="1.5"/>
-                  <text x="574" y="289" textAnchor="middle" fontSize="9" fill="#0369a1" fontWeight="600">W.TOI</text>
+                  <text x="642" y="275" textAnchor="middle" fontSize="9" fill="#0369a1" fontWeight="600">W.TOI</text>
 
-                  {/* Garden patch 1 — vertical, left of lifts */}
-                  <rect x="190" y="328" width="106" height="226" rx="9"
+                  {/* Garden patch 1 — vertical green strip, centre of plot */}
+                  <rect x="310" y="328" width="90" height="220" rx="9"
                     fill="#bbf7d0" stroke="#4ade80" strokeWidth="1.5"/>
-                  <text x="243" y="448" textAnchor="middle" fontSize="9" fill="#15803d" fontWeight="600">GARDEN</text>
+                  <text x="355" y="442" textAnchor="middle" fontSize="9" fill="#15803d" fontWeight="600">GARDEN</text>
 
-                  {/* Garden patch 2 — horizontal, right of centre */}
+                  {/* Garden patch 2 — horizontal green, right-centre */}
                   <rect x="448" y="478" width="266" height="40" rx="7"
                     fill="#bbf7d0" stroke="#4ade80" strokeWidth="1.5"/>
 
-                  {/* Ramp (to right of garden 2) */}
-                  <rect x="448" y="526" width="250" height="50" rx="5"
+                  {/* Ramp — below garden 2 leading to gate */}
+                  <rect x="448" y="526" width="260" height="50" rx="5"
                     fill="#dde3ed" stroke="#c8d0dc" strokeWidth="1.5"/>
                   {[0,1,2,3,4,5,6].map(i => (
                     <rect key={i} x={456+i*33} y="533" width="16" height="36" rx="2" fill="#fbbf24"/>
                   ))}
-                  <text x="573" y="594" textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">RAMP / ENTRY</text>
+                  <text x="578" y="594" textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">RAMP / ENTRY</text>
 
                   {/* MES panel labels */}
-                  <text x="316" y="324" textAnchor="middle" fontSize="7" fill="#94a3b8">MES PANEL</text>
-                  <text x="316" y="560" textAnchor="middle" fontSize="7" fill="#94a3b8">MES PANEL</text>
+                  <text x="430" y="324" textAnchor="middle" fontSize="7" fill="#94a3b8">MES PANEL</text>
+                  <text x="430" y="560" textAnchor="middle" fontSize="7" fill="#94a3b8">MES PANEL</text>
 
                   {/* Stairs UP upper */}
-                  <rect x="306" y="330" width="70" height="28" rx="4"
+                  <rect x="420" y="330" width="70" height="28" rx="4"
                     fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5"/>
-                  <text x="341" y="349" textAnchor="middle" fontSize="9" fill="#475569" fontWeight="700">UP ↑</text>
+                  <text x="455" y="349" textAnchor="middle" fontSize="9" fill="#475569" fontWeight="700">UP ↑</text>
 
-                  {/* LIFT 1 — upper centre */}
-                  <rect x="306" y="366" width="70" height="66" rx="7"
+                  {/* LIFT 1 — upper, RIGHT of garden */}
+                  <rect x="420" y="366" width="70" height="66" rx="7"
                     fill="#ddd6fe" stroke="#a78bfa" strokeWidth="2"/>
-                  <text x="341" y="406" textAnchor="middle" fontSize="12" fill="#5b21b6" fontWeight="800">LIFT</text>
+                  <text x="455" y="406" textAnchor="middle" fontSize="12" fill="#5b21b6" fontWeight="800">LIFT</text>
 
-                  {/* LIFT 2 — lower centre */}
-                  <rect x="306" y="530" width="70" height="66" rx="7"
+                  {/* LIFT 2 — lower, RIGHT of garden */}
+                  <rect x="420" y="530" width="70" height="66" rx="7"
                     fill="#ddd6fe" stroke="#a78bfa" strokeWidth="2"/>
-                  <text x="341" y="570" textAnchor="middle" fontSize="12" fill="#5b21b6" fontWeight="800">LIFT</text>
+                  <text x="455" y="570" textAnchor="middle" fontSize="12" fill="#5b21b6" fontWeight="800">LIFT</text>
 
                   {/* Stairs UP lower */}
-                  <rect x="306" y="604" width="70" height="28" rx="4"
+                  <rect x="420" y="604" width="70" height="28" rx="4"
                     fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5"/>
-                  <text x="341" y="623" textAnchor="middle" fontSize="9" fill="#475569" fontWeight="700">UP ↑</text>
+                  <text x="455" y="623" textAnchor="middle" fontSize="9" fill="#475569" fontWeight="700">UP ↑</text>
 
                   {/* Road label */}
                   <text x="858" y="750" textAnchor="middle" fontSize="8" fill="#94a3b8"
