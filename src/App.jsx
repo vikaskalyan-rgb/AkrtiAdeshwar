@@ -29,6 +29,7 @@ import IdeasSuggestions   from './pages/IdeasSuggestions'
 import BuySell            from './pages/BuySell'
 import WeeklyActivities   from './pages/WeeklyActivities'
 import ClassesEvents      from './pages/ClassesEvents'
+import Parking            from './pages/Parking'
 
 import ResidentDashboard   from './pages/resident/ResidentDashboard'
 import ResidentMaintenance from './pages/resident/ResidentMaintenance'
@@ -98,6 +99,7 @@ function AppShell() {
               <Route path="/buy-sell"          element={<BuySell />} />
               <Route path="/weekly-activities" element={<WeeklyActivities />} />
               <Route path="/classes-events"    element={<ClassesEvents />} />
+              <Route path="/parking"           element={<Parking />} />
             </>}
 
             {/* ── Resident pages (owner + tenant) ── */}
@@ -121,6 +123,7 @@ function AppShell() {
               <Route path="/buy-sell"               element={<BuySell />} />
               <Route path="/weekly-activities"      element={<WeeklyActivities />} />
               <Route path="/classes-events"         element={<ClassesEvents />} />
+              <Route path="/parking"                element={<Parking />} />
 
               {/* Owner only */}
               <Route path="/resident/expenses" element={
