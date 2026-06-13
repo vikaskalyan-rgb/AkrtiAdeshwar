@@ -9,7 +9,7 @@ import {
   Users2, Network, PackageSearch, BarChart3, ClipboardList,
   FileBarChart2, Footprints, Feather, Lightbulb, ShoppingBag,
   CalendarCheck, GraduationCap, X, ChevronRight, ChevronLeft,
-  Truck, Volume2, Mail
+  Truck, Volume2, Mail, Car
 } from 'lucide-react'
 
 function fmt(n) {
@@ -59,10 +59,11 @@ const ADMIN_SECTIONS = [
     ],
   },
   { label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
-    desc: 'Visitors, deliveries, lost & found, night patrol',
+    desc: 'Visitors, deliveries, parking, lost & found, night patrol',
     items: [
       { to: '/visitors',   icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
       { to: '/deliveries', icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/parking',    icon: Car,          label: 'Parking',     desc: 'View and manage the 3D parking layout',             color: '#5b52f0', bg: '#eeeeff' },
       { to: '/lost-found', icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
       { to: '/watchman',   icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs and schedules',          color: '#1a1a2e', bg: '#f1f1f9' },
     ],
@@ -107,10 +108,11 @@ const OWNER_SECTIONS = [
     ],
   },
   { label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
-    desc: 'Visitors, deliveries, lost & found, night patrol',
+    desc: 'Visitors, deliveries, parking, lost & found, night patrol',
     items: [
       { to: '/resident/visitors', icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
       { to: '/deliveries',        icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/parking',           icon: Car,          label: 'Parking',     desc: 'View your parking slot and add vehicles',           color: '#5b52f0', bg: '#eeeeff' },
       { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
       { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs',                        color: '#1a1a2e', bg: '#f1f1f9' },
     ],
@@ -153,10 +155,11 @@ const TENANT_SECTIONS = [
     ],
   },
   { label: 'Safety & Services', color: '#e11d48', emoji: '🔒',
-    desc: 'Visitors, deliveries, lost & found, night patrol',
+    desc: 'Visitors, deliveries, parking, lost & found, night patrol',
     items: [
       { to: '/resident/visitors', icon: Users,        label: 'Visitors',    desc: 'Log and track visitor entries and exits',           color: '#0284c7', bg: '#f0f9ff' },
       { to: '/deliveries',        icon: Package,      label: 'Deliveries',  desc: 'Track parcels and courier arrivals',                color: '#d97706', bg: '#fffbeb' },
+      { to: '/parking',           icon: Car,          label: 'Parking',     desc: 'View your parking slot and add vehicles',           color: '#5b52f0', bg: '#eeeeff' },
       { to: '/lost-found',        icon: PackageSearch,label: 'Lost & Found',desc: 'Report or find lost items in the apartment',        color: '#e11d48', bg: '#fff1f2' },
       { to: '/resident/watchman', icon: Shield,       label: 'Night Patrol',desc: 'Night security patrol logs',                        color: '#1a1a2e', bg: '#f1f1f9' },
     ],
@@ -454,7 +457,6 @@ function AdminHome({ user, navigate, sections, onSectionPress, announcements }) 
   const [complaints,    setComplaints] = useState([])
   const [deliveries,    setDeliveries] = useState([])
   const [visitors,      setVisitors]   = useState([])
-  const [flats,         setFlats]      = useState([])
   const [loading,       setLoading]    = useState(true)
   const [sendingAll,    setSendingAll] = useState(false)
   const [reminderMsg,   setReminderMsg]= useState(null)
@@ -464,7 +466,7 @@ function AdminHome({ user, navigate, sections, onSectionPress, announcements }) 
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [dashRes, trendRes, paymentsRes, complaintsRes, visitorsRes, deliveriesRes, flatsRes] =
+      const [dashRes, trendRes, paymentsRes, complaintsRes, visitorsRes, deliveriesRes] =
         await Promise.all([
           api.get(`/api/dashboard?month=${selMonth.month}&year=${selMonth.year}`),
           api.get('/api/dashboard/trend?months=6'),
@@ -472,7 +474,6 @@ function AdminHome({ user, navigate, sections, onSectionPress, announcements }) 
           api.get('/api/complaints'),
           api.get('/api/visitors?todayOnly=true'),
           api.get('/api/deliveries').catch(() => ({ data: [] })),
-          api.get('/api/flats').catch(() => ({ data: [] })),
         ])
       setDashboard(dashRes.data)
       setTrend(trendRes.data)
@@ -480,7 +481,6 @@ function AdminHome({ user, navigate, sections, onSectionPress, announcements }) 
       setComplaints(complaintsRes.data)
       setVisitors(visitorsRes.data)
       setDeliveries((deliveriesRes.data || []).filter(d => d.status === 'PENDING'))
-      setFlats((flatsRes.data || []).filter(f => f.floor > 0 && f.wing !== 'Ground'))
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -602,49 +602,6 @@ function AdminHome({ user, navigate, sections, onSectionPress, announcements }) 
           )}
         </div>
       </div>
-
-      {/* Flat grid */}
-      {flats.length > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Flat Status · {monthLabel}</span>
-            <button onClick={() => navigate('/maintenance')}
-              className="text-[11px] font-semibold" style={{ color: 'var(--indigo)' }}>
-              View All →
-            </button>
-          </div>
-          <div className="p-3">
-            <div className="flex items-center gap-3 mb-2">
-              {[['#d1fae5','#065f46','Paid'],['#ffe4e6','#9f1239','Unpaid'],['#fef9c3','#78350f','Partial']].map(([bg,color,l]) => (
-                <div key={l} className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-sm" style={{ background: bg }} />
-                  <span className="text-[10px]" style={{ color: 'var(--ink-3)' }}>{l}</span>
-                </div>
-              ))}
-            </div>
-            <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))' }}>
-              {flats.map(f => {
-                const pay = payments.find(p => p.flatNo === f.flatNo)
-                const st  = pay?.status || 'UNPAID'
-                const isMe = f.flatNo === user?.flatNo
-                return (
-                  <div key={f.flatNo} title={f.flatNo}
-                    onClick={() => navigate('/maintenance')}
-                    className="aspect-square rounded-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
-                    style={{
-                      background: isMe ? 'var(--indigo)' : st === 'PAID' ? '#d1fae5' : st === 'PARTIAL' ? '#fef9c3' : '#ffe4e6',
-                      color:      isMe ? 'white' : st === 'PAID' ? '#065f46' : st === 'PARTIAL' ? '#78350f' : '#9f1239',
-                      fontSize: '7px', fontWeight: 700,
-                      outline: isMe ? '2px solid var(--indigo)' : 'none', outlineOffset: '1px',
-                    }}>
-                    {f.flatNo}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Defaulters */}
       {defaulters.length > 0 && (
