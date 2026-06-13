@@ -1,650 +1,371 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import * as THREE from 'three'
+import { useState, useEffect, useRef } from 'react'
 import Topbar from '../components/layout/Topbar'
 import { Modal } from '../components/ui'
 import api from '../api/config'
 import { useAuth } from '../context/AuthContext'
 import {
-  Car, Bike, Plus, Trash2, X, Edit3, Save, MapPin,
-  RotateCw, Move, Check, Maximize2
+  Car, Bike, Plus, Trash2, Save, Minus, Maximize2, RotateCcw
 } from 'lucide-react'
 
 // ── Vehicle types ─────────────────────────────────────────
 const VEHICLE_TYPES = [
-  { value: 'CAR',     label: 'Car',     icon: Car,  isBike: false, color: '#5b52f0' },
-  { value: 'BIKE',    label: 'Bike',    icon: Bike, isBike: true,  color: '#059669' },
-  { value: 'SCOOTER', label: 'Scooter', icon: Bike, isBike: true,  color: '#0284c7' },
-  { value: 'CYCLE',   label: 'Cycle',   icon: Bike, isBike: true,  color: '#d97706' },
-  { value: 'TEMPO',   label: 'Tempo',   icon: Car,  isBike: false, color: '#e11d48' },
+  { value: 'CAR',     label: 'Car',     icon: Car,  color: '#5b52f0', emoji: '🚗' },
+  { value: 'BIKE',    label: 'Bike',    icon: Bike, color: '#059669', emoji: '🏍️' },
+  { value: 'SCOOTER', label: 'Scooter', icon: Bike, color: '#0284c7', emoji: '🛵' },
+  { value: 'CYCLE',   label: 'Cycle',   icon: Bike, color: '#d97706', emoji: '🚲' },
+  { value: 'TEMPO',   label: 'Tempo',   icon: Car,  color: '#e11d48', emoji: '🚐' },
 ]
-const isBikeType = (t) => ['BIKE', 'SCOOTER', 'CYCLE'].includes((t || '').toUpperCase())
+const typeConf = (t) => VEHICLE_TYPES.find(v => v.value === (t || '').toUpperCase()) || VEHICLE_TYPES[0]
 
-// ── 3D vehicle builders ───────────────────────────────────
-function makeCar(color = 0x5b52f0) {
-  const g = new THREE.Group()
-  // body
-  const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: 0.4, roughness: 0.4 })
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.5, 3.8), bodyMat)
-  body.position.y = 0.45; body.castShadow = true
-  g.add(body)
-  // cabin
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 2), 
-    new THREE.MeshStandardMaterial({ color: 0xcfe8ff, metalness: 0.2, roughness: 0.1 }))
-  cabin.position.set(0, 0.85, -0.2); cabin.castShadow = true
-  g.add(cabin)
-  // wheels
-  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
-  const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16)
-  const positions = [[-0.95, 0.35, 1.2], [0.95, 0.35, 1.2], [-0.95, 0.35, -1.2], [0.95, 0.35, -1.2]]
-  positions.forEach(([x, y, z]) => {
-    const w = new THREE.Mesh(wheelGeo, wheelMat)
-    w.rotation.z = Math.PI / 2; w.position.set(x, y, z); w.castShadow = true
-    g.add(w)
-  })
-  return g
-}
+// ── Slot layout — arranged to mirror the brochure site plan ──
+// kinds: 'v' = nose-in (tall), 'h' = parallel (wide)
+const T = { w: 64, h: 110 }   // tall slot
+const W = { w: 110, h: 58 }   // wide slot
 
-function makeBike(color = 0x059669) {
-  const g = new THREE.Group()
-  const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: 0.4, roughness: 0.4 })
-  // frame
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 1.8), bodyMat)
-  frame.position.y = 0.6; frame.castShadow = true
-  g.add(frame)
-  // seat
-  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.2, 0.7),
-    new THREE.MeshStandardMaterial({ color: 0x1a1a1a }))
-  seat.position.set(0, 0.9, -0.3); seat.castShadow = true
-  g.add(seat)
-  // wheels
-  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
-  const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.18, 16)
-  ;[0.85, -0.85].forEach(z => {
-    const w = new THREE.Mesh(wheelGeo, wheelMat)
-    w.rotation.z = Math.PI / 2; w.position.set(0, 0.4, z); w.castShadow = true
-    g.add(w)
-  })
-  return g
-}
+const SLOT_LAYOUT = [
+  // North strip (top, near transformer)
+  { label: '40', x: 470, y: 40,  ...W },
+  { label: '39', x: 585, y: 40,  ...W },
+  { label: '38', x: 700, y: 40,  ...W },
 
-function makeVehicleMesh(type) {
-  const t = (type || '').toUpperCase()
-  const conf = VEHICLE_TYPES.find(v => v.value === t)
-  const color = conf ? parseInt(conf.color.replace('#', '0x')) : 0x888888
-  if (isBikeType(t)) return makeBike(color)
-  return makeCar(color)
-}
+  // North bay — upper row (facing down)
+  { label: '25', x: 250, y: 150, ...T },
+  { label: '24', x: 320, y: 150, ...T },
+  { label: '23', x: 390, y: 150, ...T },
+  { label: '22', x: 460, y: 150, ...T },
 
-// ════════════════════════════════════════════════════════════
-//  3D Scene Component
-// ════════════════════════════════════════════════════════════
-function ParkingScene({ slots, selectedSlotId, onSlotClick, userFlat, isAdmin, editMode, onSlotDrag }) {
-  const mountRef    = useRef(null)
-  const sceneRef    = useRef(null)
-  const rendererRef = useRef(null)
-  const cameraRef   = useRef(null)
-  const slotMeshesRef = useRef({})   // id -> { base, label, group }
-  const raycaster   = useRef(new THREE.Raycaster())
-  const pointer     = useRef(new THREE.Vector2())
+  // North bay — lower row (facing up)
+  { label: '26', x: 250, y: 268, ...T },
+  { label: '27', x: 320, y: 268, ...T },
+  { label: '28', x: 390, y: 268, ...T },
+  { label: '29', x: 460, y: 268, ...T },
 
-  // camera control state
-  const camState = useRef({
-    theta: Math.PI / 4, phi: Math.PI / 3.2, radius: 60,
-    target: new THREE.Vector3(0, 0, 0),
-    isPanning: false, isRotating: false,
-    lastX: 0, lastY: 0,
-  })
+  // Right column (road side)
+  { label: '20', x: 800, y: 150, ...W },
+  { label: '19', x: 800, y: 216, ...W },
+  { label: '18', x: 800, y: 282, ...W },
+  { label: '17', x: 800, y: 348, ...W },
+  { label: '16', x: 800, y: 414, ...W },
 
-  // ── init scene once ──
-  useEffect(() => {
-    const mount = mountRef.current
-    if (!mount) return
+  // Left column
+  { label: '30',  x: 60, y: 150, ...W },
+  { label: '31',  x: 60, y: 216, ...W },
+  { label: '32',  x: 60, y: 282, ...W },
+  { label: '33',  x: 60, y: 348, ...W },
+  { label: '33a', x: 60, y: 414, ...W },
+  { label: '34',  x: 60, y: 480, ...W },
 
-    const W = mount.clientWidth, H = mount.clientHeight
-    const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xeef1f6)
-    sceneRef.current = scene
+  // Centre slots (near lifts / ramp)
+  { label: '10a', x: 600, y: 300, ...T },
+  { label: '14a', x: 588, y: 624, ...T },
+  { label: '14',  x: 660, y: 624, ...T },
 
-    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 1000)
-    cameraRef.current = camera
+  // Bottom-left
+  { label: '35', x: 60,  y: 600, ...W },
+  { label: '36', x: 60,  y: 666, ...W },
+  { label: '5',  x: 200, y: 762, ...T },
+  { label: '5a', x: 270, y: 762, ...T },
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
-    renderer.setSize(W, H)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
-    mount.appendChild(renderer.domElement)
-    rendererRef.current = renderer
+  // Bottom row (left-centre)
+  { label: '1', x: 200, y: 892, ...T },
+  { label: '2', x: 270, y: 892, ...T },
+  { label: '3', x: 340, y: 892, ...T },
+  { label: '4', x: 410, y: 892, ...T },
 
-    // lights
-    const ambient = new THREE.AmbientLight(0xffffff, 0.7)
-    scene.add(ambient)
-    const sun = new THREE.DirectionalLight(0xffffff, 0.9)
-    sun.position.set(20, 40, 20); sun.castShadow = true
-    sun.shadow.camera.left = -60; sun.shadow.camera.right = 60
-    sun.shadow.camera.top = 60;   sun.shadow.camera.bottom = -60
-    sun.shadow.mapSize.set(2048, 2048)
-    scene.add(sun)
+  // Bottom-centre
+  { label: '6', x: 500, y: 892, ...T },
+  { label: '7', x: 570, y: 892, ...T },
+  { label: '8', x: 640, y: 892, ...T },
+  { label: '9', x: 710, y: 892, ...T },
 
-    // ground
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(90, 90),
-      new THREE.MeshStandardMaterial({ color: 0xd6dae2, roughness: 0.95 })
-    )
-    ground.rotation.x = -Math.PI / 2
-    ground.position.y = 0
-    ground.receiveShadow = true
-    scene.add(ground)
+  // Bottom-right
+  { label: '10', x: 800, y: 762, ...W },
+  { label: '11', x: 800, y: 828, ...W },
+  { label: '12', x: 800, y: 894, ...W },
+  { label: '13', x: 800, y: 960, ...W },
+]
 
-    // boundary walls (the angled compound)
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x3a3a4a })
-    const mkWall = (w, h, d, x, y, z, ry = 0) => {
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat)
-      wall.position.set(x, y, z); wall.rotation.y = ry; wall.castShadow = true
-      scene.add(wall)
-    }
-    // left & right long walls (slightly angled like the brochure)
-    mkWall(1, 3, 80, -24, 1.5, 0, 0.05)
-    mkWall(1, 3, 80,  22, 1.5, 0, -0.05)
-
-    // ── LIFTS (two lift blocks near the center) ──
-    const liftMat = new THREE.MeshStandardMaterial({ color: 0x5b52f0, metalness: 0.3, roughness: 0.5 })
-    const lift1 = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 3), liftMat)
-    lift1.position.set(-3, 2, -7); lift1.castShadow = true
-    scene.add(lift1)
-    const lift2 = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 3), liftMat)
-    lift2.position.set(-3, 2, 2); lift2.castShadow = true
-    scene.add(lift2)
-    // lift labels (text via canvas)
-    ;[lift1, lift2].forEach(l => {
-      const lblCanvas = document.createElement('canvas')
-      lblCanvas.width = 128; lblCanvas.height = 64
-      const ctx = lblCanvas.getContext('2d')
-      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 28px sans-serif'
-      ctx.textAlign = 'center'; ctx.fillText('LIFT', 64, 40)
-      const tex = new THREE.CanvasTexture(lblCanvas)
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }))
-      sprite.scale.set(3, 1.5, 1)
-      sprite.position.set(l.position.x, 4.6, l.position.z)
-      scene.add(sprite)
-    })
-
-    // ── RAMP (entry ramp, the striped one on the right) ──
-    const rampMat = new THREE.MeshStandardMaterial({ color: 0x9aa0ad, roughness: 0.9 })
-    const ramp = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 6), rampMat)
-    ramp.position.set(10, 0.2, -1)
-    ramp.receiveShadow = true
-    scene.add(ramp)
-    // ramp stripes
-    for (let i = 0; i < 5; i++) {
-      const stripe = new THREE.Mesh(
-        new THREE.BoxGeometry(0.6, 0.42, 6),
-        new THREE.MeshStandardMaterial({ color: 0xf5c542 })
-      )
-      stripe.position.set(7 + i * 1.6, 0.22, -1)
-      scene.add(stripe)
-    }
-
-    // gate marker
-    const gateMat = new THREE.MeshStandardMaterial({ color: 0xe11d48 })
-    const gate = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 4), gateMat)
-    gate.position.set(22, 1, 28); gate.castShadow = true
-    scene.add(gate)
-
-    updateCamera()
-
-    // ── render loop ──
-    let raf
-    const animate = () => {
-      raf = requestAnimationFrame(animate)
-      renderer.render(scene, camera)
-    }
-    animate()
-
-    // ── resize ──
-    const onResize = () => {
-      const w = mount.clientWidth, h = mount.clientHeight
-      camera.aspect = w / h; camera.updateProjectionMatrix()
-      renderer.setSize(w, h)
-    }
-    window.addEventListener('resize', onResize)
-
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('resize', onResize)
-      renderer.dispose()
-      if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement)
-    }
-  }, [])
-
-  // ── camera positioning ──
-  const updateCamera = useCallback(() => {
-    const c = camState.current
-    const cam = cameraRef.current
-    if (!cam) return
-    c.phi = Math.max(0.2, Math.min(Math.PI / 2 - 0.05, c.phi))
-    c.radius = Math.max(15, Math.min(120, c.radius))
-    const x = c.target.x + c.radius * Math.sin(c.phi) * Math.cos(c.theta)
-    const y = c.target.y + c.radius * Math.cos(c.phi)
-    const z = c.target.z + c.radius * Math.sin(c.phi) * Math.sin(c.theta)
-    cam.position.set(x, y, z)
-    cam.lookAt(c.target)
-  }, [])
-
-  // ── pointer controls (rotate / pan / zoom) ──
-  useEffect(() => {
-    const mount = mountRef.current
-    if (!mount) return
-
-    const onPointerDown = (e) => {
-      const c = camState.current
-      c.lastX = e.clientX; c.lastY = e.clientY
-      if (e.button === 2 || e.shiftKey) c.isPanning = true
-      else c.isRotating = true
-
-      // slot pick (only on a clean click, not drag)
-      c._downX = e.clientX; c._downY = e.clientY
-    }
-    const onPointerMove = (e) => {
-      const c = camState.current
-      const dx = e.clientX - c.lastX, dy = e.clientY - c.lastY
-      c.lastX = e.clientX; c.lastY = e.clientY
-      if (c.isRotating) {
-        c.theta -= dx * 0.01
-        c.phi   -= dy * 0.01
-        updateCamera()
-      } else if (c.isPanning) {
-        const panSpeed = c.radius * 0.0015
-        c.target.x -= (dx * Math.cos(c.theta) + dy * Math.sin(c.theta)) * panSpeed
-        c.target.z -= (-dx * Math.sin(c.theta) + dy * Math.cos(c.theta)) * panSpeed * 0
-        c.target.z -= (dy * Math.cos(c.theta) - dx * Math.sin(c.theta)) * panSpeed
-        updateCamera()
-      }
-    }
-    const onPointerUp = (e) => {
-      const c = camState.current
-      const moved = Math.abs(e.clientX - c._downX) + Math.abs(e.clientY - c._downY)
-      if (moved < 5) handlePick(e)   // treat as click
-      c.isPanning = false; c.isRotating = false
-    }
-    const onWheel = (e) => {
-      e.preventDefault()
-      const c = camState.current
-      c.radius += e.deltaY * 0.05
-      updateCamera()
-    }
-    const onContext = (e) => e.preventDefault()
-
-    // touch
-    let pinchDist = 0
-    const onTouchStart = (e) => {
-      const c = camState.current
-      if (e.touches.length === 1) {
-        c.lastX = e.touches[0].clientX; c.lastY = e.touches[0].clientY
-        c.isRotating = true
-        c._downX = e.touches[0].clientX; c._downY = e.touches[0].clientY
-      } else if (e.touches.length === 2) {
-        c.isRotating = false
-        const dx = e.touches[0].clientX - e.touches[1].clientX
-        const dy = e.touches[0].clientY - e.touches[1].clientY
-        pinchDist = Math.hypot(dx, dy)
-      }
-    }
-    const onTouchMove = (e) => {
-      e.preventDefault()
-      const c = camState.current
-      if (e.touches.length === 1 && c.isRotating) {
-        const dx = e.touches[0].clientX - c.lastX
-        const dy = e.touches[0].clientY - c.lastY
-        c.lastX = e.touches[0].clientX; c.lastY = e.touches[0].clientY
-        c.theta -= dx * 0.01; c.phi -= dy * 0.01
-        updateCamera()
-      } else if (e.touches.length === 2) {
-        const dx = e.touches[0].clientX - e.touches[1].clientX
-        const dy = e.touches[0].clientY - e.touches[1].clientY
-        const dist = Math.hypot(dx, dy)
-        c.radius += (pinchDist - dist) * 0.08
-        pinchDist = dist
-        updateCamera()
-      }
-    }
-    const onTouchEnd = (e) => {
-      const c = camState.current
-      if (e.changedTouches.length && c._downX != null) {
-        const moved = Math.abs(e.changedTouches[0].clientX - c._downX) +
-                      Math.abs(e.changedTouches[0].clientY - c._downY)
-        if (moved < 8) handlePick(e.changedTouches[0])
-      }
-      c.isRotating = false
-    }
-
-    mount.addEventListener('pointerdown', onPointerDown)
-    mount.addEventListener('pointermove', onPointerMove)
-    mount.addEventListener('pointerup', onPointerUp)
-    mount.addEventListener('wheel', onWheel, { passive: false })
-    mount.addEventListener('contextmenu', onContext)
-    mount.addEventListener('touchstart', onTouchStart, { passive: false })
-    mount.addEventListener('touchmove', onTouchMove, { passive: false })
-    mount.addEventListener('touchend', onTouchEnd)
-
-    return () => {
-      mount.removeEventListener('pointerdown', onPointerDown)
-      mount.removeEventListener('pointermove', onPointerMove)
-      mount.removeEventListener('pointerup', onPointerUp)
-      mount.removeEventListener('wheel', onWheel)
-      mount.removeEventListener('contextmenu', onContext)
-      mount.removeEventListener('touchstart', onTouchStart)
-      mount.removeEventListener('touchmove', onTouchMove)
-      mount.removeEventListener('touchend', onTouchEnd)
-    }
-  }, [updateCamera])
-
-  // ── pick a slot ──
-  const handlePick = (e) => {
-    const mount = mountRef.current
-    const rect = mount.getBoundingClientRect()
-    pointer.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-    pointer.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-    raycaster.current.setFromCamera(pointer.current, cameraRef.current)
-
-    const bases = Object.values(slotMeshesRef.current).map(m => m.base)
-    const hits = raycaster.current.intersectObjects(bases, false)
-    if (hits.length) {
-      const id = hits[0].object.userData.slotId
-      onSlotClick(id)
-    }
-  }
-
-  // ── (re)build slots whenever data changes ──
-  useEffect(() => {
-    const scene = sceneRef.current
-    if (!scene) return
-
-    // clear old
-    Object.values(slotMeshesRef.current).forEach(({ group }) => scene.remove(group))
-    slotMeshesRef.current = {}
-
-    slots.forEach(slot => {
-      const group = new THREE.Group()
-      group.position.set(slot.posX, 0, slot.posZ)
-      group.rotation.y = slot.rotation || 0
-
-      const isMine = slot.assignedFlat && userFlat &&
-                     slot.assignedFlat.toUpperCase() === userFlat.toUpperCase()
-      const isSelected = slot.id === selectedSlotId
-      const assigned = !!slot.assignedFlat
-
-      // base pad color
-      let padColor = 0xb8bec9          // unassigned grey
-      if (assigned) padColor = 0xbfe3c6 // assigned green-ish
-      if (isMine)   padColor = 0x5b52f0 // mine indigo
-      if (isSelected) padColor = 0xf5c542 // selected yellow
-
-      const base = new THREE.Mesh(
-        new THREE.BoxGeometry(2.6, 0.15, 5),
-        new THREE.MeshStandardMaterial({ color: padColor, roughness: 0.8 })
-      )
-      base.position.y = 0.08
-      base.receiveShadow = true
-      base.userData.slotId = slot.id
-      group.add(base)
-
-      // slot border lines
-      const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff })
-      const edges = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(2.6, 0.16, 5)), edgeMat
-      )
-      edges.position.y = 0.08
-      group.add(edges)
-
-      // label sprite (slot number + flat)
-      const c = document.createElement('canvas')
-      c.width = 256; c.height = 128
-      const ctx = c.getContext('2d')
-      ctx.fillStyle = isMine ? '#ffffff' : '#1a1a2e'
-      ctx.font = 'bold 52px sans-serif'; ctx.textAlign = 'center'
-      ctx.fillText(slot.label, 128, 54)
-      if (assigned) {
-        ctx.font = 'bold 38px sans-serif'
-        ctx.fillStyle = isMine ? '#ffe066' : '#5b52f0'
-        ctx.fillText(slot.assignedFlat, 128, 100)
-      } else {
-        ctx.font = '30px sans-serif'; ctx.fillStyle = '#94a3b8'
-        ctx.fillText('unassigned', 128, 96)
-      }
-      const tex = new THREE.CanvasTexture(c)
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }))
-      sprite.scale.set(2.5, 1.25, 1)
-      sprite.position.set(0, 2.5, 0)
-      group.add(sprite)
-
-      // vehicles
-      const vehicles = slot.vehicles || []
-      const cars  = vehicles.filter(v => !isBikeType(v.type))
-      const bikes = vehicles.filter(v => isBikeType(v.type))
-      cars.forEach((v, i) => {
-        const mesh = makeVehicleMesh(v.type)
-        mesh.position.set(0, 0.15, i === 0 ? 0 : 0)
-        group.add(mesh)
-      })
-      bikes.forEach((v, i) => {
-        const mesh = makeVehicleMesh(v.type)
-        const offset = bikes.length > 1 ? (i === 0 ? -0.6 : 0.6) : 0
-        mesh.position.set(offset, 0.15, cars.length ? 1.6 : 0)
-        mesh.scale.set(0.9, 0.9, 0.9)
-        group.add(mesh)
-      })
-
-      scene.add(group)
-      slotMeshesRef.current[slot.id] = { base, group }
-    })
-  }, [slots, selectedSlotId, userFlat])
-
-  return <div ref={mountRef} style={{ width: '100%', height: '100%', touchAction: 'none', cursor: 'grab' }} />
-}
+const VIEW_W = 1000
+const VIEW_H = 1100
 
 // ════════════════════════════════════════════════════════════
 //  Main Parking Page
 // ════════════════════════════════════════════════════════════
 export default function Parking() {
   const { user } = useAuth()
-  const isAdmin     = user?.role === 'admin'
-  const isOwner     = user?.role === 'owner'
-  const isTenant    = user?.role === 'tenant' || user?.identifier?.includes('_tenant')
-  const userFlat    = user?.flatNo
+  const isAdmin  = user?.role === 'admin'
+  const isTenant = user?.role === 'tenant' || (user?.identifier || '').includes('_tenant')
+  const userFlat = (user?.flatNo || '').toUpperCase()
 
-  const [slots,        setSlots]        = useState([])
+  const [slots,        setSlots]        = useState([])      // from DB (keyed by label)
   const [loading,      setLoading]      = useState(true)
-  const [selectedId,   setSelectedId]   = useState(null)
-  const [showSlotModal,setShowSlotModal]= useState(false)
+  const [selectedLbl,  setSelectedLbl]  = useState(null)
+  const [showModal,    setShowModal]    = useState(false)
 
-  // assign-flat (admin)
   const [assignFlat,   setAssignFlat]   = useState('')
-  const [carCap,       setCarCap]       = useState(1)
-  const [bikeCap,      setBikeCap]      = useState(0)
-
-  // add-vehicle
   const [vType,        setVType]        = useState('CAR')
   const [vNumber,      setVNumber]      = useState('')
   const [saving,       setSaving]       = useState(false)
   const [err,          setErr]          = useState(null)
 
+  const [zoom,         setZoom]         = useState(0.5)
+  const wrapRef = useRef(null)
+
   useEffect(() => { fetchSlots() }, [])
+
+  // fit to width on first load
+  useEffect(() => {
+    if (wrapRef.current) {
+      const cw = wrapRef.current.clientWidth
+      const fit = Math.max(0.34, Math.min(1, cw / VIEW_W))
+      setZoom(fit)
+    }
+  }, [loading])
 
   const fetchSlots = async () => {
     setLoading(true)
     try {
       const res = await api.get('/api/parking/slots')
-      setSlots(res.data)
+      setSlots(res.data || [])
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
   }
 
-  const selectedSlot = slots.find(s => s.id === selectedId)
+  // db slot lookup by label
+  const byLabel = {}
+  slots.forEach(s => { byLabel[s.label] = s })
 
-  // open modal when a slot is clicked
-  const handleSlotClick = (id) => {
-    setSelectedId(id)
-    const slot = slots.find(s => s.id === id)
-    if (slot) {
-      setAssignFlat(slot.assignedFlat || '')
-      setCarCap(slot.carCapacity)
-      setBikeCap(slot.bikeCapacity)
-      setErr(null)
-      setShowSlotModal(true)
-    }
+  const selectedDb = selectedLbl ? byLabel[selectedLbl] : null
+  const canEdit = !!(selectedDb && selectedDb.assignedFlat &&
+                     selectedDb.assignedFlat.toUpperCase() === userFlat)
+
+  const openSlot = (label) => {
+    setSelectedLbl(label)
+    const db = byLabel[label]
+    setAssignFlat(db?.assignedFlat || '')
+    setVType('CAR'); setVNumber(''); setErr(null)
+    setShowModal(true)
   }
 
-  // ── admin: assign / update slot ──
-  const handleSaveSlot = async () => {
+  const handleSaveAssign = async () => {
+    if (!selectedDb) return
     setSaving(true); setErr(null)
     try {
-      await api.put(`/api/parking/slots/${selectedId}`, {
+      await api.put(`/api/parking/slots/${selectedDb.id}`, {
         assignedFlat: assignFlat.trim().toUpperCase() || null,
-        carCapacity: Number(carCap),
-        bikeCapacity: Number(bikeCap),
       })
       await fetchSlots()
-      setShowSlotModal(false)
-    } catch (e) { setErr('Failed to save') }
+      setShowModal(false)
+    } catch (e) { setErr('Could not save') }
     finally { setSaving(false) }
   }
 
-  // ── resident/tenant: add vehicle ──
   const handleAddVehicle = async () => {
+    if (!selectedDb) return
     setSaving(true); setErr(null)
     try {
       const res = await api.post('/api/parking/vehicles', {
-        slotId: selectedId,
+        slotId: selectedDb.id,
         flatNo: userFlat,
         type: vType,
         numberPlate: vNumber.trim().toUpperCase(),
         addedBy: user?.identifier,
-        isTenant: isTenant,
+        isTenant,
       })
-      if (res.data?.error) { setErr(res.data.error); setSaving(false); return }
+      if (res.data?.error) { setErr(res.data.error); return }
       setVNumber('')
       await fetchSlots()
     } catch (e) {
       setErr(e?.response?.data?.error || 'Could not add vehicle')
-    }
-    finally { setSaving(false) }
+    } finally { setSaving(false) }
   }
 
   const handleDeleteVehicle = async (vid) => {
-    try {
-      await api.delete(`/api/parking/vehicles/${vid}`)
-      await fetchSlots()
-    } catch (e) { console.error(e) }
+    try { await api.delete(`/api/parking/vehicles/${vid}`); await fetchSlots() }
+    catch (e) { console.error(e) }
   }
 
-  // who can edit vehicles for the selected slot?
-  const canEditVehicles = (() => {
-    if (!selectedSlot || !selectedSlot.assignedFlat) return false
-    const mine = selectedSlot.assignedFlat.toUpperCase() === (userFlat || '').toUpperCase()
-    if (!mine) return false
-    // owner can edit only if no tenant in flat; tenant always can.
-    // Simplest correct rule per your spec: tenant edits if tenant; owner edits otherwise.
-    return true
-  })()
+  // ── slot colours ──
+  const slotStyle = (lbl) => {
+    const db = byLabel[lbl]
+    const assigned = !!db?.assignedFlat
+    const mine = assigned && db.assignedFlat.toUpperCase() === userFlat
+    const selected = lbl === selectedLbl
+    let fill = '#ffffff', stroke = '#cbd5e1', text = '#64748b'
+    if (assigned) { fill = '#d1fae5'; stroke = '#6ee7b7'; text = '#065f46' }
+    if (mine)     { fill = '#5b52f0'; stroke = '#4f46e5'; text = '#ffffff' }
+    return { fill, stroke, text, selected }
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-      <Topbar title="Parking" subtitle="3D parking layout" />
+      <Topbar title="Parking" subtitle="Society parking layout" />
 
-      <div className="flex-1 relative overflow-hidden">
-        {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-[13px]" style={{ color: 'var(--ink-4)' }}>Loading parking...</div>
+      <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-3">
+
+        {/* Legend + zoom */}
+        <div className="card p-3 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            {[
+              ['#5b52f0', 'Your slot'],
+              ['#d1fae5', 'Assigned'],
+              ['#ffffff', 'Empty'],
+            ].map(([c, l]) => (
+              <div key={l} className="flex items-center gap-1.5">
+                <div style={{ width: 14, height: 14, borderRadius: 4, background: c, border: '1px solid #cbd5e1' }} />
+                <span className="text-[11px]" style={{ color: 'var(--ink-2)' }}>{l}</span>
+              </div>
+            ))}
           </div>
-        ) : (
-          <ParkingScene
-            slots={slots}
-            selectedSlotId={selectedId}
-            onSlotClick={handleSlotClick}
-            userFlat={userFlat}
-            isAdmin={isAdmin}
-          />
-        )}
-
-        {/* Floating legend */}
-        <div className="absolute top-3 left-3 card p-3" style={{ maxWidth: 160 }}>
-          <div className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--ink-3)' }}>Legend</div>
-          {[
-            ['#5b52f0', 'Your slot'],
-            ['#bfe3c6', 'Assigned'],
-            ['#b8bec9', 'Unassigned'],
-            ['#f5c542', 'Selected'],
-          ].map(([c, l]) => (
-            <div key={l} className="flex items-center gap-2 mb-1">
-              <div style={{ width: 12, height: 12, borderRadius: 3, background: c }} />
-              <span className="text-[11px]" style={{ color: 'var(--ink-2)' }}>{l}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Help hint */}
-        <div className="absolute bottom-3 left-3 right-3 flex justify-center">
-          <div className="card px-3 py-2 flex items-center gap-3 text-[10px]" style={{ color: 'var(--ink-3)' }}>
-            <span className="flex items-center gap-1"><Move size={11}/> Drag to rotate</span>
-            <span className="flex items-center gap-1"><Maximize2 size={11}/> Pinch / scroll to zoom</span>
-            <span className="flex items-center gap-1"><MapPin size={11}/> Tap a slot</span>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setZoom(z => Math.max(0.34, +(z - 0.18).toFixed(2)))}
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+              <Minus size={15} style={{ color: 'var(--ink-2)' }} />
+            </button>
+            <button onClick={() => { if (wrapRef.current) setZoom(Math.max(0.34, Math.min(1, wrapRef.current.clientWidth / VIEW_W))) }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+              <RotateCcw size={14} style={{ color: 'var(--ink-2)' }} />
+            </button>
+            <button onClick={() => setZoom(z => Math.min(2.4, +(z + 0.18).toFixed(2)))}
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+              <Plus size={15} style={{ color: 'var(--ink-2)' }} />
+            </button>
           </div>
         </div>
+
+        {/* Map */}
+        <div className="card p-0 overflow-hidden">
+          <div ref={wrapRef} style={{ overflow: 'auto', maxHeight: '64vh', background: '#e9ecf2', WebkitOverflowScrolling: 'touch' }}>
+            {loading ? (
+              <div className="flex items-center justify-center" style={{ height: 300 }}>
+                <span className="text-[13px]" style={{ color: 'var(--ink-4)' }}>Loading parking…</span>
+              </div>
+            ) : (
+              <div style={{ width: VIEW_W * zoom, height: VIEW_H * zoom, position: 'relative' }}>
+                <svg width="100%" height="100%" viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+                  preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+
+                  {/* plot background */}
+                  <rect x="20" y="20" width={VIEW_W - 40} height={VIEW_H - 40} rx="20"
+                    fill="#dfe3ea" stroke="#c2c8d2" strokeWidth="2" />
+
+                  {/* driveway hint down the centre */}
+                  <rect x="150" y="120" width="700" height="860" rx="14"
+                    fill="#e9ecf2" stroke="#d2d8e0" strokeWidth="1.5" strokeDasharray="6 8" />
+
+                  {/* ── Lifts ── */}
+                  {[{ x: 430, y: 470 }, { x: 430, y: 620 }].map((l, i) => (
+                    <g key={i}>
+                      <rect x={l.x} y={l.y} width="72" height="62" rx="8"
+                        fill="#ddd6fe" stroke="#c4b5fd" strokeWidth="2" />
+                      <text x={l.x + 36} y={l.y + 37} textAnchor="middle"
+                        fontSize="15" fontWeight="700" fill="#5b21b6">LIFT</text>
+                    </g>
+                  ))}
+
+                  {/* stairs */}
+                  <g>
+                    <rect x="430" y="416" width="72" height="46" rx="8"
+                      fill="#eef1f6" stroke="#cbd5e1" strokeWidth="1.5" />
+                    <text x="466" y="444" textAnchor="middle" fontSize="13" fontWeight="700" fill="#64748b">UP</text>
+                  </g>
+
+                  {/* ── Ramp (striped) leading to gate ── */}
+                  <g>
+                    <rect x="690" y="486" width="212" height="62" rx="6" fill="#d8dde6" stroke="#c2c8d2" strokeWidth="1.5" />
+                    {[0,1,2,3,4,5].map(i => (
+                      <rect key={i} x={702 + i * 34} y="492" width="16" height="50" rx="2" fill="#f5c542" />
+                    ))}
+                    <text x="796" y="572" textAnchor="middle" fontSize="12" fontWeight="600" fill="#94a3b8">RAMP</text>
+                  </g>
+                  {/* gate on road edge */}
+                  <rect x="906" y="486" width="12" height="62" rx="3" fill="#e11d48" />
+                  <text x="912" y="476" textAnchor="middle" fontSize="11" fontWeight="700" fill="#e11d48">GATE</text>
+
+                  {/* road label */}
+                  <text x="960" y="540" textAnchor="middle" fontSize="12" fontWeight="600" fill="#94a3b8"
+                    transform="rotate(90 960 540)">10.0 M WIDE ROAD</text>
+
+                  {/* ── Slots ── */}
+                  {SLOT_LAYOUT.map(s => {
+                    const st = slotStyle(s.label)
+                    const db = byLabel[s.label]
+                    const vehicles = db?.vehicles || []
+                    const cx = s.x + s.w / 2
+                    return (
+                      <g key={s.label} onClick={() => openSlot(s.label)} style={{ cursor: 'pointer' }}>
+                        <rect x={s.x} y={s.y} width={s.w} height={s.h} rx="9"
+                          fill={st.fill} stroke={st.selected ? '#f59e0b' : st.stroke}
+                          strokeWidth={st.selected ? 3.5 : 1.5} />
+                        {/* slot number */}
+                        <text x={cx} y={s.y + (db?.assignedFlat ? s.h / 2 - 6 : s.h / 2 + 6)}
+                          textAnchor="middle" fontSize="19" fontWeight="700" fill={st.text}>
+                          {s.label}
+                        </text>
+                        {/* assigned flat */}
+                        {db?.assignedFlat && (
+                          <text x={cx} y={s.y + s.h / 2 + 16} textAnchor="middle"
+                            fontSize="13" fontWeight="700"
+                            fill={st.text === '#ffffff' ? '#e0e7ff' : '#5b52f0'}>
+                            {db.assignedFlat}
+                          </text>
+                        )}
+                        {/* vehicle dots */}
+                        {vehicles.length > 0 && (
+                          <g>
+                            {vehicles.slice(0, 5).map((v, i) => (
+                              <circle key={i}
+                                cx={s.x + 12 + i * 12} cy={s.y + s.h - 10} r="4"
+                                fill={st.text === '#ffffff' ? '#ffffff' : typeConf(v.type).color} />
+                            ))}
+                          </g>
+                        )}
+                      </g>
+                    )
+                  })}
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <p className="text-[11px] text-center" style={{ color: 'var(--ink-4)' }}>
+          <Maximize2 size={11} className="inline mb-0.5" /> Pinch or use +/− to zoom · scroll to pan · tap a slot
+        </p>
       </div>
 
-      {/* ── Slot modal ── */}
-      <Modal open={showSlotModal} onClose={() => setShowSlotModal(false)}
-        title={selectedSlot ? `Slot ${selectedSlot.label}` : 'Slot'}>
-        {selectedSlot && (
+      {/* ── Slot Modal ── */}
+      <Modal open={showModal} onClose={() => setShowModal(false)}
+        title={selectedLbl ? `Slot ${selectedLbl}` : 'Slot'}>
+        {selectedLbl && (
           <div className="space-y-4">
 
-            {/* Capacity summary */}
-            <div className="flex gap-2">
-              <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: '#eeeeff' }}>
-                <div className="flex items-center justify-center gap-1">
-                  <Car size={14} style={{ color: '#5b52f0' }} />
-                  <span className="text-[13px] font-bold" style={{ color: '#5b52f0' }}>{selectedSlot.carCapacity}</span>
-                </div>
-                <div className="text-[9px] mt-0.5" style={{ color: 'var(--ink-4)' }}>car spaces</div>
-              </div>
-              <div className="flex-1 rounded-xl p-2.5 text-center" style={{ background: '#ecfdf5' }}>
-                <div className="flex items-center justify-center gap-1">
-                  <Bike size={14} style={{ color: '#059669' }} />
-                  <span className="text-[13px] font-bold" style={{ color: '#059669' }}>{selectedSlot.bikeCapacity}</span>
-                </div>
-                <div className="text-[9px] mt-0.5" style={{ color: 'var(--ink-4)' }}>bike spaces</div>
-              </div>
+            {/* Assigned status */}
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+              style={{
+                background: selectedDb?.assignedFlat ? '#ecfdf5' : 'var(--surface-2)',
+                border: `1px solid ${selectedDb?.assignedFlat ? '#6ee7b7' : 'var(--border)'}`,
+              }}>
+              <span className="text-[12px]" style={{ color: 'var(--ink-3)' }}>
+                {selectedDb?.assignedFlat
+                  ? <>Assigned to <span className="font-bold" style={{ color: '#065f46' }}>Flat {selectedDb.assignedFlat}</span></>
+                  : 'Not assigned to any flat yet'}
+              </span>
             </div>
 
-            {/* ── ADMIN: assign flat + capacity ── */}
+            {/* ── Admin: assign flat ── */}
             {isAdmin && (
               <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
                 <div className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--ink-3)' }}>
                   Admin · Assign Slot
                 </div>
-                <div>
-                  <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: 'var(--ink-2)' }}>
-                    Flat Number (leave blank to unassign)
-                  </label>
-                  <input className="input w-full" placeholder="e.g. 2H, 4B"
-                    value={assignFlat}
-                    onChange={e => setAssignFlat(e.target.value.toUpperCase())} />
-                </div>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: 'var(--ink-2)' }}>Car spaces</label>
-                    <input type="number" min="0" max="4" className="input w-full"
-                      value={carCap} onChange={e => setCarCap(e.target.value)} />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[11px] font-semibold mb-1.5 block" style={{ color: 'var(--ink-2)' }}>Bike spaces</label>
-                    <input type="number" min="0" max="6" className="input w-full"
-                      value={bikeCap} onChange={e => setBikeCap(e.target.value)} />
-                  </div>
-                </div>
-                <button onClick={handleSaveSlot} disabled={saving} className="btn-primary w-full justify-center">
-                  <Save size={14} /> {saving ? 'Saving...' : 'Save Slot'}
+                <input className="input w-full" placeholder="Flat number (e.g. 2H) — blank to unassign"
+                  value={assignFlat} onChange={e => setAssignFlat(e.target.value.toUpperCase())} />
+                <button onClick={handleSaveAssign} disabled={saving} className="btn-primary w-full justify-center">
+                  <Save size={14} /> {saving ? 'Saving…' : 'Save'}
                 </button>
               </div>
             )}
@@ -652,17 +373,17 @@ export default function Parking() {
             {/* ── Vehicles list ── */}
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--ink-3)' }}>
-                Vehicles {selectedSlot.assignedFlat ? `· Flat ${selectedSlot.assignedFlat}` : ''}
+                Vehicles {selectedDb?.assignedFlat ? `· Flat ${selectedDb.assignedFlat}` : ''}
               </div>
-
-              {(!selectedSlot.vehicles || selectedSlot.vehicles.length === 0) ? (
-                <div className="text-[12px] text-center py-4 rounded-xl" style={{ color: 'var(--ink-4)', background: 'var(--surface-2)' }}>
-                  No vehicles parked here
+              {(!selectedDb?.vehicles || selectedDb.vehicles.length === 0) ? (
+                <div className="text-[12px] text-center py-4 rounded-xl"
+                  style={{ color: 'var(--ink-4)', background: 'var(--surface-2)' }}>
+                  No vehicles added
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  {selectedSlot.vehicles.map(v => {
-                    const conf = VEHICLE_TYPES.find(t => t.value === v.type?.toUpperCase()) || VEHICLE_TYPES[0]
+                  {selectedDb.vehicles.map(v => {
+                    const conf = typeConf(v.type)
                     const Icon = conf.icon
                     return (
                       <div key={v.id} className="flex items-center gap-2.5 p-2.5 rounded-xl"
@@ -678,7 +399,7 @@ export default function Parking() {
                         {v.isTenant && (
                           <span className="badge text-[9px]" style={{ background: '#fffbeb', color: '#d97706' }}>Tenant</span>
                         )}
-                        {canEditVehicles && (
+                        {canEdit && (
                           <button onClick={() => handleDeleteVehicle(v.id)}
                             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                             style={{ background: '#fff1f2', color: '#e11d48' }}>
@@ -692,13 +413,12 @@ export default function Parking() {
               )}
             </div>
 
-            {/* ── Add vehicle (residents/tenant of this flat) ── */}
-            {canEditVehicles && (
+            {/* ── Add vehicle (residents of this flat) ── */}
+            {canEdit && (
               <div className="rounded-xl p-4 space-y-3" style={{ background: '#ecfdf5', border: '1px solid #6ee7b7' }}>
                 <div className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#065f46' }}>
                   Add a Vehicle
                 </div>
-                {/* type pills */}
                 <div className="flex flex-wrap gap-1.5">
                   {VEHICLE_TYPES.map(t => {
                     const Icon = t.icon
@@ -719,23 +439,22 @@ export default function Parking() {
                 <input className="input w-full" placeholder="Vehicle number (e.g. TN09AB1234)"
                   value={vNumber} onChange={e => setVNumber(e.target.value.toUpperCase())} />
                 {err && (
-                  <div className="text-[11px] px-3 py-2 rounded-lg" style={{ background: '#fff1f2', color: '#9f1239' }}>
-                    {err}
-                  </div>
+                  <div className="text-[11px] px-3 py-2 rounded-lg" style={{ background: '#fff1f2', color: '#9f1239' }}>{err}</div>
                 )}
                 <button onClick={handleAddVehicle} disabled={saving} className="btn-primary w-full justify-center">
-                  <Plus size={14} /> {saving ? 'Adding...' : 'Add Vehicle'}
+                  <Plus size={14} /> {saving ? 'Adding…' : 'Add Vehicle'}
                 </button>
               </div>
             )}
 
-            {/* Non-editable note */}
-            {!canEditVehicles && selectedSlot.assignedFlat && !isAdmin && (
-              <div className="text-[11px] px-3 py-2.5 rounded-xl text-center" style={{ background: 'var(--surface-2)', color: 'var(--ink-4)' }}>
-                Only the resident of Flat {selectedSlot.assignedFlat} can edit these vehicles.
+            {/* note for non-residents */}
+            {!canEdit && !isAdmin && selectedDb?.assignedFlat && (
+              <div className="text-[11px] px-3 py-2.5 rounded-xl text-center"
+                style={{ background: 'var(--surface-2)', color: 'var(--ink-4)' }}>
+                Only residents of Flat {selectedDb.assignedFlat} can add vehicles here.
               </div>
             )}
-            {err && isAdmin && (
+            {err && (isAdmin || !canEdit) && (
               <div className="text-[11px] px-3 py-2 rounded-lg" style={{ background: '#fff1f2', color: '#9f1239' }}>{err}</div>
             )}
           </div>
