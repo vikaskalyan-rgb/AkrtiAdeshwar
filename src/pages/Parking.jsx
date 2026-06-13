@@ -12,96 +12,119 @@ const VEHICLE_TYPES = [
   { value: 'CYCLE',   label: 'Cycle',   icon: Bike, color: '#d97706' },
   { value: 'TEMPO',   label: 'Tempo',   icon: Car,  color: '#e11d48' },
 ]
-const typeConf = (t) => VEHICLE_TYPES.find(v => v.value === (t||'').toUpperCase()) || VEHICLE_TYPES[0]
+const typeConf = t => VEHICLE_TYPES.find(v => v.value === (t||'').toUpperCase()) || VEHICLE_TYPES[0]
 
 // ─────────────────────────────────────────────────────────────
-//  SLOT LAYOUT — pixel-mapped from the brochure screenshots
-//  SVG canvas: 900 wide × 980 tall
-//  SV = vertical slot (car noses up/down):  w52 h86
-//  SH = horizontal slot (car noses left/right): w86 h52
+//  SLOT LAYOUT — re-mapped carefully from brochure screenshots
+//
+//  Canvas: 920 × 1020
+//  Reading the brochure top→bottom, left→right:
+//
+//  TOP AREA (y 30-130):
+//    39, 40 = top centre (vertical, facing down)
+//    38 = top right near transformer (vertical)
+//
+//  UPPER ZONE (y 140-320):
+//    LEFT COL (horizontal facing right): 30 @ y155, 31 @ y250, 29(sm) next to 31
+//    CENTRE ROW 1 (vertical facing down): 25,24,23,22 @ y140, then gap, 21,20 further right
+//    CENTRE ROW 2 (vertical facing up):   26,27,28 @ y236
+//    10a = lone slot right of 28
+//    RIGHT COL (horizontal facing left):  20 same row as upper centre right
+//                                         19,18,17,16,15 stacked down
+//
+//  MIDDLE ZONE (y 320-580):
+//    LEFT COL: 32,32a @ y355  |  33,33a @ y445  |  34 @ y525
+//    CENTRE: Garden patch (vertical) | Lift 1 to its right | W.TOI right of that
+//    RIGHT COL: 15a @ y465 (same height as 33), then gap for ramp
+//
+//  LOWER ZONE (y 580-900):
+//    LEFT COL: 35 @ y590, 36 @ y660, 37 @ y730
+//    CENTRE-LEFT: 4a,5a,6a (small, facing down) @ y640
+//    CENTRE-RIGHT: 14a, 14 @ y640 | Garden patch 2 (horiz)
+//    RIGHT COL: 13 @ y590, 12 @ y668, 11 @ y748, 10 @ y828
+//    BOTTOM ROWS: 1,2,3,4 (left group) | 5,6,7,8,9 (right group) @ y830-900
 // ─────────────────────────────────────────────────────────────
-const SV = { w: 52, h: 86 }
-const SH = { w: 86, h: 52 }
-const SM = { w: 44, h: 52 }   // small / bike slot
+
+const SV = { w: 54, h: 90 }   // vertical slot
+const SH = { w: 90, h: 54 }   // horizontal slot
+const SM = { w: 46, h: 54 }   // small/bike slot
 
 const SLOTS = [
-  // ── TOP RIGHT — 38,39,40 near transformer (right side, top) ──
-  { id: '40', x: 490, y: 22, ...SV },
-  { id: '39', x: 555, y: 22, ...SV },
-  { id: '38', x: 700, y: 22, ...SV },
+  // ── TOP STRIP ─────────────────────────────────────────────
+  { id: '39', x: 436, y: 24, ...SV },
+  { id: '40', x: 498, y: 24, ...SV },
+  { id: '38', x: 676, y: 24, ...SV },
 
-  // ── UPPER CENTRE — row facing DOWN: 25,24,23,22,21,20 ──
-  // (Left group: 25,24,23,22 — gap — right group near road: 21,20)
-  { id: '25', x: 290, y: 140, ...SV },
-  { id: '24', x: 350, y: 140, ...SV },
-  { id: '23', x: 430, y: 140, ...SV },
-  { id: '22', x: 510, y: 140, ...SV },
-  { id: '21', x: 638, y: 140, ...SV },
-  { id: '20', x: 700, y: 140, ...SV },
+  // ── UPPER CENTRE ROW 1 (facing down) ─────────────────────
+  { id: '25', x: 236, y: 140, ...SV },
+  { id: '24', x: 298, y: 140, ...SV },
+  { id: '23', x: 374, y: 140, ...SV },
+  { id: '22', x: 450, y: 140, ...SV },
+  { id: '21', x: 580, y: 140, ...SV },
+  { id: '20', x: 648, y: 140, ...SV },
 
-  // ── SECOND CENTRE ROW — facing UP: 26,27,28 ──
-  { id: '26', x: 290, y: 236, ...SV },
-  { id: '27', x: 390, y: 236, ...SV },
-  { id: '28', x: 460, y: 236, ...SV },
+  // ── UPPER CENTRE ROW 2 (facing up) ───────────────────────
+  { id: '26', x: 236, y: 242, ...SV },
+  { id: '27', x: 344, y: 242, ...SV },
+  { id: '28', x: 418, y: 242, ...SV },
+  { id: '10a',x: 520, y: 242, ...SV },
 
-  // ── 10a — lone slot right of 28 ──
-  { id: '10a', x: 560, y: 236, ...SV },
+  // ── RIGHT COLUMN (horizontal, facing left) ────────────────
+  { id: '19', x: 740, y: 148, ...SH },
+  { id: '18', x: 740, y: 214, ...SH },
+  { id: '17', x: 740, y: 280, ...SH },
+  { id: '16', x: 740, y: 346, ...SH },
+  { id: '15', x: 740, y: 412, ...SH },
+  { id: '15a',x: 632, y: 412, ...SH },
 
-  // ── RIGHT COLUMN — horizontal, facing left: 20→19→18→17→16→15→15a ──
-  { id: '19',  x: 750, y: 208, ...SH },
-  { id: '18',  x: 750, y: 272, ...SH },
-  { id: '17',  x: 750, y: 336, ...SH },
-  { id: '16',  x: 750, y: 400, ...SH },
-  { id: '15',  x: 750, y: 464, ...SH },
-  { id: '15a', x: 638, y: 464, ...SH },
+  // ── LEFT COLUMN (horizontal, facing right) ────────────────
+  { id: '30',  x: 22, y: 148, ...SH },
+  { id: '31',  x: 22, y: 248, ...SH },
+  { id: '29',  x: 122, y: 248, ...SM },
+  { id: '32',  x: 22, y: 356, ...SH },
+  { id: '32a', x: 122, y: 356, ...SM },
+  { id: '33',  x: 22, y: 448, ...SH },
+  { id: '33a', x: 122, y: 448, ...SM },
+  { id: '34',  x: 22, y: 528, ...SH },
 
-  // ── LEFT COLUMN — horizontal, facing right: 30,31,32,32a,33,33a,34 ──
-  { id: '30',  x: 24,  y: 164, ...SH },
-  { id: '31',  x: 24,  y: 268, ...SH },
-  { id: '32',  x: 24,  y: 372, ...SH },
-  { id: '32a', x: 128, y: 372, ...SM },
-  { id: '33',  x: 24,  y: 462, ...SH },
-  { id: '33a', x: 128, y: 462, ...SM },
-  { id: '34',  x: 24,  y: 546, ...SH },
+  // ── LEFT BOTTOM COLUMN ────────────────────────────────────
+  { id: '35', x: 22, y: 616, ...SH },
+  { id: '36', x: 22, y: 690, ...SH },
+  { id: '37', x: 22, y: 764, ...SH },
 
-  // 29 — bike slot next to 31 on the left col
-  { id: '29',  x: 128, y: 268, ...SM },
+  // ── CENTRE RIGHT — 14a, 14, 13 ───────────────────────────
+  { id: '13',  x: 740, y: 478, ...SH },
+  { id: '14a', x: 548, y: 630, ...SV },
+  { id: '14',  x: 614, y: 630, ...SV },
 
-  // ── LEFT BOTTOM — 35,36,37 ──
-  { id: '35', x: 24, y: 620, ...SH },
-  { id: '36', x: 24, y: 690, ...SH },
-  { id: '37', x: 24, y: 760, ...SH },
+  // ── RIGHT BOTTOM COLUMN ───────────────────────────────────
+  { id: '12', x: 740, y: 640, ...SH },
+  { id: '11', x: 740, y: 714, ...SH },
+  { id: '10', x: 740, y: 788, ...SH },
 
-  // ── CENTRE: LIFT area, then 14a, 14, 13 below ramp ──
-  { id: '14a', x: 560, y: 620, ...SV },
-  { id: '14',  x: 626, y: 620, ...SV },
-  { id: '13',  x: 750, y: 590, ...SH },
+  // ── BOTTOM UPPER SUB-ROW (small, facing down) ─────────────
+  { id: '4a', x: 226, y: 640, ...SV },
+  { id: '5a', x: 292, y: 640, ...SV },
+  { id: '6a', x: 376, y: 640, ...SV },
 
-  // ── RIGHT BOTTOM column — 12,11,10 ──
-  { id: '12', x: 750, y: 668, ...SH },
-  { id: '11', x: 750, y: 734, ...SH },
-  { id: '10', x: 750, y: 800, ...SH },
-
-  // ── BOTTOM UPPER SUB-ROW — 4a, 5a, 6a (facing down, smaller) ──
-  { id: '4a', x: 270, y: 640, ...SV },
-  { id: '5a', x: 334, y: 640, ...SV },
-  { id: '6a', x: 410, y: 640, ...SV },
-
-  // ── BOTTOM MAIN ROW 1 (upper) — facing up: 1,2,3,4,5,6,7,8,9 ──
-  { id: '1', x: 130, y: 760, ...SV },
-  { id: '2', x: 196, y: 760, ...SV },
-  { id: '3', x: 262, y: 760, ...SV },
-  { id: '4', x: 328, y: 760, ...SV },
-  { id: '5', x: 394, y: 760, ...SV },
-  { id: '6', x: 460, y: 760, ...SV },
-  { id: '7', x: 526, y: 760, ...SV },
-  { id: '8', x: 592, y: 760, ...SV },
-  { id: '9', x: 658, y: 760, ...SV },
+  // ── BOTTOM MAIN ROWS ─────────────────────────────────────
+  // Left group: 1,2,3,4
+  { id: '1', x: 130, y: 764, ...SV },
+  { id: '2', x: 196, y: 764, ...SV },
+  { id: '3', x: 262, y: 764, ...SV },
+  { id: '4', x: 328, y: 764, ...SV },
+  // Right group: 5,6,7,8,9
+  { id: '5', x: 394, y: 764, ...SV },
+  { id: '6', x: 460, y: 764, ...SV },
+  { id: '7', x: 526, y: 764, ...SV },
+  { id: '8', x: 592, y: 764, ...SV },
+  { id: '9', x: 658, y: 764, ...SV },
 ]
 
-const VIEW_W = 870
-const VIEW_H = 900
+const VIEW_W = 862
+const VIEW_H = 890
 
+// ════════════════════════════════════════════════════════════
 export default function Parking() {
   const { user } = useAuth()
   const isAdmin  = user?.role === 'admin'
@@ -138,7 +161,7 @@ export default function Parking() {
   const byId = {}
   slots.forEach(s => { byId[s.label] = s })
 
-  const openSlot = (id) => {
+  const openSlot = id => {
     const db = byId[id]
     setSelId(id)
     setAssignFlat(db?.assignedFlat || '')
@@ -177,12 +200,12 @@ export default function Parking() {
     finally { setSaving(false) }
   }
 
-  const handleDeleteVehicle = async (vid) => {
+  const handleDeleteVehicle = async vid => {
     try { await api.delete(`/api/parking/vehicles/${vid}`); await fetchSlots() }
     catch (e) { console.error(e) }
   }
 
-  const slotColor = (id) => {
+  const slotColor = id => {
     const db = byId[id]
     if (!db?.assignedFlat) return { fill: '#f8fafc', stroke: '#e2e8f0', text: '#94a3b8' }
     if (db.assignedFlat.toUpperCase() === userFlat)
@@ -207,13 +230,13 @@ export default function Parking() {
             ))}
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button onClick={() => setZoom(z => Math.max(0.3, +(z-0.08).toFixed(2)))}
+            <button onClick={() => setZoom(z => Math.max(0.28, +(z-0.08).toFixed(2)))}
               className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{ background:'var(--surface-2)', border:'1px solid var(--border)' }}>
               <Minus size={14} style={{ color:'var(--ink-2)' }}/>
             </button>
             <button onClick={() => {
-              if (wrapRef.current) setZoom(Math.max(0.3, Math.min(1.2, (wrapRef.current.clientWidth-16)/VIEW_W)))
+              if (wrapRef.current) setZoom(Math.max(0.28, Math.min(1.2, (wrapRef.current.clientWidth-16)/VIEW_W)))
             }} className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{ background:'var(--surface-2)', border:'1px solid var(--border)' }}>
               <RotateCcw size={13} style={{ color:'var(--ink-2)' }}/>
@@ -243,85 +266,78 @@ export default function Parking() {
                   xmlns="http://www.w3.org/2000/svg">
 
                   {/* Plot boundary */}
-                  <rect x="14" y="8" width={VIEW_W-28} height={VIEW_H-16}
-                    rx="12" fill="#e4e8f2" stroke="#c8cfdc" strokeWidth="2"/>
-
-                  {/* Inner paved area */}
-                  <rect x="24" y="120" width={VIEW_W-60} height={VIEW_H-160}
-                    rx="8" fill="#eaedf5" stroke="#d8dde8" strokeWidth="1"
-                    strokeDasharray="4 6"/>
+                  <rect x="12" y="6" width={VIEW_W-24} height={VIEW_H-12}
+                    rx="14" fill="#e4e8f2" stroke="#c8cfdc" strokeWidth="2"/>
 
                   {/* Septic tank — top left */}
-                  <rect x="30" y="24" width="148" height="86" rx="6"
-                    fill="none" stroke="#c8cfdc" strokeWidth="1.5" strokeDasharray="5 4"/>
-                  <text x="104" y="64" textAnchor="middle" fontSize="9" fill="#94a3b8" fontWeight="600">SEPTIC</text>
-                  <text x="104" y="76" textAnchor="middle" fontSize="9" fill="#94a3b8" fontWeight="600">TANK</text>
+                  <rect x="28" y="20" width="156" height="100" rx="7"
+                    fill="none" stroke="#c0c8d8" strokeWidth="1.5" strokeDasharray="5 4"/>
+                  <text x="106" y="68" textAnchor="middle" fontSize="9" fill="#a0aec0" fontWeight="600">SEPTIC TANK</text>
 
                   {/* Transformer — top right */}
-                  <rect x="746" y="14" width="98" height="38" rx="5"
+                  <rect x="748" y="10" width="100" height="36" rx="5"
                     fill="#fef9c3" stroke="#fde047" strokeWidth="1.5"/>
-                  <text x="795" y="37" textAnchor="middle" fontSize="8" fill="#854d0e" fontWeight="700">TRANSFORMER</text>
+                  <text x="798" y="32" textAnchor="middle" fontSize="8" fill="#854d0e" fontWeight="700">TRANSFORMER</text>
 
                   {/* Security cabin */}
-                  <rect x="836" y="62" width="26" height="52" rx="4"
+                  <rect x="840" y="54" width="18" height="54" rx="4"
                     fill="#fef9c3" stroke="#fde047" strokeWidth="1.5"/>
-                  <text x="849" y="84" textAnchor="middle" fontSize="6.5" fill="#854d0e" fontWeight="700">SEC</text>
-                  <text x="849" y="96" textAnchor="middle" fontSize="6.5" fill="#854d0e" fontWeight="700">CAB</text>
+                  <text x="849" y="74" textAnchor="middle" fontSize="6" fill="#854d0e" fontWeight="700">SEC</text>
+                  <text x="849" y="86" textAnchor="middle" fontSize="6" fill="#854d0e" fontWeight="700">CAB</text>
 
-                  {/* W.TOI */}
-                  <rect x="556" y="258" width="68" height="40" rx="5"
+                  {/* Gate — right edge mid */}
+                  <rect x="850" y="484" width="10" height="56" rx="3" fill="#e11d48"/>
+                  <text x="848" y="480" textAnchor="middle" fontSize="8" fill="#e11d48" fontWeight="700">GATE</text>
+
+                  {/* W.TOI box */}
+                  <rect x="540", y="264" width="68" height="40" rx="5"
                     fill="#f0f9ff" stroke="#bae6fd" strokeWidth="1.5"/>
-                  <text x="590" y="283" textAnchor="middle" fontSize="9" fill="#0369a1" fontWeight="600">W.TOI</text>
+                  <text x="574" y="289" textAnchor="middle" fontSize="9" fill="#0369a1" fontWeight="600">W.TOI</text>
 
-                  {/* Garden 1 — vertical green patch left of lifts */}
-                  <rect x="348" y="322" width="80" height="210" rx="8"
+                  {/* Garden patch 1 — vertical, left of lifts */}
+                  <rect x="190" y="328" width="106" height="226" rx="9"
                     fill="#bbf7d0" stroke="#4ade80" strokeWidth="1.5"/>
-                  <text x="388" y="432" textAnchor="middle" fontSize="8" fill="#15803d" fontWeight="600">GARDEN</text>
+                  <text x="243" y="448" textAnchor="middle" fontSize="9" fill="#15803d" fontWeight="600">GARDEN</text>
 
-                  {/* Garden 2 — horizontal green patch right side */}
-                  <rect x="476" y="478" width="250" height="36" rx="6"
+                  {/* Garden patch 2 — horizontal, right of centre */}
+                  <rect x="448" y="478" width="266" height="40" rx="7"
                     fill="#bbf7d0" stroke="#4ade80" strokeWidth="1.5"/>
 
-                  {/* MES panel label */}
-                  <text x="448" y="316" textAnchor="middle" fontSize="8" fill="#64748b" fontWeight="600">MES PANEL</text>
-                  <text x="448" y="560" textAnchor="middle" fontSize="8" fill="#64748b" fontWeight="600">MES PANEL</text>
-
-                  {/* Stairs UP — between lifts */}
-                  <rect x="438" y="286" width="72" height="30" rx="4"
-                    fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5"/>
-                  <text x="474" y="306" textAnchor="middle" fontSize="9" fill="#475569" fontWeight="700">UP ↑</text>
-
-                  {/* LIFT 1 — upper */}
-                  <rect x="438" y="326" width="72" height="64" rx="7"
-                    fill="#ddd6fe" stroke="#a78bfa" strokeWidth="2"/>
-                  <text x="474" y="365" textAnchor="middle" fontSize="12" fill="#5b21b6" fontWeight="800">LIFT</text>
-
-                  {/* LIFT 2 — lower (below garden) */}
-                  <rect x="438" y="540" width="72" height="64" rx="7"
-                    fill="#ddd6fe" stroke="#a78bfa" strokeWidth="2"/>
-                  <text x="474" y="579" textAnchor="middle" fontSize="12" fill="#5b21b6" fontWeight="800">LIFT</text>
-
-                  {/* Stairs 2 */}
-                  <rect x="438" y="612" width="72" height="30" rx="4"
-                    fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5"/>
-                  <text x="474" y="632" textAnchor="middle" fontSize="9" fill="#475569" fontWeight="700">UP ↑</text>
-
-                  {/* Ramp entry (right-side, mid) */}
-                  <rect x="548" y="518" width="196" height="48" rx="5"
+                  {/* Ramp (to right of garden 2) */}
+                  <rect x="448" y="526" width="250" height="50" rx="5"
                     fill="#dde3ed" stroke="#c8d0dc" strokeWidth="1.5"/>
-                  {[0,1,2,3,4,5].map(i => (
-                    <rect key={i} x={556+i*31} y="525" width="16" height="34" rx="2" fill="#fbbf24"/>
+                  {[0,1,2,3,4,5,6].map(i => (
+                    <rect key={i} x={456+i*33} y="533" width="16" height="36" rx="2" fill="#fbbf24"/>
                   ))}
-                  <text x="646" y="582" textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">RAMP</text>
+                  <text x="573" y="594" textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">RAMP / ENTRY</text>
 
-                  {/* Gate */}
-                  <rect x="846" y="518" width="12" height="48" rx="3" fill="#e11d48"/>
-                  <text x="862" y="548" textAnchor="middle" fontSize="8" fill="#e11d48"
-                    fontWeight="700" transform="rotate(90 862 548)">GATE</text>
+                  {/* MES panel labels */}
+                  <text x="316" y="324" textAnchor="middle" fontSize="7" fill="#94a3b8">MES PANEL</text>
+                  <text x="316" y="560" textAnchor="middle" fontSize="7" fill="#94a3b8">MES PANEL</text>
+
+                  {/* Stairs UP upper */}
+                  <rect x="306" y="330" width="70" height="28" rx="4"
+                    fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5"/>
+                  <text x="341" y="349" textAnchor="middle" fontSize="9" fill="#475569" fontWeight="700">UP ↑</text>
+
+                  {/* LIFT 1 — upper centre */}
+                  <rect x="306" y="366" width="70" height="66" rx="7"
+                    fill="#ddd6fe" stroke="#a78bfa" strokeWidth="2"/>
+                  <text x="341" y="406" textAnchor="middle" fontSize="12" fill="#5b21b6" fontWeight="800">LIFT</text>
+
+                  {/* LIFT 2 — lower centre */}
+                  <rect x="306" y="530" width="70" height="66" rx="7"
+                    fill="#ddd6fe" stroke="#a78bfa" strokeWidth="2"/>
+                  <text x="341" y="570" textAnchor="middle" fontSize="12" fill="#5b21b6" fontWeight="800">LIFT</text>
+
+                  {/* Stairs UP lower */}
+                  <rect x="306" y="604" width="70" height="28" rx="4"
+                    fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5"/>
+                  <text x="341" y="623" textAnchor="middle" fontSize="9" fill="#475569" fontWeight="700">UP ↑</text>
 
                   {/* Road label */}
-                  <text x="856" y="780" textAnchor="middle" fontSize="8" fill="#94a3b8"
-                    fontWeight="600" transform="rotate(90 856 780)">10.0M WIDE ROAD</text>
+                  <text x="858" y="750" textAnchor="middle" fontSize="8" fill="#94a3b8"
+                    fontWeight="600" transform="rotate(90 858 750)">10.0M WIDE ROAD</text>
 
                   {/* ── SLOTS ── */}
                   {SLOTS.map(s => {
@@ -331,42 +347,31 @@ export default function Parking() {
                     const vcount = db?.vehicles?.length || 0
                     const cx = s.x + s.w / 2
                     const cy = s.y + s.h / 2
+                    const fontSize = s.w < 50 ? 10 : 13
 
                     return (
-                      <g key={s.id} onClick={() => openSlot(s.id)} style={{ cursor: 'pointer' }}>
-                        {/* slot box */}
+                      <g key={s.id} onClick={() => openSlot(s.id)} style={{ cursor:'pointer' }}>
                         <rect x={s.x} y={s.y} width={s.w} height={s.h} rx="7"
                           fill={col.fill}
                           stroke={isSel ? '#f59e0b' : col.stroke}
                           strokeWidth={isSel ? 3 : 1.5}/>
-
-                        {/* slot number */}
-                        <text
-                          x={cx}
-                          y={db?.assignedFlat ? cy - 5 : cy + 5}
-                          textAnchor="middle"
-                          fontSize={s.w < 50 ? 10 : 13}
-                          fontWeight="800"
-                          fill={col.text}>
+                        <text x={cx} y={db?.assignedFlat ? cy-5 : cy+5}
+                          textAnchor="middle" fontSize={fontSize} fontWeight="800" fill={col.text}>
                           {s.id}
                         </text>
-
-                        {/* assigned flat label */}
                         {db?.assignedFlat && (
-                          <text x={cx} y={cy + 10} textAnchor="middle"
+                          <text x={cx} y={cy+10} textAnchor="middle"
                             fontSize={s.w < 50 ? 8 : 10} fontWeight="700"
                             fill={col.text === '#ffffff' ? '#c7d2fe' : '#16a34a'}>
                             {db.assignedFlat}
                           </text>
                         )}
-
-                        {/* vehicle count badge */}
                         {vcount > 0 && (
                           <>
-                            <circle cx={s.x + s.w - 9} cy={s.y + 9} r="8"
-                              fill={col.text === '#ffffff' ? 'rgba(255,255,255,0.25)' : '#5b52f0'}/>
-                            <text x={s.x + s.w - 9} y={s.y + 13}
-                              textAnchor="middle" fontSize="8" fontWeight="800" fill="#ffffff">
+                            <circle cx={s.x+s.w-9} cy={s.y+9} r="8"
+                              fill={col.text === '#ffffff' ? 'rgba(255,255,255,0.3)' : '#5b52f0'}/>
+                            <text x={s.x+s.w-9} y={s.y+13}
+                              textAnchor="middle" fontSize="8" fontWeight="800" fill="#fff">
                               {vcount}
                             </text>
                           </>
@@ -380,7 +385,7 @@ export default function Parking() {
           </div>
         </div>
 
-        <p className="text-[11px] text-center pb-2" style={{ color: 'var(--ink-4)' }}>
+        <p className="text-[11px] text-center pb-2" style={{ color:'var(--ink-4)' }}>
           Scroll to pan · +/− to zoom · tap a slot
         </p>
       </div>
@@ -390,7 +395,6 @@ export default function Parking() {
         title={selId ? `Slot ${selId}` : 'Slot'}>
         {selId && (
           <div className="space-y-4">
-
             <div className="px-3 py-2.5 rounded-xl text-[12px]"
               style={{
                 background: selectedDb?.assignedFlat ? '#f0fdf4' : 'var(--surface-2)',
@@ -402,34 +406,30 @@ export default function Parking() {
                 : 'Not assigned to any flat yet'}
             </div>
 
-            {/* Admin assign */}
             {isAdmin && (
               <div className="rounded-xl p-4 space-y-3"
-                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
-                <div className="text-[11px] font-bold uppercase tracking-wide"
-                  style={{ color: 'var(--ink-3)' }}>Admin · Assign Flat</div>
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border)' }}>
+                <div className="text-[11px] font-bold uppercase tracking-wide" style={{ color:'var(--ink-3)' }}>
+                  Admin · Assign Flat
+                </div>
                 <input className="input w-full"
                   placeholder="Flat no. (e.g. 2H) — blank to unassign"
-                  value={assignFlat}
-                  onChange={e => setAssignFlat(e.target.value.toUpperCase())}/>
-                <button onClick={handleSaveAssign} disabled={saving}
-                  className="btn-primary w-full justify-center">
+                  value={assignFlat} onChange={e => setAssignFlat(e.target.value.toUpperCase())}/>
+                <button onClick={handleSaveAssign} disabled={saving} className="btn-primary w-full justify-center">
                   <Save size={14}/> {saving ? 'Saving…' : 'Save'}
                 </button>
                 {err && <div className="text-[11px] px-3 py-2 rounded-lg"
-                  style={{ background: '#fff1f2', color: '#9f1239' }}>{err}</div>}
+                  style={{ background:'#fff1f2', color:'#9f1239' }}>{err}</div>}
               </div>
             )}
 
-            {/* Vehicles */}
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-wide mb-2"
-                style={{ color: 'var(--ink-3)' }}>
+              <div className="text-[11px] font-bold uppercase tracking-wide mb-2" style={{ color:'var(--ink-3)' }}>
                 Vehicles{selectedDb?.assignedFlat ? ` · Flat ${selectedDb.assignedFlat}` : ''}
               </div>
               {(!selectedDb?.vehicles || selectedDb.vehicles.length === 0) ? (
                 <div className="text-[12px] text-center py-4 rounded-xl"
-                  style={{ color: 'var(--ink-4)', background: 'var(--surface-2)' }}>
+                  style={{ color:'var(--ink-4)', background:'var(--surface-2)' }}>
                   No vehicles added yet
                 </div>
               ) : (
@@ -439,23 +439,22 @@ export default function Parking() {
                     const Icon = conf.icon
                     return (
                       <div key={v.id} className="flex items-center gap-2.5 p-2.5 rounded-xl"
-                        style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+                        style={{ background:'var(--surface-2)', border:'1px solid var(--border)' }}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ background: `${conf.color}18` }}>
-                          <Icon size={15} style={{ color: conf.color }}/>
+                          style={{ background:`${conf.color}18` }}>
+                          <Icon size={15} style={{ color:conf.color }}/>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>{conf.label}</div>
-                          {v.numberPlate && <div className="text-[10px]" style={{ color: 'var(--ink-3)' }}>{v.numberPlate}</div>}
+                          <div className="text-[12px] font-semibold" style={{ color:'var(--ink)' }}>{conf.label}</div>
+                          {v.numberPlate && <div className="text-[10px]" style={{ color:'var(--ink-3)' }}>{v.numberPlate}</div>}
                         </div>
                         {v.isTenant && (
-                          <span className="badge text-[9px]"
-                            style={{ background: '#fffbeb', color: '#d97706' }}>Tenant</span>
+                          <span className="badge text-[9px]" style={{ background:'#fffbeb', color:'#d97706' }}>Tenant</span>
                         )}
                         {canEdit && (
                           <button onClick={() => handleDeleteVehicle(v.id)}
                             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ background: '#fff1f2', color: '#e11d48' }}>
+                            style={{ background:'#fff1f2', color:'#e11d48' }}>
                             <Trash2 size={13}/>
                           </button>
                         )}
@@ -466,12 +465,12 @@ export default function Parking() {
               )}
             </div>
 
-            {/* Add vehicle */}
             {canEdit && (
               <div className="rounded-xl p-4 space-y-3"
-                style={{ background: '#f0fdf4', border: '1px solid #86efac' }}>
-                <div className="text-[11px] font-bold uppercase tracking-wide"
-                  style={{ color: '#166534' }}>Add a Vehicle</div>
+                style={{ background:'#f0fdf4', border:'1px solid #86efac' }}>
+                <div className="text-[11px] font-bold uppercase tracking-wide" style={{ color:'#166534' }}>
+                  Add a Vehicle
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   {VEHICLE_TYPES.map(t => {
                     const Icon = t.icon
@@ -489,14 +488,11 @@ export default function Parking() {
                     )
                   })}
                 </div>
-                <input className="input w-full"
-                  placeholder="Vehicle number (e.g. TN09AB1234)"
-                  value={vNumber}
-                  onChange={e => setVNumber(e.target.value.toUpperCase())}/>
+                <input className="input w-full" placeholder="Vehicle number (e.g. TN09AB1234)"
+                  value={vNumber} onChange={e => setVNumber(e.target.value.toUpperCase())}/>
                 {err && <div className="text-[11px] px-3 py-2 rounded-lg"
-                  style={{ background: '#fff1f2', color: '#9f1239' }}>{err}</div>}
-                <button onClick={handleAddVehicle} disabled={saving}
-                  className="btn-primary w-full justify-center">
+                  style={{ background:'#fff1f2', color:'#9f1239' }}>{err}</div>}
+                <button onClick={handleAddVehicle} disabled={saving} className="btn-primary w-full justify-center">
                   <Plus size={14}/> {saving ? 'Adding…' : 'Add Vehicle'}
                 </button>
               </div>
@@ -504,7 +500,7 @@ export default function Parking() {
 
             {!canEdit && !isAdmin && selectedDb?.assignedFlat && (
               <div className="text-[11px] px-3 py-2.5 rounded-xl text-center"
-                style={{ background: 'var(--surface-2)', color: 'var(--ink-4)' }}>
+                style={{ background:'var(--surface-2)', color:'var(--ink-4)' }}>
                 Only residents of Flat {selectedDb.assignedFlat} can manage vehicles here.
               </div>
             )}
